@@ -1,8 +1,5 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import router as api_router
-from routes import evidence
-from uuid import UUID
 
 app = FastAPI()
 
@@ -14,27 +11,16 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# temporary Cases Route for testing Evidence Upload
-cases_filler = APIRouter(prefix="/cases", tags=["filler"]) 
+@app.get("/")
+def root():
+    return {"message": "Hello fr FastAPI backend!"}
 
-@cases_filler.get("/all")
-async def get_mock_cases():
-    return [
-        {
-            "id": 1, 
-            "description": "Test Case 1",
-            "status": "pending",
-            "created_at": "2026-03-10T00:00:00Z",
-            "organization_id": 1
-        }
-    ]
-
-app.include_router(cases_filler)
-app.include_router(api_router)
-app.include_router(evidence.router)
+@app.get("/api/example")
+def example():
+    return {"status": "ok", "data": [1, 2, 3]}
