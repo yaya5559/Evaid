@@ -1,8 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import router as api_router
-from routes import evidence
-from uuid import UUID
 
 app = FastAPI()
 
@@ -14,11 +11,16 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_router)
+@app.get("/")
+def root():
+    return {"message": "Hello fr FastAPI backend!"}
 
+@app.get("/api/example")
+def example():
+    return {"status": "ok", "data": [1, 2, 3]}
