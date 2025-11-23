@@ -19,7 +19,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"message": "Hello from FastAPI backend!"}
+    return {"message": "Hello fr FastAPI backend!"}
 
 @app.get("/api/example")
 def example():
