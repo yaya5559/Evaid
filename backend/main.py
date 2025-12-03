@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import app.auth
+from app.auth.routes import router as auth_router
 
 app = FastAPI()
 
@@ -18,18 +18,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/create/")
-def create():
-    return {}
-
-@app.get("/test/{test_id}")
-async def test(test_id):
-    return {"Hello": test_id}
-
-@app.get("/")
-def root():
-    return {"message": "Hello fr FastAPI backend!"}
-
-@app.get("/api/example")
-def example():
-    return {"status": "ok", "data": [1, 2, 3]}
+app.include_router(auth_router)
