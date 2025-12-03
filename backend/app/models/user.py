@@ -1,1 +1,1 @@
-# File for database representation of a user
+# File for database representation of a userfrom
