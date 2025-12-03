@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import app.auth
 
 app = FastAPI()
 
@@ -16,6 +17,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.post("/create/")
+def create():
+    return {}
+
+@app.get("/test/{test_id}")
+async def test(test_id):
+    return {"Hello": test_id}
 
 @app.get("/")
 def root():
