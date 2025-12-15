@@ -4,7 +4,7 @@
 */
 
 import React, { createContext, useCallback, useState, useRef, useEffect, useMemo, useContext } from "react"
-import jwtDecode from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 import type { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 import axios from "axios";
 
@@ -82,8 +82,8 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
             setState({user: null, accessToken: null, loading: false})
             return
         };
-        const user = jwtDecode(token);
-        setState({user, accessToken: token, loading:false})
+        const user:User = jwtDecode(token);
+        setState({user:user, accessToken: token, loading:false})
 
     }, []);
 
