@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from backend.routes import router as api_router
 
 app = FastAPI()
 
@@ -9,6 +10,7 @@ origins = [
     # Add more origins here in future (production URL, etc.)
 ]
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -17,10 +19,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {"message": "Hello from FastAPI backend!"}
-
-@app.get("/api/example")
-def example():
-    return {"status": "ok", "data": [1, 2, 3]}
+app.include_router(api_router, prefix="/Evaide")
