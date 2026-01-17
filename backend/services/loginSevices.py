@@ -111,24 +111,6 @@ def store_refresh_token(user_id, refresh_token):
     finally:
         conn.close()
 
-# Saves refresh token to database for session management
-def store_refresh_token(user_id, refresh_token):
-    # Saves the refresh token into the user_sessions table.
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        # refresh tokens are valid for 7 days
-        expires_at = datetime.utcnow() + timedelta(days=7)
-        
-        query = """
-            INSERT INTO user_sessions (user_id, token_hash, expires_at, is_valid)
-            VALUES (?, ?, ?, 1)
-        """
-        cursor.execute(query, (user_id, refresh_token, expires_at))
-        conn.commit()
-    finally:
-        conn.close()
-
 # Creates new user account in the database
 def register_user(first_name, last_name, email, password, role_id, org_id=None):
     # Hashes password and saves a new user to Azure SQL.
