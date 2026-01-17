@@ -8,7 +8,7 @@ import pyodbc
 import secrets
 import jwt
 import os
-
+ 
 load_dotenv()
 
 # Setup for bcrypt password hashing
@@ -31,13 +31,7 @@ def get_user_by_email(email):
     cursor = conn.cursor()
     try:
         # only get active users (checks for soft delete)
-        # added JOIN to get the text role name
-        query = """
-            SELECT u.user_id, u.password_hash, u.first_name, r.role_name 
-            FROM users u
-            JOIN roles r ON u.role_id = r.role_id
-            WHERE u.email = ? AND u.deleted_at IS NULL
-        """
+        query = "SELECT user_id, password_hash, first_name FROM users WHERE email = ? AND deleted_at IS NULL"
         cursor.execute(query, (email,))
         row = cursor.fetchone()
         
@@ -46,14 +40,13 @@ def get_user_by_email(email):
             return type('User', (object,), {
                 "id": row[0],
                 "password_hash": row[1],
-                "first_name": row[2],
-                "role": row[3]  # This adds the 'role' attribute your app.py is looking for
+                "first_name": row[2]
             })
         return None
     finally:
         conn.close()
 
-def create_access_token(user_name: str, remember: bool = False):
+def create_access_token(user_id: int, email: str, role: str, remember: bool = False):
     expires =  timedelta(minutes=15) # represents a duration of time 
 
     #remember signifies how long this login should stay valid
@@ -61,9 +54,13 @@ def create_access_token(user_name: str, remember: bool = False):
     if remember : 
         expires = timedelta(days=7)
 
-
+    # Abenezer: updated payload and parameters of 
+    # function to include userid, email and role
     payload = {
-        "sub": user_name,
+        "user_id": user_id,
+        "email": email,
+        "role": role,
+        # "sub": user_name,
         "exp": datetime.utcnow()+expires
     }
 
@@ -75,6 +72,26 @@ def create_access_token(user_name: str, remember: bool = False):
     token = jwt.encode(payload, JWT_SECRET, algorithm = "HS256")
 
     return token
+
+# Abenezer: decode token function
+def decode_access_token(token: str):
+    JWT_SECRET = os.getenv("JWT_SECRET")
+    if not JWT_SECRET:
+        raise RuntimeError("JWT_SECRET not set")
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = "Token expired"
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid Token"
+        )
 
 # Saves refresh token to database for session management
 def store_refresh_token(user_id, refresh_token):
@@ -104,43 +121,15 @@ def register_user(first_name, last_name, email, password, role_id, org_id=None):
     hashed_password = pwd_context.hash(password)
     
     try:
-        # SQL expects NULL for empty orgs, not Python None
-        db_org_id = org_id if org_id is not None else None 
-        
         query = """
             INSERT INTO users (first_name, last_name, email, password_hash, role_id, org_id, is_enabled)
             VALUES (?, ?, ?, ?, ?, ?, 1)
         """
-        
-        # pyodbc automatically converts Python None to SQL NULL
-        cursor.execute(query, (first_name, last_name, email, hashed_password, role_id, db_org_id))
+        cursor.execute(query, (first_name, last_name, email, hashed_password, role_id, org_id))
         conn.commit()
-        print(f"SUCCESS: User {email} registered with role_id={role_id}")
         return True
-        
-    except pyodbc.IntegrityError as e:
-        # this catches foreign key violations and duplicate emails
-        error_msg = str(e)
-        print(f"=== DATABASE INTEGRITY ERROR ===")
-        print(f"Error: {error_msg}")
-        
-        # try to figure out what went wrong
-        if "FOREIGN KEY" in error_msg.upper():
-            if "role_id" in error_msg:
-                print(f"PROBLEM: role_id={role_id} doesn't exist in roles table!")
-            elif "org_id" in error_msg:
-                print(f"PROBLEM: org_id={org_id} doesn't exist in organizations table!")
-        elif "UNIQUE" in error_msg.upper() or "duplicate" in error_msg.lower():
-            print(f"PROBLEM: Email {email} is already registered!")
-        
+    except pyodbc.IntegrityError:
+        # happens when email already exists in evaide_db
         return False
-        
-    except Exception as e:
-        # catch any other weird errors
-        print(f"=== UNEXPECTED ERROR ===")
-        print(f"Error type: {type(e).__name__}")
-        print(f"Error message: {e}")
-        return False
-        
     finally:
         conn.close()
