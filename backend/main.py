@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.auth.routes import router as auth_router
+from routes import router as api_router
 
 app = FastAPI()
 
@@ -10,6 +10,7 @@ origins = [
     # Add more origins here in future (production URL, etc.)
 ]
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -18,4 +19,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
+app.include_router(api_router, prefix="/Evaide")
