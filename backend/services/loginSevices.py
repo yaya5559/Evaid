@@ -31,16 +31,17 @@ def get_user_by_email(email):
     cursor = conn.cursor()
     try:
         # only get active users (checks for soft delete)
-        query = "SELECT user_id, password_hash, first_name FROM users WHERE email = ? AND deleted_at IS NULL"
+        query = "SELECT user_id, password_hash, email, role_id FROM users WHERE email = ? AND deleted_at IS NULL"
         cursor.execute(query, (email,))
         row = cursor.fetchone()
         
         if row:
             # create a simple user object to return
             return type('User', (object,), {
-                "id": row[0],
+                "user_id": row[0],
                 "password_hash": row[1],
-                "first_name": row[2]
+                "email": row[2],
+                "role_id": row[3]
             })
         return None
     finally:
@@ -133,3 +134,4 @@ def register_user(first_name, last_name, email, password, role_id, org_id=None):
         return False
     finally:
         conn.close()
+    
