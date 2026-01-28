@@ -41,14 +41,15 @@ def me(authorization: str = Header(None)):
     }
 
 @router.post("/login")
-def login(data: LoginRequest, response : Response, remember: bool =False ):
+def login(data: LoginRequest, response : Response, remember: bool = False ):
+    print("Worked!")
     email= data.email
     password = data.password
 
 
     user = get_user_by_email(email)
 
-    # user with that email doesn t exist
+    # user with that email doesnt exist
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -62,10 +63,13 @@ def login(data: LoginRequest, response : Response, remember: bool =False ):
             detail="Invalid credentials!!"
         )
         
-    # we need database to get username
-    user_name = user.first_name
+    # # we need database to get username
+    # user_name = user.first_name
 
-    token = create_access_token(user_name, remember)
+    token = create_access_token(user_id=user.user_id,
+    email=user.email,
+    role=user.role_id,
+    remember=remember)
 
     refresh_token = secrets.token_urlsafe(64)
 
@@ -79,7 +83,7 @@ def login(data: LoginRequest, response : Response, remember: bool =False ):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=False,   # false for localhost
         samesite="strict",
         path="/auth/refresh",
         max_age=60*60*24*7 #7days
