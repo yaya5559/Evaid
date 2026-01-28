@@ -46,7 +46,7 @@ def get_user_by_email(email):
     finally:
         conn.close()
 
-def create_access_token(user_id: int, email: str, role: str, remember: bool = False):
+def create_access_token(user_id: int, email: str, role: str, remember: bool):
     expires =  timedelta(minutes=15) # represents a duration of time 
 
     #remember signifies how long this login should stay valid

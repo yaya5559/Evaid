@@ -42,6 +42,7 @@ def me(authorization: str = Header(None)):
 
 @router.post("/login")
 def login(data: LoginRequest, response : Response, remember: bool =False ):
+    print("yahya")
     email= data.email
     password = data.password
 
@@ -65,7 +66,10 @@ def login(data: LoginRequest, response : Response, remember: bool =False ):
     # we need database to get username
     user_name = user.first_name
 
-    token = create_access_token(user_name, remember)
+    token = create_access_token(user_id=user.user_id,
+    email=user.email,
+    role=user.role_id,
+    remember=remember)
 
     refresh_token = secrets.token_urlsafe(64)
 
@@ -79,7 +83,7 @@ def login(data: LoginRequest, response : Response, remember: bool =False ):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=False,   # false for localhost
         samesite="strict",
         path="/auth/refresh",
         max_age=60*60*24*7 #7days
