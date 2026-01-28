@@ -42,31 +42,30 @@ def me(authorization: str = Header(None)):
 
 @router.post("/login")
 def login(data: LoginRequest, response : Response, remember: bool = False ):
-    print("Worked!")
     email= data.email
     password = data.password
 
-
     user = get_user_by_email(email)
-
+    
     # user with that email doesnt exist
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+            detail="Invalid credentials - Email"
         )
         
     #wrong password
     if not verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials!!"
+            detail="Invalid credentials!! - Password"
         )
         
     # # we need database to get username
     # user_name = user.first_name
 
-    token = create_access_token(user_id=user.user_id,
+    token = create_access_token(
+    user_id=user.user_id,
     email=user.email,
     role=user.role_id,
     remember=remember)
@@ -75,7 +74,7 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
 
     #refreshToken should be in database
     store_refresh_token(
-        user_id=user.id,
+        user_id=user.user_id,
         refresh_token=refresh_token
     )
 
