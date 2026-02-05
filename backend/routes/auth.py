@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, Response, APIRouter
+from fastapi import HTTPException, status, Response, APIRouter, Depends, Header
 from pydantic import BaseModel, EmailStr
 from datetime import timedelta, datetime
 from dotenv import load_dotenv

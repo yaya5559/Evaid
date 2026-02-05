@@ -8,7 +8,7 @@ import pyodbc
 import secrets
 import jwt
 import os
-
+ 
 load_dotenv()
 
 # Setup for bcrypt password hashing
@@ -61,9 +61,13 @@ def create_access_token(user_name: str, remember: bool = False):
     if remember : 
         expires = timedelta(days=7)
 
-
+    # Abenezer: updated payload and parameters of 
+    # function to include userid, email and role
     payload = {
-        "sub": user_name,
+        "user_id": user_id,
+        "email": email,
+        "role": role,
+        # "sub": user_name,
         "exp": datetime.utcnow()+expires
     }
 
@@ -75,6 +79,27 @@ def create_access_token(user_name: str, remember: bool = False):
     token = jwt.encode(payload, JWT_SECRET, algorithm = "HS256")
 
     return token
+
+"""
+# Abenezer: decode token function
+def decode_access_token(token: str):
+    JWT_SECRET = os.getenv("JWT_SECRET")
+    if not JWT_SECRET:
+        raise RuntimeError("JWT_SECRET not set")
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = "Token expired"
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid Token"
+        )"""
 
 # Saves refresh token to database for session management
 def store_refresh_token(user_id, refresh_token):
