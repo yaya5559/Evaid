@@ -139,3 +139,14 @@ class EvidenceService:
         
         # results will have fileName, caseId, aiSummary, and similarityScore
         return list(results)
+
+    def get_case_evidence(self, caseId):
+        # this helps the frontend show a gallery of all files for one case
+        container = self.database.get_container_client("Evidence")
+    
+        # we use the partition key (caseId) to make this query super fast
+        query = "SELECT * FROM c WHERE c.caseId = @caseId AND c.isDeleted = false"
+        params = [{"name": "@caseId", "value": caseId}]
+    
+        results = container.query_items(query=query, parameters=params, partition_key=caseId)
+        return list(results)
