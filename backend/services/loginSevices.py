@@ -31,7 +31,13 @@ def get_user_by_email(email):
     cursor = conn.cursor()
     try:
         # only get active users (checks for soft delete)
-        query = "SELECT user_id, password_hash, first_name FROM users WHERE email = ? AND deleted_at IS NULL"
+        # added JOIN to get the text role name
+        query = """
+            SELECT u.user_id, u.password_hash, u.first_name, r.role_name 
+            FROM users u
+            JOIN roles r ON u.role_id = r.role_id
+            WHERE u.email = ? AND u.deleted_at IS NULL
+        """
         cursor.execute(query, (email,))
         row = cursor.fetchone()
         
@@ -40,7 +46,8 @@ def get_user_by_email(email):
             return type('User', (object,), {
                 "id": row[0],
                 "password_hash": row[1],
-                "first_name": row[2]
+                "first_name": row[2],
+                "role": row[3]  # This adds the 'role' attribute your app.py is looking for
             })
         return None
     finally:
@@ -97,15 +104,43 @@ def register_user(first_name, last_name, email, password, role_id, org_id=None):
     hashed_password = pwd_context.hash(password)
     
     try:
+        # SQL expects NULL for empty orgs, not Python None
+        db_org_id = org_id if org_id is not None else None 
+        
         query = """
             INSERT INTO users (first_name, last_name, email, password_hash, role_id, org_id, is_enabled)
             VALUES (?, ?, ?, ?, ?, ?, 1)
         """
-        cursor.execute(query, (first_name, last_name, email, hashed_password, role_id, org_id))
+        
+        # pyodbc automatically converts Python None to SQL NULL
+        cursor.execute(query, (first_name, last_name, email, hashed_password, role_id, db_org_id))
         conn.commit()
+        print(f"SUCCESS: User {email} registered with role_id={role_id}")
         return True
-    except pyodbc.IntegrityError:
-        # happens when email already exists in evaide_db
+        
+    except pyodbc.IntegrityError as e:
+        # this catches foreign key violations and duplicate emails
+        error_msg = str(e)
+        print(f"=== DATABASE INTEGRITY ERROR ===")
+        print(f"Error: {error_msg}")
+        
+        # try to figure out what went wrong
+        if "FOREIGN KEY" in error_msg.upper():
+            if "role_id" in error_msg:
+                print(f"PROBLEM: role_id={role_id} doesn't exist in roles table!")
+            elif "org_id" in error_msg:
+                print(f"PROBLEM: org_id={org_id} doesn't exist in organizations table!")
+        elif "UNIQUE" in error_msg.upper() or "duplicate" in error_msg.lower():
+            print(f"PROBLEM: Email {email} is already registered!")
+        
         return False
+        
+    except Exception as e:
+        # catch any other weird errors
+        print(f"=== UNEXPECTED ERROR ===")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {e}")
+        return False
+        
     finally:
         conn.close()
