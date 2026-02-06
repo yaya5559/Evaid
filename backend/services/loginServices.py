@@ -14,7 +14,7 @@ load_dotenv()
 # Setup for bcrypt password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
 
-#pydantic gurantees email and password exist 
+#pydantic guarantees email and password exist 
 class LoginRequest(BaseModel):
     email: EmailStr # pydantic's built in email validator
     password: str

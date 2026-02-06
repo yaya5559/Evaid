@@ -7,7 +7,7 @@ import secrets
 load_dotenv()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-#pydantic gurantees email and password exist 
+#pydantic guarantees email and password exist 
 class LoginRequest(BaseModel):
     email: EmailStr # pydantic's built in email validator
     password: str

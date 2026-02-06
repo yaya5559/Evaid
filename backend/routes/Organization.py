@@ -1,9 +1,7 @@
 from fastapi import HTTPException, status, APIRouter
 from models.organization import Organization
-from dotenv import load_dotenv
-from services.organizationServerice import check_organization, add_Organization
+from services.organizationServices import check_organization, add_Organization
 
-load_dotenv()
 router = APIRouter(prefix="/Organization")
 
 

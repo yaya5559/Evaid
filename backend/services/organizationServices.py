@@ -16,9 +16,9 @@ def check_organization(name: str):
   try:
     query = "SELECT 1 FROM organization WHERE name = ? AND deleted_at IS NULL"
     cursor.execute(query, (name,))
-    verifciation = cursor.fetchone()
+    verification = cursor.fetchone()
 
-    if verifciation:
+    if verification:
       return False
     
     return True

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import '../../styles/Admin/AddOragnization.css'
+import '../../styles/Admin/AddOrganization.css'
 import Nav from './Nav';
 
 type OrganizationForm = {

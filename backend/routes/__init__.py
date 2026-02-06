@@ -4,7 +4,7 @@ from .Organization import router as Organization_router
 from .register import router as register_router
 
 
-router = APIRouter()
+router = APIRouter(prefix="/Evaide")
 
 router.include_router(Login_router)
 router.include_router(Organization_router)
