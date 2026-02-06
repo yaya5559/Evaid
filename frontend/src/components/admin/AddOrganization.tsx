@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import '../../styles/Admin/AddOragnization.css'
-import Nav from './nav';
+import Nav from './Nav';
 
 type OrganizationForm = {
     companyName:string,
-    UserName: string,
+    firstName: string,
+    lastName: string,
     email: string,
     phone: string,
     password: string,
@@ -23,7 +24,8 @@ type InputProps = {
 function AddOrganization() {
     const [form, setForm] = useState<OrganizationForm>({
       companyName:"",
-      UserName:"",
+      firstName:"",
+      lastName:"",
       email:"",
       phone:"",
       password: ""
@@ -53,7 +55,8 @@ function AddOrganization() {
 
         <div className="employee-form">
           <Input label="Company Name" name="companyName" value={form.companyName} onChange={onChange} />
-          <Input label="UserName" name="UserName" value={form.UserName} onChange={onChange} />
+          <Input label="First Name" name="firstName" value={form.firstName} onChange={onChange} />
+          <Input label="Last Name" name="lastName" value={form.lastName} onChange={onChange} />
 
           
 
