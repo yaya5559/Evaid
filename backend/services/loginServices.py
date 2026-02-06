@@ -4,8 +4,6 @@ from datetime import timedelta, datetime
 from dotenv import load_dotenv
 from database import get_db_connection  # imports the database logic
 from passlib.context import CryptContext # for password hashing
-import pyodbc
-import secrets
 import jwt
 import os
  

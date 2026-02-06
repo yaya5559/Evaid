@@ -14,7 +14,7 @@ def check_organization(name: str):
   cursor = conn.cursor()
 
   try:
-    query = "SELECT 1 FROM organization WHERE name = ? AND deleted_at IS NULL"
+    query = "SELECT 1 FROM organizations WHERE name = ? AND deleted_at IS NULL"
     cursor.execute(query, (name,))
     verification = cursor.fetchone()
 
@@ -31,17 +31,17 @@ def add_Organization(data: Organization):
   conn = get_db_connection()
   cursor = conn.cursor()
 
-  hashed_password = pwd_context.hash(Organization.password)
+  hashed_password = pwd_context.hash(data.password)
 
   try:
     org_query = "" \
     "INSERT INTO organizations (name, description, is_active)" \
     "VALUES (?, ?, 1)"
 
-    cursor.execute(org_query, (Organization.company_name, f"Organization for {Organization.company_name}"))
+    cursor.execute(org_query, (data.company_name, f"Organization for {data.company_name}"))
 
-    cursor.execute("SELECT @@IDENTITY as org_id")
-    org_id = cursor.fetchone()
+    cursor.execute("SELECT CAST(SCOPE_IDENTITY() AS INT)")
+    org_id = cursor.fetchone()[0]
     
     user_query = "" \
     "INSERT INTO users (first_name, last_name, email, password_hash, role_id, org_id, is_enabled)" \

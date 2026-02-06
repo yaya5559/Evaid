@@ -9,7 +9,7 @@ router = APIRouter(prefix="/Organization")
 
 def addOrganization(data: Organization): 
     
-    if not check_organization(data.companyName):
+    if not check_organization(data.company_name):
       raise HTTPException(
          status_code = status.HTTP_409_CONFLICT,
          detail = "Organization already exists"
