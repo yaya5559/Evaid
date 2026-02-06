@@ -112,27 +112,3 @@ def store_refresh_token(user_id, refresh_token):
         conn.commit()
     finally:
         conn.close()
-
-# Creates new user account in the database
-def register_user(first_name, last_name, email, password, role_id, org_id=None):
-    # Hashes password and saves a new user to Azure SQL.
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # securely hash the password before storing
-    hashed_password = pwd_context.hash(password)
-    
-    try:
-        query = """
-            INSERT INTO users (first_name, last_name, email, password_hash, role_id, org_id, is_enabled)
-            VALUES (?, ?, ?, ?, ?, ?, 1)
-        """
-        cursor.execute(query, (first_name, last_name, email, hashed_password, role_id, org_id))
-        conn.commit()
-        return True
-    except pyodbc.IntegrityError:
-        # happens when email already exists in evaide_db
-        return False
-    finally:
-        conn.close()
-    
