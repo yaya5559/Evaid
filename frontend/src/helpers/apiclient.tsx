@@ -33,7 +33,7 @@ export class ApiClient {
         const url = `${this.baseURL}${path.startsWith("/")?"":"/"}${path}`;
 
         //builds the header problematic
-        const headers: Record<string, string> = {"Content-type": "appliation/json", ...(opts.headers ?? {})}
+        const headers: Record<string, string> = {"Content-Type": "application/json", ...(opts.headers ?? {})}
         if(this.token) headers.Authorization = `Bearer ${this.token}`;
 
         const doFetch = async (): Promise<Response> => fetch(url, {
@@ -93,7 +93,8 @@ export class ApiClient {
 }
 
 // Single source of truth for the API base; keeps login and other calls on the same host.
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.88.23:5000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://192.168.88.23:5000";
 
 
 export const api = new ApiClient(API_BASE_URL);
