@@ -11,5 +11,8 @@ backend/venv/
 .env.*
 frontend/.env
 
-# Node
+
+
+
 node_modules/
+frontend/node_modules/
