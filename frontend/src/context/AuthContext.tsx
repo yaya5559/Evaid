@@ -58,10 +58,16 @@ const api: AxiosInstance = axios.create({
     withCredentials: true, //send and receives token 
 })
 
+const TOKEN_KEY = 'authToken'
+const REFRESH_KEY = "refreshToken";
+const USER_KEY = 'user';
+
 const AuthContext = createContext<AuthProviderValue | undefined>(undefined);
 
 export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children}) => {
     const [state, setState] = useState<AuthState>({user:null, accessToken: null, loading: true})
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
+    const [error, setError] = useState<String | null>(null);
     const refreshingRef =  useRef<Promise<string | null> | null>(null);
     const failedQueue: {
         resolve: (v?: unknown) => void;
@@ -71,10 +77,13 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
     }[] = [];
 
     const accessTokenRef = useRef<string | null>(null);
-    useEffect(() => {
-        accessTokenRef.current = state.accessToken;
+    // useEffect(() => {
+    //     accessTokenRef.current = state.accessToken;
 
-    }, [state.accessToken])
+    // }, [state.accessToken])
+    useEffect(()=>{
+        
+    })
 
 
     const setAccessToken = useCallback((token: string | null) => {
