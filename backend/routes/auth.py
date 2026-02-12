@@ -1,14 +1,13 @@
 from fastapi import HTTPException, status, Response, APIRouter, Depends, Header
 from pydantic import BaseModel, EmailStr
-from datetime import timedelta, datetime
 from dotenv import load_dotenv
-from services.loginSevices import( store_refresh_token, create_access_token, get_user_by_email, verify_password, register_user, decode_access_token)
+from services.loginServices import( store_refresh_token, create_access_token, get_user_by_email, verify_password, decode_access_token)
 import secrets
 
 load_dotenv()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-#pydantic gurantees email and password exist 
+#pydantic guarantees email and password exist 
 class LoginRequest(BaseModel):
     email: EmailStr # pydantic's built in email validator
     password: str
@@ -41,37 +40,41 @@ def me(authorization: str = Header(None)):
     }
 
 @router.post("/login")
-def login(data: LoginRequest, response : Response, remember: bool =False ):
+def login(data: LoginRequest, response : Response, remember: bool = False ):
     email= data.email
     password = data.password
 
-
     user = get_user_by_email(email)
-
-    # user with that email doesn t exist
+    
+    # user with that email doesnt exist
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+            detail="Invalid credentials - Email"
         )
         
     #wrong password
     if not verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials!!"
+            detail="Invalid credentials!! - Password"
         )
         
-    # we need database to get username
-    user_name = user.first_name
+    # # we need database to get username
+    # user_name = user.first_name
+    token = create_access_token(
+        user_id=user.user_id,
+        email=user.email,
+        role=user.role_name,
+        remember=remember
+    )
 
-    token = create_access_token(user_name, remember)
-
+    #creates a cryptographically secure random string
     refresh_token = secrets.token_urlsafe(64)
 
     #refreshToken should be in database
     store_refresh_token(
-        user_id=user.id,
+        user_id=user.user_id,
         refresh_token=refresh_token
     )
 
@@ -79,42 +82,12 @@ def login(data: LoginRequest, response : Response, remember: bool =False ):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=False,   # false for localhost
         samesite="strict",
         path="/auth/refresh",
         max_age=60*60*24*7 #7days
     )
 
     return {
-        "access_token":token
+        "accessToken":token
     }
-
-# Registration request model
-class RegisterRequest(BaseModel):
-    first_name: str
-    last_name: str
-    email: EmailStr
-    password: str
-    org_id: int = None # this is optional and can be assigned later
-
-# Handles new user registration
-@router.post("/register")
-def register(data: RegisterRequest):
-    # new users default to AGENT role (role_id = 3)
-    success = register_user(
-        first_name=data.first_name,
-        last_name=data.last_name,
-        email=data.email,
-        password=data.password,
-        role_id=3, 
-        org_id=data.org_id
-    )
-    
-    # check if registration failed (most likely due to duplicated email)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-        
-    return {"message": "User created successfully"}

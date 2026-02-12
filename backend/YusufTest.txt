@@ -1,0 +1,14 @@
+Register Test 
+
+
+
+Company Test 
+
+{
+  "company_name": "Yusuf's Test Company",
+  "first_name": "Yusuf",
+  "last_name": "Al-Magsusi",
+  "email": "Yusuf@TestCompany.com",
+  "phone_number": "1234567890",
+  "password": "WhatTheHeck"
+}
