@@ -26,7 +26,6 @@ def get_organization_id(name:str):
   finally:
     conn.close()
 
-
 def check_organization(name: str):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -44,7 +43,7 @@ def check_organization(name: str):
   finally:
     conn.close()
 
-  
+# Adds an organization to the database 
 def add_Organization(data: Organization):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -53,10 +52,10 @@ def add_Organization(data: Organization):
 
   try:
     org_query = "" \
-    "INSERT INTO organizations (name, description, is_active)" \
-    "VALUES (?, ?, 1)"
+    "INSERT INTO organizations (name, email, phone_number description, is_active,)" \
+    "VALUES (?, ?, ?, ?, 1)"
 
-    cursor.execute(org_query, (data.company_name, f"Organization for {data.company_name}"))
+    cursor.execute(org_query, (data.company_name, data.company_email, data.company_phone_number, f"Organization for {data.company_name}"))
 
     cursor.execute("SELECT CAST(SCOPE_IDENTITY() AS INT)")
     org_id = cursor.fetchone()[0]
@@ -84,15 +83,52 @@ def add_Organization(data: Organization):
   finally:
     conn.close()
 
-def delete_organization(data:Organization):
+# Disables an organization but does not delete it
+def disable_organization(name: str):
 
   conn = get_db_connection()
   cursor = conn.cursor()
 
   try:
+    query = "UPDATE organizations SET is_active = 0 WHERE name = ?"
+    cursor.execute(query, (name))
 
+    conn.commit()
+    return True
+  
+  except pyodbc.IntegrityError:
+    conn.rollback()
+    return False
+  
+  finally:
+    conn.close()
+
+# Enables a previously disabled organization
+def enable_organization(name: str):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  try:
+    query = "UPDATE organizations SET is_active = 1 WHERE name = ?"
+    cursor.execute(query, (name))
+    conn.commit()
+    return True
+  
+  except pyodbc.IntegrityError:
+    conn.rollback()
+    return False
+  
+  finally:
+    conn.close()
+
+# Hard deletes an organization
+def delete_organization(name: str):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  try:
     delete_query = "DELETE FROM organizations WHERE name = ?"
-    cursor.execute(delete_query, (data.company_name,))
+    cursor.execute(delete_query, (name))
     conn.commit()
   
     if cursor.rowcount == 0:
@@ -100,26 +136,77 @@ def delete_organization(data:Organization):
     
     return True
 
-  except:
+  except pyodbc.Error:
     conn.rollback()
     return False
   
   finally:
     conn.close()
 
-def change_owner(new_owner: int, org_id: int):
-
+# Changes the owner of an organization
+# Need to check if team wants to delete old owner, or do something else with them
+# Need to create a new user for new owner
+def change_owner(new_owner: int, old_owner: str):
   conn = get_db_connection()
   cursor = conn.cursor()
 
   try: 
-
-    query = "UPDATE organizations SET owner_id = ? WHERE org_id = ?"
-    cursor.execute(query, (new_owner, org_id))
+    query = "UPDATE organizations SET owner_id = ? WHERE name = ?"
+    cursor.execute(query, (new_owner, old_owner))
     conn.commit()
+    return True
 
+  except pyodbc.IntegrityError:
+    conn.rollback()
+    return False
 
   finally:
     conn.close()
 
-def change_name(new_name: str, org_id: int)
+# Lists all active organizations 
+def list_active_organization():
+
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  try:
+    query = "SELECT * FROM Organizations WHERE is_active = 1"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    return rows
+  
+  except pyodbc.Error:
+    return None
+  
+  finally:
+    conn.close()
+
+# Lists organizations that have been disabled but not deleted
+def list_disabled_organization():
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  try:
+    query = "SELECT * FROM Organizations WHERE is_active = 0"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    return rows
+  
+  except pyodbc.Error:
+    return None
+  
+  finally:
+    conn.close()
+
+# Displays all the information needed for an organization
+# Still need to add the following
+# Cases, Evidence, Agents, Owner, Phone Number, Email, 
+# Add ability to view dashboard from organization perspective
+def organization_details(org_name: str):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+    
+
+
+# def change_name(new_name: str, org_id: int)

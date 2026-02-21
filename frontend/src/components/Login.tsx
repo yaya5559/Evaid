@@ -69,7 +69,7 @@ function Login() {
       // await loginUser(form.email, form.password);
       // Done: Abenezer
 
-      await axios.post("http://localhost:8000/Evaide/v1/auth/login", {
+      await axios.post("http://localhost:8000/Evaide/auth/login", {
         email: form.email,
         password: form.password,
       },

@@ -14,6 +14,8 @@ CREATE TABLE roles (
 CREATE TABLE organizations (
     org_id INT IDENTITY(1,1) PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
+    email NVARCHAR(255) UNIQUE NOT NULL,
+    phone_number NVARCHAR(20) UNIQUE NOT NULL,
     owner_id INT NULL, -- Owner not added yet
     description NVARCHAR(MAX),
     is_active BIT DEFAULT 1,
