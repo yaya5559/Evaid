@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS Evidence;
 -- Evidence Node
 -- this is the main table for storing evidence files
 -- NODE makes it a graph node so we can connect files together
+-- Evidence Node: Updated with tracking and status columns
 CREATE TABLE Evidence (
     FileId UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
     case_id INT NOT NULL,                                          -- which case this evidence belongs to
@@ -24,9 +25,11 @@ CREATE TABLE Evidence (
     ContentType NVARCHAR(100) NULL,                                -- MIME type like image/jpeg
     FileData VARBINARY(MAX) NOT NULL,                              -- actual file binary data stored here
     ChecksumSha256 CHAR(64) NULL,                                  -- hash of file to detect duplicates
-    -- TODO: Store AI/Extracted metadata here as JSON
     metadata_json NVARCHAR(MAX) NULL,                              -- stores stuff like file size, dimensions as JSON
-    upload_date DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()         -- when it was uploaded
+    upload_date DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET(),        -- when it was uploaded
+    -- NEW: Required for tracking and the preview workflow
+    uploaded_by NVARCHAR(100) NULL,
+    processing_status NVARCHAR(20) DEFAULT 'pending' -- 'pending', 'confirmed', 'failed'
 ) AS NODE;
 
 -- EvidenceLink Edge
