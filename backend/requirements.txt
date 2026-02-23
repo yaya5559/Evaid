@@ -44,4 +44,7 @@ typing_extensions==4.15.0
 tzdata==2025.1
 uvicorn==0.40.0
 Pillow
-python-multiport
+python-multipart
+pymupdf
+python-dateutil
+python-docx
