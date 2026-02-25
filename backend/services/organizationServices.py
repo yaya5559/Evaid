@@ -170,12 +170,12 @@ def list_active_organization():
   cursor = conn.cursor()
 
   try:
-    query = "SELECT name, email FROM Organizations WHERE is_active = 1"
+    query = "SELECT org_id, name, email FROM Organizations WHERE is_active = 1"
     cursor.execute(query)
     rows = cursor.fetchall()
     
     organizations = [
-      {"name": row[0], "email": row[1]}
+      {"org ID": row[0], "name": row[1], "email": row[2]}
       for row in rows
     ]
     
@@ -202,7 +202,7 @@ def list_disabled_organization():
     rows = cursor.fetchall()
 
     organizations = [
-      {"name": row[0], "email": row[1]}
+      {"org ID": row[0], "name": row[1], "email": row[2]}
       for row in rows
     ]
     return {
