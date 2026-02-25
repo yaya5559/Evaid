@@ -7,7 +7,7 @@ router = APIRouter(prefix="/Organization")
 
 @router.get("/")
 def list_organizations():
-   return services.list_active_organization
+   return services.list_active_organization()
 
 @router.get("/{org_name}")
    

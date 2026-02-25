@@ -170,13 +170,23 @@ def list_active_organization():
   cursor = conn.cursor()
 
   try:
-    query = "SELECT * FROM Organizations WHERE is_active = 1"
+    query = "SELECT name, email FROM Organizations WHERE is_active = 1"
     cursor.execute(query)
     rows = cursor.fetchall()
-    return rows
+    
+    organizations = [
+      {"name": row[0], "email": row[1]}
+      for row in rows
+    ]
+    
+    return {
+      "message": "Success",
+      "Organizations": organizations
+    }
   
-  except pyodbc.Error:
-    return None
+  except pyodbc.Error as e:
+    print(f"Database error: {e}")
+    return "Failed"
   
   finally:
     conn.close()
@@ -187,10 +197,66 @@ def list_disabled_organization():
   cursor = conn.cursor()
 
   try:
-    query = "SELECT * FROM Organizations WHERE is_active = 0"
+    query = "SELECT name, email FROM Organizations WHERE is_active = 0"
     cursor.execute(query)
     rows = cursor.fetchall()
-    return rows
+
+    organizations = [
+      {"name": row[0], "email": row[1]}
+      for row in rows
+    ]
+    return {
+      "message": "Success",
+      "Organizations": organizations
+      }
+
+  except pyodbc.Error:
+    return None
+  
+  finally:
+    conn.close()
+
+# Lists active agents in an organization
+def list_active_agents(name: str):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  query = "SELECT org_id FROM organizations WHERE name = ? AND deleted_at IS NULL"
+  cursor.execute(query, (name,))
+  org_id = cursor.fetchone()
+
+  try:
+    query = "SELECT first_name, last_name, email, phone_number FROM users WHERE org_id = ? AND is_active = 1"
+    cursor.execute(query, org_id)
+    results = cursor.fetchall()
+
+    if results:
+      return results
+    return None
+  
+  except pyodbc.Error:
+    return None
+  
+  finally:
+    conn.close()
+    
+# List disabled agents in an organization    
+def list_disabled_agents(name: str):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  query = "SELECT org_id FROM organizations WHERE name = ? AND deleted_at IS NULL"
+  cursor.execute(query, (name,))
+  org_id = cursor.fetchone()
+
+  try:
+    query = "SELECT first_name, last_name, email, phone_number FROM users WHERE org_id = ? AND is_active = 0"
+    cursor.execute(query, org_id)
+    results = cursor.fetchall()
+
+    if results:
+      return results
+    return None
   
   except pyodbc.Error:
     return None
@@ -198,13 +264,27 @@ def list_disabled_organization():
   finally:
     conn.close()
 
+# def disable_agent(org: str, agent: int):
+#   conn = get_db_connection()
+#   cursor = conn.cursor()
+
+#   query = "SELECT org_id FROM organizations WHERE name = ? AND deleted_at IS NULL"
+#   cursor.execute(query, (org))
+#   org_id = cursor.fetchone()
+
+#   try:
+#     query = "UPDATE users SET is_active = 0 WHERE org_id = ? AND user_id = ? "
+#     cursor.execute(query, (org_id, agent))
+
 # Displays all the information needed for an organization
 # Still need to add the following
 # Cases, Evidence, Agents, Owner, Phone Number, Email, 
 # Add ability to view dashboard from organization perspective
-def organization_details(org_name: str):
-  conn = get_db_connection()
-  cursor = conn.cursor()
+# def organization_details(org_name: str):
+#   conn = get_db_connection()
+#   cursor = conn.cursor()
+
+#   try: 
 
     
 
