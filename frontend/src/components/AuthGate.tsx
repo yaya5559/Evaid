@@ -1,12 +1,12 @@
-import React from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 
 const roleHome: Record<string, string> = {
     admin: "/Dashboard",
-    organisation:"/Dashboard",
-    agent: "/Dashboard"
+    organisation:"/Org_Dashboard",
+    organization:"/Org_Dashboard",
+    agent: "/Org_Dashboard"
 }
 
 export default function AuthGate({roles}: {roles?:string[]}) {

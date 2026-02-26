@@ -1,67 +1,45 @@
-import React from 'react'
-import '../../styles/Admin/Dashboard.css'
+import { NavLink } from 'react-router-dom'
 
-type labelProps = {
-    label:string,
-}
+const navClassName = ({ isActive }: { isActive: boolean }) =>
+  `admin-nav-item${isActive ? ' active' : ''}`
 
-function Nav(label: labelProps) {
-
+function Nav() {
   return (
-    <div>
-        <div className='brand'>
-          <div className='brand-mark'></div>
-          <div>
-            <div className='brand-title'>Evaid</div>
-            <div className='brand-sub'>Admin console</div>
-          </div>
+    <>
+      <div className='admin-brand'>
+        <div className='admin-brand-mark' />
+        <div>
+          <div className='admin-brand-title'>Evaid</div>
+          <div className='admin-brand-sub'>Admin console</div>
         </div>
+      </div>
 
-        <nav className='nav'>
-          <div className='nav-section'>
-            <div className='nav-label'>Core</div>
-            <a className={"nav-item "+(label.label=='Dashboard'?'active':"")} href='#'>
-              <span className='nav-dot'></span>
-              Overview
-            </a>
-            <a className={"nav-item "+(label.label=='AddOrganizatio'?'active':"")} href='#'>
-              <span className='nav-dot'></span>
-              Analytics
-            </a>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Organization Summary
-            </a>
-          </div>
-
-          <div className='nav-section'>
-            <div className='nav-label'>Operations</div>
-            <a className={"nav-item "+(label.label=='AddOrganization'?'active':"")} href='#'>
-              <span className='nav-dot'></span>
-              Add Organization
-            </a>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Delete Organization
-            </a>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Edit Organization
-            </a>
-          </div>
-        </nav>
-
-        <div className='left-footer'>
-          <div className='user'>
-            <div className='avatar'>IN</div>
-            <div>
-              <div className='user-name'>Investigator</div>
-              <div className='user-role'>Super admin</div>
-            </div>
-          </div>
+      <nav className='admin-nav'>
+        <div className='admin-nav-section'>
+          <div className='admin-nav-label'>Command</div>
+          <NavLink className={navClassName} to='/Dashboard'>
+            <span className='admin-nav-dot' />
+            Dashboard
+          </NavLink>
+          <NavLink className={navClassName} to='/Add_Organization'>
+            <span className='admin-nav-dot' />
+            Add Organization
+          </NavLink>
+          <NavLink className={navClassName} to='/Edit_Organization'>
+            <span className='admin-nav-dot' />
+            Edit Organization
+          </NavLink>
         </div>
-      
-    </div>
+      </nav>
+
+      <div className='admin-user-panel'>
+        <div className='admin-user-avatar'>SA</div>
+        <div>
+          <div className='admin-user-name'>Security Admin</div>
+          <div className='admin-user-role'>Organization control</div>
+        </div>
+      </div>
+    </>
   )
 }
 

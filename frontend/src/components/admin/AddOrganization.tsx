@@ -1,89 +1,284 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Nav from './Nav'
+import { addOrganization } from '../../helpers/api-communicators'
+import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/AddOrganization.css'
-import Nav from './Nav';
 
 type OrganizationForm = {
-    companyName:string,
-    firstName: string,
-    lastName: string,
-    email: string,
-    phone: string,
-    password: string,
-    
+  companyName: string
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  password: string
+  confirmPassword: string
+  description: string
 }
 
-type InputProps = {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  full?: boolean;
-};
+type FormErrors = Partial<Record<keyof OrganizationForm, string>>
 
+const initialForm: OrganizationForm = {
+  companyName: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  password: '',
+  confirmPassword: '',
+  description: '',
+}
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const phoneRegex = /^[+]?[\d()\s-]{7,20}$/
+
+function validate(values: OrganizationForm): FormErrors {
+  const errors: FormErrors = {}
+
+  if (!values.companyName.trim()) errors.companyName = 'Company name is required.'
+  if (!values.firstName.trim()) errors.firstName = 'First name is required.'
+  if (!values.lastName.trim()) errors.lastName = 'Last name is required.'
+  if (!emailRegex.test(values.email)) errors.email = 'Enter a valid email address.'
+  if (!phoneRegex.test(values.phoneNumber)) errors.phoneNumber = 'Enter a valid phone number.'
+  if (values.password.length < 8) errors.password = 'Password must be at least 8 characters.'
+  if (values.confirmPassword !== values.password) {
+    errors.confirmPassword = 'Passwords do not match.'
+  }
+
+  return errors
+}
 
 function AddOrganization() {
-    const [form, setForm] = useState<OrganizationForm>({
-      companyName:"",
-      firstName:"",
-      lastName:"",
-      email:"",
-      phone:"",
-      password: ""
-    })
+  const navigate = useNavigate()
+  const [form, setForm] = useState<OrganizationForm>(initialForm)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [saving, setSaving] = useState(false)
+  const [formMessage, setFormMessage] = useState('')
+  const [formMessageType, setFormMessageType] = useState<'success' | 'error'>('success')
 
-    const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm({...form, [e.target.name]: e.target.value});
+  const onFieldChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target
+    const fieldName = name as keyof OrganizationForm
+    setForm((prev) => ({ ...prev, [fieldName]: value }))
+    setErrors((prev) => ({ ...prev, [fieldName]: undefined }))
+    setFormMessage('')
+  }
+
+  const onReset = () => {
+    setForm(initialForm)
+    setErrors({})
+    setFormMessage('')
+  }
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const validationErrors = validate(form)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
     }
 
-    
+    setSaving(true)
+    setFormMessage('')
 
+    try {
+      await addOrganization({
+        company_name: form.companyName.trim(),
+        first_name: form.firstName.trim(),
+        last_name: form.lastName.trim(),
+        email: form.email.trim(),
+        phone_number: form.phoneNumber.trim(),
+        password: form.password,
+      })
 
+      setFormMessageType('success')
+      setFormMessage('Organization created successfully.')
+      setForm(initialForm)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to create organization.'
+      setFormMessageType('error')
+      setFormMessage(message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <div className='root'>
-      <aside className='left'>
-        <Nav label = {"AddOrganization"}/>
+    <div className='admin-shell'>
+      <aside className='admin-left'>
+        <Nav />
       </aside>
-      <main className='center'>
-        <header className='center-header'>
-          <div className='title-block'>
-            <div className='eyebrow'>Admin overview</div>
-            <h1>Add Organization</h1>
-            <p className='subtext'>Please Enter the Following Information</p>
+
+      <main className='admin-main'>
+        <header className='admin-header'>
+          <div>
+            <div className='admin-eyebrow'>Organization onboarding</div>
+            <h1 className='admin-title'>Add Organization</h1>
+            <p className='admin-subtext'>
+              Create an organization profile and assign the first secure admin account.
+            </p>
+          </div>
+          <div className='admin-actions'>
+            <button className='admin-btn admin-btn-ghost' onClick={() => navigate('/Dashboard')} type='button'>
+              Back to Dashboard
+            </button>
           </div>
         </header>
 
-        <div className="employee-form">
-          <Input label="Company Name" name="companyName" value={form.companyName} onChange={onChange} />
-          <Input label="First Name" name="firstName" value={form.firstName} onChange={onChange} />
-          <Input label="Last Name" name="lastName" value={form.lastName} onChange={onChange} />
+        <section className='org-layout'>
+          <form className='admin-card org-form-card' onSubmit={onSubmit} noValidate>
+            <div className='org-section-title'>Organization Details</div>
+            <div className='org-grid'>
+              <Field
+                label='Organization name'
+                name='companyName'
+                value={form.companyName}
+                placeholder='Metro Intelligence Unit'
+                error={errors.companyName}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Contact email'
+                name='email'
+                value={form.email}
+                placeholder='admin@agency.gov'
+                error={errors.email}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Admin first name'
+                name='firstName'
+                value={form.firstName}
+                placeholder='Amina'
+                error={errors.firstName}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Admin last name'
+                name='lastName'
+                value={form.lastName}
+                placeholder='Patel'
+                error={errors.lastName}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Phone number'
+                name='phoneNumber'
+                value={form.phoneNumber}
+                placeholder='+1 555 010 2200'
+                error={errors.phoneNumber}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Temporary password'
+                type='password'
+                name='password'
+                value={form.password}
+                placeholder='At least 8 characters'
+                error={errors.password}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Confirm password'
+                type='password'
+                name='confirmPassword'
+                value={form.confirmPassword}
+                placeholder='Re-enter password'
+                error={errors.confirmPassword}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Organization notes (optional)'
+                name='description'
+                value={form.description}
+                placeholder='Special handling, legal constraints, or onboarding notes.'
+                error={errors.description}
+                onChange={onFieldChange}
+                multiline
+                full
+              />
+            </div>
 
-          
+            {formMessage && <p className={`org-status ${formMessageType}`}>{formMessage}</p>}
 
-          <Input label="Email Address" name="email" value={form.email} onChange={onChange} />
-          <Input label="Phone Number" name="phone" value={form.phone} onChange={onChange} />
+            <div className='org-actions'>
+              <button className='admin-btn admin-btn-primary' disabled={saving} type='submit'>
+                {saving ? 'Creating...' : 'Create Organization'}
+              </button>
+              <button className='admin-btn admin-btn-ghost' onClick={onReset} type='button'>
+                Reset Form
+              </button>
+            </div>
+          </form>
 
-          <Input label="Password" name="password" value={form.password} onChange={onChange} />
-          <Input label="Confirm Password" name="fax" value={form.password} onChange={onChange} />
-        </div>
-
-        <div className="employee-actions">
-          <button className="btn primary">Save</button>
-          <button className="btn ghost">Cancel</button>
-        </div>
+          <aside className='admin-card org-preview-card'>
+            <div className='org-section-title'>Preview</div>
+            <div className='org-preview-list'>
+              <div>
+                <span>Organization</span>
+                <strong>{form.companyName.trim() || 'Not set'}</strong>
+              </div>
+              <div>
+                <span>Primary admin</span>
+                <strong>
+                  {form.firstName || form.lastName ? `${form.firstName} ${form.lastName}`.trim() : 'Not set'}
+                </strong>
+              </div>
+              <div>
+                <span>Contact</span>
+                <strong>{form.email.trim() || 'Not set'}</strong>
+              </div>
+              <div>
+                <span>Phone</span>
+                <strong>{form.phoneNumber.trim() || 'Not set'}</strong>
+              </div>
+            </div>
+            <div className='org-note'>
+              After creation, the organization appears on the dashboard board and can be monitored for onboarding
+              status.
+            </div>
+          </aside>
+        </section>
       </main>
     </div>
   )
 }
 
-function Input({ label, full, ...props }: InputProps) {
-  return (
-    <div className={`field ${full ? "full" : ""}`}>
-      <label>{label}</label>
-      <input {...props} />
-    </div>
-  );
+type FieldProps = {
+  label: string
+  name: keyof OrganizationForm
+  value: string
+  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  placeholder?: string
+  type?: string
+  error?: string
+  multiline?: boolean
+  full?: boolean
 }
 
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  error,
+  multiline = false,
+  full = false,
+}: FieldProps) {
+  return (
+    <div className={`org-field ${full ? 'full' : ''}`}>
+      <label htmlFor={name}>{label}</label>
+      {multiline ? (
+        <textarea id={name} name={name} onChange={onChange} placeholder={placeholder} rows={4} value={value} />
+      ) : (
+        <input id={name} name={name} onChange={onChange} placeholder={placeholder} type={type} value={value} />
+      )}
+      {error && <span className='org-field-error'>{error}</span>}
+    </div>
+  )
+}
 
 export default AddOrganization
