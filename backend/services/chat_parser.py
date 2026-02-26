@@ -137,7 +137,7 @@ def parse_chat_log(file_bytes, content_type):
                         })
                     else:
                         # line didnt match anything, just log and skip it
-                        logger.warning(f"couldnt parse this line, skipping: {line[:80]}")
+                        logger.warning(f"couldn't parse this line, skipping: {line[:80]}")
 
         except Exception as e:
             error_msg = f"TXT parsing failed: {str(e)}"

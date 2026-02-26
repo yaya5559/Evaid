@@ -1,7 +1,8 @@
 from fastapi import HTTPException, status, Response, APIRouter, Depends, Header
 from pydantic import BaseModel, EmailStr
 from dotenv import load_dotenv
-from services.loginServices import( store_refresh_token, create_access_token, get_user_by_email, verify_password, register_user)
+from services.loginServices import (store_refresh_token, create_access_token, get_user_by_email, verify_password, decode_access_token)
+from services.registerUser import  register_user
 import secrets
 
 load_dotenv()

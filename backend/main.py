@@ -21,4 +21,3 @@ app.add_middleware(
 
 app.include_router(api_router)
 
-app.include_router(evidence.router)
