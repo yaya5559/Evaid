@@ -1,4 +1,5 @@
 // src/pages/Login.tsx
+import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/Login.css";
@@ -66,6 +67,18 @@ function Login() {
     try {
       // TODO: replace with your real API call
       // await loginUser(form.email, form.password);
+      // Done: Abenezer
+
+      await axios.post("http://localhost:8000/Evaide/v1/auth/login", {
+        email: form.email,
+        password: form.password,
+      },
+      {
+        withCredentials: true,
+
+      });
+
+      navigate("/dashboard");
       
     } catch {
       setErrorTop("Invalid email or password. Try again.");

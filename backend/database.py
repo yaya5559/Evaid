@@ -18,10 +18,25 @@ def get_db_connection():
     username = os.getenv('DB_USER')
     password = os.getenv('DB_PASSWORD')
     
+    # Validate environment variables are set
+    missing_vars = []
+    if not server:
+        missing_vars.append('DB_SERVER')
+    if not database:
+        missing_vars.append('DB_NAME')
+    if not username:
+        missing_vars.append('DB_USER')
+    if not password:
+        missing_vars.append('DB_PASSWORD')
+    
+    if missing_vars:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}. Check your .env file.")
+    
     # Debug print (remove after it works)
-    print(f"Server: {server}")
-    print(f"Database: {database}")
-    print(f"Username: {username}")
+    print(f"[DB] Server: {server}")
+    print(f"[DB] Database: {database}")
+    print(f"[DB] Username: {username}")
+    print(f"[DB] Driver: {driver}")
     
     # builds connection string from env. required for Azure SQL Database
     conn_str = (
@@ -37,9 +52,14 @@ def get_db_connection():
     
     # added try/catch to see what error i'm getting
     try:
+        print("[DB] Attempting to connect to Azure SQL Database...")
         connection = pyodbc.connect(conn_str)
-        print("Connected successfully!")
+        print("[DB] ✓ Connected successfully!")
         return connection
+    except pyodbc.Error as e:
+        print(f"[DB] ✗ Connection error: {e}")
+        print(f"[DB] Error code: {e.args[0] if e.args else 'Unknown'}")
+        raise
     except Exception as e:
-        print(f"Connection error: {e}")
+        print(f"[DB] ✗ Unexpected error: {type(e).__name__}: {e}")
         raise

@@ -44,9 +44,9 @@ function HomePage() {
   return (
     <div className="homePage">
       {/* HEADER / NAV */}
-      <header className="navBar" role="navigation" aria-label="Primary" data-cy="nav">
+      <header className="navBar" role="navigation" aria-label="Primary">
         <div className="navInner">
-          <a className="brand" href="#section1" aria-label="EVAIDE home" data-cy="brand-home">
+          <a className="brand" href="#section1" aria-label="EVAIDE home">
             <span className="brandMark">E</span>VAIDE
           </a>
 
@@ -58,7 +58,6 @@ function HomePage() {
                 onClick={onNavClick}
                 aria-current={activeId === l.id ? "page" : undefined}
                 className={activeId === l.id ? "isActive" : undefined}
-                data-cy={`nav-${l.label.toLowerCase()}`}
               >
                 {l.label}
                 {activeId === l.id && <span className="activeDot" aria-hidden />}
@@ -72,15 +71,13 @@ function HomePage() {
               onClick={() => {
                 document.querySelector("#section2")?.scrollIntoView({ behavior: "smooth" });
               }}
-              data-cy="nav-learn-more"
             >
-              Learn More
+              Learn more
             </button>
             <button
               className="loginButton"
               onClick={() => navigate("/Login")}
               aria-label="Log in to EVAIDE"
-              data-cy="nav-login"
             >
               Login
             </button>
@@ -90,7 +87,6 @@ function HomePage() {
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((s) => !s)}
-              data-cy="nav-hamburger"
             >
               <span />
               <span />
@@ -100,7 +96,7 @@ function HomePage() {
         </div>
 
         {/* MOBILE MENU */}
-        <div className={`mobileMenu ${menuOpen ? "open" : ""}`} data-cy="mobile-menu">
+        <div className={`mobileMenu ${menuOpen ? "open" : ""}`}>
           {navLinks.map((l) => (
             <a
               key={l.id}
@@ -108,16 +104,11 @@ function HomePage() {
               onClick={onNavClick}
               aria-current={activeId === l.id ? "page" : undefined}
               className={activeId === l.id ? "isActive" : undefined}
-              data-cy={`mobile-${l.label.toLowerCase()}`}
             >
               {l.label}
             </a>
           ))}
-          <button
-            className="loginButton full"
-            onClick={() => navigate("/Login")}
-            data-cy="mobile-login"
-          >
+          <button className="loginButton full" onClick={() => navigate("/Login")}>
             Login
           </button>
         </div>
@@ -126,16 +117,9 @@ function HomePage() {
       {/* MAIN */}
       <main className="scroll-snap-container" id="main">
         {/* HERO */}
-        <section
-          id="section1"
-          className="snap-section section1"
-          aria-label="Hero"
-          data-cy="section-home"
-        >
+        <section id="section1" className="snap-section section1" aria-label="Hero">
           <div className="hero">
-            <div className="badge" data-cy="home-badge">
-              AI Evidence Assistant
-            </div>
+            <div className="badge">AI EVIDENCE ASSISTANT</div>
             <h1 className="headline">
               Investigations, <span className="accent">amplified</span>.
             </h1>
@@ -144,28 +128,22 @@ function HomePage() {
               critical details top-of-mind—so you can follow leads, not files.
             </p>
             <div className="ctaRow">
-              <button
-                className="loginButton cta"
-                onClick={() => navigate("/Login")}
-                data-cy="cta-get-started"
-              >
+              <button className="loginButton cta" onClick={() => navigate("/Login")}>
                 Get started
               </button>
-              <a className="secondaryCta" href="#section2" data-cy="cta-see-features">
-                See features
-              </a>
+              <a className="secondaryCta" href="#section2">See features</a>
             </div>
 
-            <div className="stats" data-cy="home-stats">
-              <div data-cy="stat-faster-link-discovery">
+            <div className="stats">
+              <div>
                 <strong>10×</strong>
                 <span>faster link discovery</span>
               </div>
-              <div data-cy="stat-manual-dedupe">
+              <div>
                 <strong>0</strong>
                 <span>manual dedupe</span>
               </div>
-              <div data-cy="stat-case-memory">
+              <div>
                 <strong>24/7</strong>
                 <span>case memory</span>
               </div>
@@ -174,46 +152,41 @@ function HomePage() {
         </section>
 
         {/* FEATURES */}
-        <section
-          id="section2"
-          className="snap-section section2"
-          aria-label="Features"
-          data-cy="section-features"
-        >
-          <div className="features card" data-cy="features-card">
-            <h1>What is Evaide?</h1>
+        <section id="section2" className="snap-section section2" aria-label="Features">
+          <div className="features card">
+            <h1>What is EVAIDE?</h1>
             <h2 className="lede">
               Your AI copilot for investigators: structured evidence database,
               real-time link discovery, and AI-guided insights.
             </h2>
 
             <div className="featureGrid">
-              <article className="feature" data-cy="feature-unified-evidence-vault">
+              <article className="feature">
                 <div className="icon" aria-hidden>🗂️</div>
                 <h3>Unified Evidence Vault</h3>
                 <p>Ingest videos, images, docs, and transcripts with automatic enrichment.</p>
               </article>
-              <article className="feature" data-cy="feature-ai-connections">
+              <article className="feature">
                 <div className="icon" aria-hidden>🧠</div>
                 <h3>AI Connections</h3>
                 <p>Surface entities, timelines, and relationships across cases in seconds.</p>
               </article>
-              <article className="feature" data-cy="feature-query-plain-english">
+              <article className="feature">
                 <div className="icon" aria-hidden>🔎</div>
                 <h3>Query in Plain English</h3>
                 <p>Ask questions; get citations to the exact evidence snippets.</p>
               </article>
-              <article className="feature" data-cy="feature-secure-by-default">
+              <article className="feature">
                 <div className="icon" aria-hidden>🔐</div>
                 <h3>Secure by Default</h3>
                 <p>Role-based access, encryption at rest and in transit.</p>
               </article>
-              <article className="feature" data-cy="feature-integrations">
+              <article className="feature">
                 <div className="icon" aria-hidden>🧩</div>
                 <h3>Integrations</h3>
                 <p>Bring your chain-of-custody and RMS with minimal setup.</p>
               </article>
-              <article className="feature" data-cy="feature-audit-reporting">
+              <article className="feature">
                 <div className="icon" aria-hidden>📈</div>
                 <h3>Audit & Reporting</h3>
                 <p>One-click briefs, timelines, and exportable link graphs.</p>
@@ -223,15 +196,10 @@ function HomePage() {
         </section>
 
         {/* CONTACT */}
-        <section
-          id="section4"
-          className="snap-section section4"
-          aria-label="Contact"
-          data-cy="section-contact"
-        >
-          <footer className="contact card" role="contentinfo" data-cy="contact-card">
+        <section id="section4" className="snap-section section4" aria-label="Contact">
+          <footer className="contact card" role="contentinfo">
             <h1>Contact</h1>
-            <h2>Evaide</h2>
+            <h2>EVAIDE</h2>
             <h3>Email: <a href="mailto:evaide@example.com">evaide@example.com</a></h3>
             <h4>Phone: <a href="tel:+10000000000">(000) 000-0000</a></h4>
             <div className="social">
@@ -239,7 +207,7 @@ function HomePage() {
               <a href="#" aria-label="LinkedIn">Lin</a>
               <a href="#" aria-label="GitHub">GH</a>
             </div>
-            <p className="fine">© 2026 EVAIDE. All rights reserved.</p>
+            <p className="fine">© {new Date().getFullYear()} EVAIDE. All rights reserved.</p>
           </footer>
         </section>
       </main>
