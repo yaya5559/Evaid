@@ -6,6 +6,7 @@ from database import get_db_connection  # imports the database logic
 from passlib.context import CryptContext # for password hashing
 import jwt
 import os
+import hashlib
  
 load_dotenv()
 
@@ -25,24 +26,29 @@ def verify_password(password, password_hash):
 
 # Grabs user info from database by email
 def get_user_by_email(email):
-    # fetches user from Azure SQL DB and returns an object with id and password_hash
-    conn = get_db_connection()
+    conn = get_db_connection()#opens a database connection
     cursor = conn.cursor()
     try:
         # only get active users (checks for soft delete)
-        query = "SELECT user_id, password_hash, email, role_id FROM users WHERE email = ? AND deleted_at IS NULL"
+        query = """
+            SELECT u.user_id, u.password_hash, u.email, r.role_name
+            FROM users u
+            JOIN roles r ON r.role_id = u.role_id
+            WHERE u.email = ? AND u.deleted_at IS NULL
+        """
         cursor.execute(query, (email,))
         row = cursor.fetchone()
-        
-        if row:
-            # create a simple user object to return
-            return type('User', (object,), {
-                "user_id": row[0],
-                "password_hash": row[1],
-                "email": row[2],
-                "role_id": row[3]
-            })
-        return None
+
+        if not row:
+            return None
+
+        # create a simple user object to return
+        return type('User', (object,), {
+            "user_id": row[0],
+            "password_hash": row[1],
+            "email": row[2],
+            "role_name": row[3]
+        })
     finally:
         conn.close()
 
@@ -101,12 +107,36 @@ def store_refresh_token(user_id, refresh_token):
     try:
         # refresh tokens are valid for 7 days
         expires_at = datetime.utcnow() + timedelta(days=7)
+        hashedRefresh = hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
         
         query = """
             INSERT INTO user_sessions (user_id, token_hash, expires_at, is_valid)
             VALUES (?, ?, ?, 1)
         """
-        cursor.execute(query, (user_id, refresh_token, expires_at))
+        cursor.execute(query, (user_id, hashedRefresh, expires_at))
         conn.commit()
     finally:
         conn.close()
+
+
+#gets role name :
+def getRoleName(role_id:int):
+    conn = get_db_connection()#opens a database connection
+    cursor = conn.cursor()
+    try:
+        query = """
+            SELECT role_name
+            FROM roles
+            WHERE role_id = ?
+        """
+
+        cursor.execute(query, (role_id,))
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+        
+        return row[0]
+    finally:
+        conn.close()
+    

@@ -3,6 +3,7 @@ import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/Login.css";
+import { useAuth } from "../context/AuthContext";
 
 type FormState = { email: string; password: string; remember: boolean };
 
@@ -16,13 +17,13 @@ function Login() {
     password: "",
     remember: true,
   });
-  const [showPwd, setShowPwd] = useState(false);//show password
+  const [showPwd, setShowPwd] = useState(false); // show password
   const [capsOn, setCapsOn] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errorTop, setErrorTop] = useState("");//server/global failure
+  const [errorTop, setErrorTop] = useState(""); // server/global failure
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
-  );//feild-level validation
+  ); // field-level validation
+  const { login, user, loading } = useAuth();
 
   // Validate small rules (why: prevent avoidable roundtrips)
   const validate = (state: FormState) => {
@@ -42,7 +43,9 @@ function Login() {
     (name: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value =
-        name === "remember" ? (e.target as HTMLInputElement).checked : e.target.value;
+        name === "remember"
+          ? (e.target as HTMLInputElement).checked
+          : e.target.value;
       setForm((p) => ({ ...p, [name]: value as any }));
       if (errors[name as "email" | "password"]) {
         const copy = { ...errors };
@@ -63,7 +66,7 @@ function Login() {
       setErrors(v);
       return;
     }
-    setLoading(true);
+
     try {
       // TODO: replace with your real API call
       // await loginUser(form.email, form.password);
@@ -80,12 +83,23 @@ function Login() {
 
       navigate("/dashboard");
       
+      await login(form.email, form.password);
     } catch {
       setErrorTop("Invalid email or password. Try again.");
-    } finally {
-      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.role === "admin") {
+        navigate("/Dashboard");
+      } else if (user.role === "organisation" || user.role === "organization" || user.role === "agent") {
+        navigate("/Org_Dashboard");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [loading, user, navigate]);
 
   useEffect(() => {
     // Reduce initial frustration: pre-focus email
@@ -145,7 +159,7 @@ function Login() {
                 name="password"
                 type={showPwd ? "text" : "password"}
                 autoComplete="current-password"
-                placeholder="••••••••"
+                placeholder="********"
                 value={form.password}
                 onChange={onChange("password")}
                 onKeyUp={onKeyEvent}
@@ -159,7 +173,7 @@ function Login() {
                 aria-label={showPwd ? "Hide password" : "Show password"}
                 onClick={() => setShowPwd((s) => !s)}
               >
-                {showPwd ? "🙈" : "👁️"}
+                {showPwd ? "Hide" : "Show"}
               </button>
             </div>
             {errors.password && (
@@ -184,14 +198,12 @@ function Login() {
           </div>
 
           <button className="btn" type="submit" disabled={!isValid || loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         <footer className="footer" aria-label="Help">
-          <p className="fine">
-            By continuing you agree to our Terms & Privacy.
-          </p>
+          <p className="fine">By continuing you agree to our Terms & Privacy.</p>
         </footer>
       </section>
     </main>

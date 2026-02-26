@@ -63,13 +63,14 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
         
     # # we need database to get username
     # user_name = user.first_name
-
     token = create_access_token(
-    user_id=user.user_id,
-    email=user.email,
-    role=user.role_id,
-    remember=remember)
+        user_id=user.user_id,
+        email=user.email,
+        role=user.role_name,
+        remember=remember
+    )
 
+    #creates a cryptographically secure random string
     refresh_token = secrets.token_urlsafe(64)
 
     #refreshToken should be in database
@@ -89,5 +90,5 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
     )
 
     return {
-        "access_token":token
+        "accessToken":token
     }

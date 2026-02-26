@@ -51,10 +51,11 @@ input:focus{
 
 /* Password adornment */
 .pwdWrap{ position: relative; }
+.pwdWrap input{ padding-right: 78px; }
 .iconBtn{
   position:absolute; right:6px; top:50%; transform: translateY(-50%);
   border: 0; background: transparent; cursor: pointer; padding: 6px 10px;
-  border-radius: 8px; line-height: 1;
+  border-radius: 8px; line-height: 1; font-size: .8rem; font-weight: 700;
 }
 .iconBtn:hover{ background: color-mix(in oklab, var(--bg-hi), transparent 85%); }
 
