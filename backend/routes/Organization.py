@@ -9,9 +9,6 @@ router = APIRouter(prefix="/Organization", tags=["Organization"])
 def list_organizations():
    return services.list_active_organization()
 
-@router.get("/{org_name}")
-   
-
 @router.post("/Add")
 def addOrganization(data: Organization): 
     
@@ -23,7 +20,7 @@ def addOrganization(data: Organization):
     
     if not services.add_Organization(data):
        raise HTTPException(
-         status_code = status.HTTP_500_CONFLICT,
+         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
          detail = "Organization failed to be created"
        )
     

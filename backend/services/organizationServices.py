@@ -76,7 +76,8 @@ def add_Organization(data: Organization):
     conn.commit()
     return True
 
-  except pyodbc.IntegrityError:
+  except pyodbc.Error as e:
+    print(f"[add_Organization] DB error: {e}")
     conn.rollback()
     return False
 
