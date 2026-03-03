@@ -1,0 +1,9 @@
+What is View Evidence (models) file about? Show how every evidence document must look. 
+
+What need to be defined?
+id → the document number
+fileName → the name of the file
+uploadDate → when it was uploaded
+ocrText → text read from the document (can be empty)
+entities → important names found inside (like people or places)
+summary → short explanation (can be empty)
