@@ -181,7 +181,7 @@ def list_active_organization():
     
     return {
       "message": "Success",
-      "Organizations": organizations
+      "organizations": organizations
     }
   
   except pyodbc.Error as e:
@@ -207,7 +207,7 @@ def list_disabled_organization():
     ]
     return {
       "message": "Success",
-      "Organizations": organizations
+      "organizations": organizations
       }
 
   except pyodbc.Error:

@@ -5,7 +5,7 @@ import services.organizationServices as services
 router = APIRouter(prefix="/Organization", tags=["Organization"])
 
 
-@router.get("/")
+@router.get("")
 def list_organizations():
    return services.list_active_organization()
 

@@ -37,3 +37,17 @@ Owner Last Name: Tester1
 Owner Email: TestOwner1@gmail.com
 Owner Phone Number: 1234567890
 Password: Test1Password
+
+Testing Add Agent
+
+First Name: TestAgent1
+Last Name: TestAgent1
+Email: Test@Agent.com
+Phone Number: 1234567890
+Password: TestAgent1
+
+First Name: TestAgent2
+Last Name: TestAgent2
+Email: Test2@Agent.com
+Phone Number: 1234567890
+Password: TestAgent2
