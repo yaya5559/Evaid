@@ -2,7 +2,7 @@ from fastapi import HTTPException, status, APIRouter
 from models.register import RegisterRequest
 from services.registerUser import register_user
 
-router = APIRouter()
+router = APIRouter(prefix="/Register", tags=["Register"])
 
 # Handles new user registration
 @router.post("/register")
@@ -13,7 +13,7 @@ def register(data: RegisterRequest):
         last_name=data.last_name,
         email=data.email,
         password=data.password,
-        role_id=3, 
+        role_id=data.role_id, 
         org_id=data.org_id
     )
     

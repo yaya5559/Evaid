@@ -2,7 +2,7 @@ from fastapi import HTTPException, status, APIRouter
 from models.organization import Organization
 import services.organizationServices as services
 
-router = APIRouter(prefix="/Organization")
+router = APIRouter(prefix="/Organization", tags=["Organization"])
 
 
 @router.get("/")

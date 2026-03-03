@@ -1,6 +1,6 @@
-from fastapi import HTTPException, status, Response
+from fastapi import HTTPException, status, Response, Cookie
 from pydantic import BaseModel, EmailStr
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from dotenv import load_dotenv
 from database import get_db_connection  # imports the database logic
 from passlib.context import CryptContext # for password hashing
@@ -52,7 +52,7 @@ def get_user_by_email(email):
     finally:
         conn.close()
 
-def create_access_token(user_name: str, remember: bool = False):
+def create_access_token(user_id: int, email: str, role: str, remember: bool = False):
     expires =  timedelta(minutes=15) # represents a duration of time 
 
     #remember signifies how long this login should stay valid
@@ -106,7 +106,7 @@ def store_refresh_token(user_id, refresh_token):
     cursor = conn.cursor()
     try:
         # refresh tokens are valid for 7 days
-        expires_at = datetime.utcnow() + timedelta(days=7)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=7)
         hashedRefresh = hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
         
         query = """
@@ -115,6 +115,52 @@ def store_refresh_token(user_id, refresh_token):
         """
         cursor.execute(query, (user_id, hashedRefresh, expires_at))
         conn.commit()
+    finally:
+        conn.close()
+
+# Access the refresh token from the database
+def get_refresh_token(refresh_token):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        hashedRefresh = hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
+        query = """
+            SELECT u.user_id, u.email, r.role_name
+            FROM user_sessions s
+            INNER JOIN users u ON s.user_id = u.user_id
+            INNER JOIN roles r ON r.role_id = u.role_id
+            WHERE s.token_hash = ? AND s.is_valid = 1 AND s.expires_at > SYSDATETIMEOFFSET() AND u.deleted_at IS NULL
+        """
+        cursor.execute(query, (hashedRefresh,))
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        return type('User', (object,), {
+            "user_id": row[0],
+            "email": row[1],
+            "role_name": row[2]
+        })
+    finally:
+        conn.close()
+
+def end_user_session(refresh_token):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        hashedRefresh = hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
+        query = "UPDATE user_sessions SET is_valid = 0 WHERE token_hash = ?"
+        cursor.execute(query, (hashedRefresh,))
+        conn.commit()
+        return True
+  
+    except:
+        conn.rollback()
+        return False
+  
     finally:
         conn.close()
 

@@ -7,10 +7,12 @@ import '../../styles/Admin/AddOrganization.css'
 
 type OrganizationForm = {
   companyName: string
-  firstName: string
-  lastName: string
-  email: string
-  phoneNumber: string
+  companyEmail: string
+  companyPhoneNumber: string
+  ownerFirstName: string
+  ownerLastName: string
+  ownerEmail: string
+  ownerPhoneNumber: string
   password: string
   confirmPassword: string
   description: string
@@ -20,10 +22,12 @@ type FormErrors = Partial<Record<keyof OrganizationForm, string>>
 
 const initialForm: OrganizationForm = {
   companyName: '',
-  firstName: '',
-  lastName: '',
-  email: '',
-  phoneNumber: '',
+  companyEmail: '',
+  companyPhoneNumber: '',
+  ownerFirstName: '',
+  ownerLastName: '',
+  ownerEmail: '',
+  ownerPhoneNumber: '',
   password: '',
   confirmPassword: '',
   description: '',
@@ -36,10 +40,12 @@ function validate(values: OrganizationForm): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.companyName.trim()) errors.companyName = 'Company name is required.'
-  if (!values.firstName.trim()) errors.firstName = 'First name is required.'
-  if (!values.lastName.trim()) errors.lastName = 'Last name is required.'
-  if (!emailRegex.test(values.email)) errors.email = 'Enter a valid email address.'
-  if (!phoneRegex.test(values.phoneNumber)) errors.phoneNumber = 'Enter a valid phone number.'
+  if (!emailRegex.test(values.companyEmail)) errors.companyEmail = 'Enter a valid email address.'
+  if (!phoneRegex.test(values.companyPhoneNumber)) errors.companyPhoneNumber = 'Enter a valid phone number.'
+  if (!values.ownerFirstName.trim()) errors.companyName = 'Company name is required.'
+  if (!values.ownerLastName.trim()) errors.companyName = 'Company name is required.'
+  if (!emailRegex.test(values.ownerEmail)) errors.ownerEmail = 'Enter a valid email address.'
+  if (!phoneRegex.test(values.ownerPhoneNumber)) errors.ownerPhoneNumber = 'Enter a valid phone number.'
   if (values.password.length < 8) errors.password = 'Password must be at least 8 characters.'
   if (values.confirmPassword !== values.password) {
     errors.confirmPassword = 'Passwords do not match.'
@@ -85,10 +91,12 @@ function AddOrganization() {
     try {
       await addOrganization({
         company_name: form.companyName.trim(),
-        first_name: form.firstName.trim(),
-        last_name: form.lastName.trim(),
-        email: form.email.trim(),
-        phone_number: form.phoneNumber.trim(),
+        company_email: form.companyEmail.trim(),
+        company_phone_number: form.companyPhoneNumber.trim(),
+        owner_first_name: form.ownerFirstName.trim(),
+        owner_last_name: form.ownerLastName.trim(),
+        owner_email: form.ownerEmail.trim(),
+        owner_phone_number: form.ownerPhoneNumber.trim(),
         password: form.password,
       })
 
@@ -139,35 +147,51 @@ function AddOrganization() {
                 onChange={onFieldChange}
               />
               <Field
-                label='Contact email'
-                name='email'
-                value={form.email}
+                label='Organization email'
+                name='companyEmail'
+                value={form.companyEmail}
                 placeholder='admin@agency.gov'
-                error={errors.email}
+                error={errors.companyEmail}
                 onChange={onFieldChange}
               />
-              <Field
-                label='Admin first name'
-                name='firstName'
-                value={form.firstName}
-                placeholder='Amina'
-                error={errors.firstName}
-                onChange={onFieldChange}
-              />
-              <Field
-                label='Admin last name'
-                name='lastName'
-                value={form.lastName}
-                placeholder='Patel'
-                error={errors.lastName}
-                onChange={onFieldChange}
-              />
-              <Field
-                label='Phone number'
-                name='phoneNumber'
-                value={form.phoneNumber}
+               <Field
+                label='Organization Phone Number'
+                name='companyPhoneNumber'
+                value={form.companyPhoneNumber}
                 placeholder='+1 555 010 2200'
-                error={errors.phoneNumber}
+                error={errors.companyPhoneNumber}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Owner First Name'
+                name='ownerFirstName'
+                value={form.ownerFirstName}
+                placeholder='Amina'
+                error={errors.ownerFirstName}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Owner last name'
+                name='ownerLastName'
+                value={form.ownerLastName}
+                placeholder='Patel'
+                error={errors.ownerLastName}
+                onChange={onFieldChange}
+              />
+               <Field
+                label='Owner email'
+                name='ownerEmail'
+                value={form.ownerEmail}
+                placeholder='admin@agency.gov'
+                error={errors.ownerEmail}
+                onChange={onFieldChange}
+              />
+              <Field
+                label='Owner Phone number'
+                name='ownerPhoneNumber'
+                value={form.ownerPhoneNumber}
+                placeholder='+1 555 010 2200'
+                error={errors.ownerPhoneNumber}
                 onChange={onFieldChange}
               />
               <Field
@@ -222,16 +246,16 @@ function AddOrganization() {
               <div>
                 <span>Primary admin</span>
                 <strong>
-                  {form.firstName || form.lastName ? `${form.firstName} ${form.lastName}`.trim() : 'Not set'}
+                  {form.ownerFirstName || form.ownerLastName ? `${form.ownerFirstName} ${form.ownerLastName}`.trim() : 'Not set'}
                 </strong>
               </div>
               <div>
-                <span>Contact</span>
-                <strong>{form.email.trim() || 'Not set'}</strong>
+                <span>Organization Email</span>
+                <strong>{form.companyEmail.trim() || 'Not set'}</strong>
               </div>
               <div>
-                <span>Phone</span>
-                <strong>{form.phoneNumber.trim() || 'Not set'}</strong>
+                <span>Organization Phone Number</span>
+                <strong>{form.companyPhoneNumber.trim() || 'Not set'}</strong>
               </div>
             </div>
             <div className='org-note'>

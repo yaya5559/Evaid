@@ -43,7 +43,7 @@ type AuthProviderValue = {
 
 }
 
-//chek token is expired
+//check token is expired
 function isExpired(token : string, skewSeconds = 5): boolean {
     try{
         const {exp} = jwtDecode<DecodedJwt>(token);
@@ -57,7 +57,7 @@ function isExpired(token : string, skewSeconds = 5): boolean {
 //Axios instance shared by the app, 
 //A preconfigured API messenger that already knows 
 //where your server lives and how authentification works
-const api: AxiosInstance = axios.create({
+export const api: AxiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api",
     withCredentials: true, //send and receives token 
 })
@@ -127,9 +127,8 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
 
             } finally{
                 //after the refresh clear the in-progress => future refreshes can proceed
-                const lock = refreshingRef.current;
                 refreshingRef.current = null;
-                //retry teh request if refresh succeed
+                //retry the request if refresh succeeded
                 failedQueue.splice(0).forEach(({resolve, reject, config}) => {
                     if(accessTokenRef.current){
                         resolve(api(config));
@@ -138,8 +137,6 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
 
                     }
                 })
-                //Prevent danglinh promise chains on callers of refresh().
-                await lock?.catch(() => {});
             }
         })()
         return refreshingRef.current;
@@ -242,6 +239,3 @@ export function useAuth(): AuthProviderValue {
     if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
     return ctx;
 }
-
-
-   

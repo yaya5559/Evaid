@@ -1,17 +1,16 @@
-import axios from "axios";
-
-const basePath = `${import.meta.env.VITE_API_BASE_URL ?? ""}/Evaide`;
+import { api } from "../context/AuthContext";
 
 type OrganizationPayload = {
-  company_name: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number: string;
-  password: string;
-};
-
-export type OrganizationListItem = {
+    company_name: string;
+    company_email: string;
+    company_phone_number: string;
+    owner_first_name: string;
+    owner_last_name: string;
+    owner_email: string;
+    owner_phone_number: string;
+    password: string;
+}
+    export type OrganizationListItem = {
   id: string;
   name: string;
   email?: string;
@@ -27,13 +26,9 @@ export type OrganizationListItem = {
 
 export const loginUser = async (email: string, password: string) => {
   try {
-    const response = await axios.post(
-      `${basePath}/auth/login`,
+    const response = await api.post(
+      `/auth/login`,
       { email, password }, // request body
-      {
-        headers: { "Content-Type": "application/json" }, // sending JSON data
-        withCredentials: true, // ensures cookies are sent and received
-      }
     );
     return response.data.accessToken ?? response.data.access_token;
   } catch (err: any) {
@@ -49,7 +44,7 @@ export const loginUser = async (email: string, password: string) => {
 
 export const addOrganization = async (organization: OrganizationPayload) => {
   try {
-    const res = await axios.post(`${basePath}/Organization/Add_Organization`, organization, {
+    const res = await api.post(`/Organization/Add`, organization, {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });
@@ -67,7 +62,7 @@ export const addOrganization = async (organization: OrganizationPayload) => {
 
 export const getOrganizations = async () => {
   try {
-    const res = await axios.get(`${basePath}/Organization`, {
+    const res = await api.get(`/Organization/`, {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });
@@ -107,7 +102,7 @@ export const editOrganization = async (
   organization: OrganizationUpdatePayload
 ) => {
   try {
-    const res = await axios.put(`${basePath}/Organization/${organizationId}`, organization, {
+    const res = await api.put(`/Organization/${organizationId}`, organization, {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });

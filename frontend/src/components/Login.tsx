@@ -1,5 +1,4 @@
 // src/pages/Login.tsx
-import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/Login.css";
@@ -29,7 +28,7 @@ function Login() {
   const validate = (state: FormState) => {
     const next: typeof errors = {};
     if (!emailRegex.test(state.email)) next.email = "Enter a valid email.";
-    if (state.password.length < 8)
+    if (state.password.length < 1)
       next.password = "Use at least 8 characters.";
     return next;
   };
@@ -68,21 +67,6 @@ function Login() {
     }
 
     try {
-      // TODO: replace with your real API call
-      // await loginUser(form.email, form.password);
-      // Done: Abenezer
-
-      await axios.post("http://localhost:8000/Evaide/auth/login", {
-        email: form.email,
-        password: form.password,
-      },
-      {
-        withCredentials: true,
-
-      });
-
-      navigate("/dashboard");
-      
       await login(form.email, form.password);
     } catch {
       setErrorTop("Invalid email or password. Try again.");
@@ -91,12 +75,12 @@ function Login() {
 
   useEffect(() => {
     if (!loading && user) {
-      if (user.role === "admin") {
+      if (user.role === "evaide_admin") {
         navigate("/Dashboard");
-      } else if (user.role === "organisation" || user.role === "organization" || user.role === "agent") {
+      } else if (user.role === "org_admin" || user.role === "agent") {
         navigate("/Org_Dashboard");
       } else {
-        navigate("/");
+        navigate("/")
       }
     }
   }, [loading, user, navigate]);

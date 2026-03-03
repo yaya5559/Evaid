@@ -1,6 +1,20 @@
 Register Test 
+{
+  "first_name": "YusufTestUser",
+  "last_name": "TestUser",
+  "email": "YusufAl@gmail.com",
+  "password": "BakaBakaBaka",
+  "org_id": 3
+}
 
-
+{
+  "first_name": "Yusuf",
+  "last_name": "Al-Magsusi",
+  "email": "Yusuf@Admin.com",
+  "password": "TheGoat",
+  "role_id": 1,
+  "org_id": 7
+}
 
 Company Test 
 
@@ -12,3 +26,14 @@ Company Test
   "phone_number": "1234567890",
   "password": "WhatTheHeck"
 }
+
+Company Test From Front end
+
+Organization name: Test1 
+Organization Email: TestOrg1@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name: Tester1
+Owner Last Name: Tester1
+Owner Email: TestOwner1@gmail.com
+Owner Phone Number: 1234567890
+Password: Test1Password

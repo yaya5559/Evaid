@@ -5,4 +5,5 @@ class RegisterRequest(BaseModel):
     last_name: str
     email: EmailStr
     password: str
+    role_id: int = 3
     org_id: int = None # this is optional and can be assigned later

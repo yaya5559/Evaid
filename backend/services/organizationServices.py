@@ -52,7 +52,7 @@ def add_Organization(data: Organization):
 
   try:
     org_query = "" \
-    "INSERT INTO organizations (name, email, phone_number description, is_active,)" \
+    "INSERT INTO organizations (name, email, phone_number, description, is_active)" \
     "VALUES (?, ?, ?, ?, 1)"
 
     cursor.execute(org_query, (data.company_name, data.company_email, data.company_phone_number, f"Organization for {data.company_name}"))
@@ -61,10 +61,10 @@ def add_Organization(data: Organization):
     org_id = cursor.fetchone()[0]
     
     user_query = "" \
-    "INSERT INTO users (first_name, last_name, email, password_hash, role_id, org_id, is_enabled)" \
-    "VALUES (?, ?, ?, ?, 2, ?, 1)"
+    "INSERT INTO users (first_name, last_name, email, phone_number, password_hash, role_id, org_id, is_enabled)" \
+    "VALUES (?, ?, ?, ?, ?, 2, ?, 1)"
 
-    cursor.execute(user_query, (data.first_name, data.last_name, data.email, hashed_password, org_id))
+    cursor.execute(user_query, (data.owner_first_name, data.owner_last_name, data.owner_email, data.owner_phone_number, hashed_password, org_id))
     
     cursor.execute("SELECT CAST(SCOPE_IDENTITY() AS INT)")
     user_id = cursor.fetchone()[0]
@@ -175,7 +175,7 @@ def list_active_organization():
     rows = cursor.fetchall()
     
     organizations = [
-      {"org ID": row[0], "name": row[1], "email": row[2]}
+      {"id": row[0], "name": row[1], "email": row[2]}
       for row in rows
     ]
     
@@ -202,7 +202,7 @@ def list_disabled_organization():
     rows = cursor.fetchall()
 
     organizations = [
-      {"org ID": row[0], "name": row[1], "email": row[2]}
+      {"id": row[0], "name": row[1], "email": row[2]}
       for row in rows
     ]
     return {

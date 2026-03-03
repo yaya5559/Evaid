@@ -4,7 +4,6 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 const roleHome: Record<string, string> = {
     admin: "/Dashboard",
-    organisation:"/Org_Dashboard",
     organization:"/Org_Dashboard",
     agent: "/Org_Dashboard"
 }
