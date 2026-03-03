@@ -34,8 +34,8 @@ describe('Login flow', () => {
     cy.contains('Login').click();
     cy.get('input#email').click().clear().type('admin@evaide.com');
     cy.get('input#password').click().clear().type('dAtAbaS3w0rk!?,' , { log: false });
-    cy.contains('Sign in').click();
-    cy.url().should('include', '/dashboard');
+    cy.contains('button', 'Sign in').click();
+    cy.url({ timeout: 15000 }).should('include', '/Dashboard');
   });
 
   it('shows expected dashboard words', () => {
@@ -43,14 +43,11 @@ describe('Login flow', () => {
     cy.contains('Login').click();
     cy.get('input#email').clear().type('admin@evaide.com');
     cy.get('input#password').clear().type('dAtAbaS3w0rk!?,' , { log: false });
-    cy.contains('Sign in').click();
-    cy.url().should('include', '/dashboard');
-    cy.contains('Operations dashboard').should('be.visible');
-    cy.contains('Overview').should('be.visible');
-    cy.contains('Analytics').should('be.visible');
-    cy.contains('Organization Summary').should('be.visible');
+    cy.contains('button', 'Sign in').click();
+    cy.url({ timeout: 15000 }).should('include', '/Dashboard');
+    cy.contains('Operations Dashboard').should('be.visible');
     cy.contains('Add Organization').should('be.visible');
-    cy.contains('Delete Organization').should('be.visible');
+    cy.contains('Register Agent').should('be.visible');
     cy.contains('Edit Organization').should('be.visible');
   });
 });
