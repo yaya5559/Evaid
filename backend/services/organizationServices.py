@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 from database import get_db_connection 
 from models.organization import Organization
-from services.registerUser import register_user
 from passlib.context import CryptContext # for password hashing
 import pyodbc
 

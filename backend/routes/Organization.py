@@ -1,8 +1,13 @@
-from fastapi import HTTPException, status, APIRouter
+from fastapi import Depends, HTTPException, status, APIRouter
 from models.organization import Organization
 import services.organizationServices as services
+from dependencies.auth import require_roles
 
-router = APIRouter(prefix="/Organization", tags=["Organization"])
+router = APIRouter(
+   prefix="/Organization",
+   tags=["Organization"],
+   dependencies=[Depends(require_roles("evaide_admin"))],
+)
 
 
 @router.get("")

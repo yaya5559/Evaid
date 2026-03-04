@@ -8,19 +8,23 @@
 # Basically this is where the frontend hits when users want to upload files,
 # download them, view them, or search through evidence
 
-from fastapi import APIRouter, UploadFile, File, Form, Response, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Response, HTTPException
 from services.evidence_service import (
     analyze_and_stage_evidence,
     confirm_evidence,
     get_evidence_file,
     search_evidence_by_metadata
 )
-from services.graph_service import get_evidence_network, create_evidence_link
+from services.graph_service import get_evidence_network
 from database import get_db_connection
-import json
+from dependencies.auth import get_current_user
 
 # all routes in this file will start with /evidence
-router = APIRouter(prefix="/evidence", tags=["evidence"])
+router = APIRouter(
+    prefix="/evidence",
+    tags=["evidence"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 # UPLOAD & PREVIEW
