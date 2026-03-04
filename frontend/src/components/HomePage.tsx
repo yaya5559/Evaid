@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/HomePage.css";
 
@@ -10,7 +10,9 @@ function HomePage() {
   // Lock scroll when mobile menu is open (why: prevent background scroll bleed)
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [menuOpen]);
 
   // Observe sections to highlight active nav
@@ -29,7 +31,6 @@ function HomePage() {
     return () => obs.disconnect();
   }, []);
 
-  
   const navLinks = useMemo(
     () => [
       { id: "section1", label: "Home", href: "#section1" },
@@ -141,7 +142,7 @@ function HomePage() {
             </h1>
             <p className="subhead">
               EVAIDE organizes evidence, surfaces real-time connections, and keeps
-              critical details top-of-mind—so you can follow leads, not files.
+              critical details top-of-mind so you can follow leads, not files.
             </p>
             <div className="ctaRow">
               <button
@@ -158,7 +159,7 @@ function HomePage() {
 
             <div className="stats" data-cy="home-stats">
               <div data-cy="stat-faster-link-discovery">
-                <strong>10×</strong>
+                <strong>10x</strong>
                 <span>faster link discovery</span>
               </div>
               <div data-cy="stat-manual-dedupe">
@@ -189,32 +190,32 @@ function HomePage() {
 
             <div className="featureGrid">
               <article className="feature" data-cy="feature-unified-evidence-vault">
-                <div className="icon" aria-hidden>🗂️</div>
+                <div className="icon" aria-hidden>DB</div>
                 <h3>Unified Evidence Vault</h3>
                 <p>Ingest videos, images, docs, and transcripts with automatic enrichment.</p>
               </article>
               <article className="feature" data-cy="feature-ai-connections">
-                <div className="icon" aria-hidden>🧠</div>
+                <div className="icon" aria-hidden>AI</div>
                 <h3>AI Connections</h3>
                 <p>Surface entities, timelines, and relationships across cases in seconds.</p>
               </article>
               <article className="feature" data-cy="feature-query-plain-english">
-                <div className="icon" aria-hidden>🔎</div>
+                <div className="icon" aria-hidden>QRY</div>
                 <h3>Query in Plain English</h3>
                 <p>Ask questions; get citations to the exact evidence snippets.</p>
               </article>
               <article className="feature" data-cy="feature-secure-by-default">
-                <div className="icon" aria-hidden>🔐</div>
+                <div className="icon" aria-hidden>SEC</div>
                 <h3>Secure by Default</h3>
                 <p>Role-based access, encryption at rest and in transit.</p>
               </article>
               <article className="feature" data-cy="feature-integrations">
-                <div className="icon" aria-hidden>🧩</div>
+                <div className="icon" aria-hidden>INT</div>
                 <h3>Integrations</h3>
                 <p>Bring your chain-of-custody and RMS with minimal setup.</p>
               </article>
               <article className="feature" data-cy="feature-audit-reporting">
-                <div className="icon" aria-hidden>📈</div>
+                <div className="icon" aria-hidden>RPT</div>
                 <h3>Audit & Reporting</h3>
                 <p>One-click briefs, timelines, and exportable link graphs.</p>
               </article>
@@ -239,7 +240,7 @@ function HomePage() {
               <a href="#" aria-label="LinkedIn">Lin</a>
               <a href="#" aria-label="GitHub">GH</a>
             </div>
-            <p className="fine">© 2026 EVAIDE. All rights reserved.</p>
+            <p className="fine">(c) 2026 EVAIDE. All rights reserved.</p>
           </footer>
         </section>
       </main>

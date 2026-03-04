@@ -1,0 +1,296 @@
+============================================================
+  CYPRESS TEST DATA LOG
+  File: create-org-and-agent.cy.js
+============================================================
+Each Cypress run appends a new entry below.
+The counter is stored in cypress/counter.json (starts at 3).
+To reset, set counter.json back to { "count": 3 }.
+============================================================
+
+============================================================
+  RUN #3 — 2026-03-03T12:02:11.593Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test3
+Organization Email:        TestOrg3@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester3
+Owner Last Name:           Tester3
+Owner Email:               TestOwner3@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test3Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent3
+Last Name:    TestAgent3
+Email:        Test3@Agent.com
+Phone Number: 1234567890
+Organization: Test3
+Password:     TestAgent3
+
+============================================================
+  RUN #4 — 2026-03-03T12:22:53.085Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test4
+Organization Email:        TestOrg4@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester4
+Owner Last Name:           Tester4
+Owner Email:               TestOwner4@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test4Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent4
+Last Name:    TestAgent4
+Email:        Test4@Agent.com
+Phone Number: 1234567890
+Organization: Test4
+Password:     TestAgent4
+
+============================================================
+  RUN #5 — 2026-03-03T12:25:38.126Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test5
+Organization Email:        TestOrg5@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester5
+Owner Last Name:           Tester5
+Owner Email:               TestOwner5@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test5Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent5
+Last Name:    TestAgent5
+Email:        Test5@Agent.com
+Phone Number: 1234567890
+Organization: Test5
+Password:     TestAgent5
+
+============================================================
+  RUN #6 — 2026-03-03T12:29:01.202Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test6
+Organization Email:        TestOrg6@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester6
+Owner Last Name:           Tester6
+Owner Email:               TestOwner6@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test6Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent6
+Last Name:    TestAgent6
+Email:        Test6@Agent.com
+Phone Number: 1234567890
+Organization: Test6
+Password:     TestAgent6
+
+============================================================
+  RUN #7 — 2026-03-03T12:30:20.976Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test7
+Organization Email:        TestOrg7@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester7
+Owner Last Name:           Tester7
+Owner Email:               TestOwner7@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test7Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent7
+Last Name:    TestAgent7
+Email:        Test7@Agent.com
+Phone Number: 1234567890
+Organization: Test7
+Password:     TestAgent7
+
+============================================================
+  RUN #8 — 2026-03-03T12:32:17.196Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test8
+Organization Email:        TestOrg8@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester8
+Owner Last Name:           Tester8
+Owner Email:               TestOwner8@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test8Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent8
+Last Name:    TestAgent8
+Email:        Test8@Agent.com
+Phone Number: 1234567890
+Organization: Test8
+Password:     TestAgent8
+
+============================================================
+  RUN #9 — 2026-03-03T12:33:55.944Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test9
+Organization Email:        TestOrg9@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester9
+Owner Last Name:           Tester9
+Owner Email:               TestOwner9@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test9Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent9
+Last Name:    TestAgent9
+Email:        Test9@Agent.com
+Phone Number: 1234567890
+Organization: Test9
+Password:     TestAgent9
+
+============================================================
+  RUN #10 — 2026-03-03T12:56:01.880Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test10
+Organization Email:        TestOrg10@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester10
+Owner Last Name:           Tester10
+Owner Email:               TestOwner10@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test10Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent10
+Last Name:    TestAgent10
+Email:        Test10@Agent.com
+Phone Number: 1234567890
+Organization: Test10
+Password:     TestAgent10
+
+============================================================
+  RUN #11 — 2026-03-03T12:58:04.024Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test11
+Organization Email:        TestOrg11@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester11
+Owner Last Name:           Tester11
+Owner Email:               TestOwner11@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test11Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent11
+Last Name:    TestAgent11
+Email:        Test11@Agent.com
+Phone Number: 1234567890
+Organization: Test11
+Password:     TestAgent11
+
+============================================================
+  RUN #12 — 2026-03-03T13:01:05.612Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test12
+Organization Email:        TestOrg12@gmail.com
+Organization Phone Number: 0987654321
+Owner First Name:          Tester12
+Owner Last Name:           Tester12
+Owner Email:               TestOwner12@gmail.com
+Owner Phone Number:        1234567890
+Password:                  Test12Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent12
+Last Name:    TestAgent12
+Email:        Test12@Agent.com
+Phone Number: 1234567890
+Organization: Test12
+Password:     TestAgent12
+
+============================================================
+  RUN #13 — 2026-03-03T13:23:22.879Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test13
+Organization Email:        TestOrg13@gmail.com
+Organization Phone Number: 2250841579
+Owner First Name:          Tester13
+Owner Last Name:           Tester13
+Owner Email:               TestOwner13@gmail.com
+Owner Phone Number:        9507733878
+Password:                  Test13Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent13
+Last Name:    TestAgent13
+Email:        Test13@Agent.com
+Phone Number: 8455329668
+Organization: Test13
+Password:     TestAgent13
+
+============================================================
+  RUN #14 — 2026-03-03T13:24:09.913Z
+============================================================
+
+  ORGANIZATION
+------------------------------------------------------------
+Organization Name:         Test14
+Organization Email:        TestOrg14@gmail.com
+Organization Phone Number: 8434509510
+Owner First Name:          Tester14
+Owner Last Name:           Tester14
+Owner Email:               TestOwner14@gmail.com
+Owner Phone Number:        8970730433
+Password:                  Test14Password
+
+  AGENT
+------------------------------------------------------------
+First Name:   TestAgent14
+Last Name:    TestAgent14
+Email:        Test14@Agent.com
+Phone Number: 5584911980
+Organization: Test14
+Password:     TestAgent14

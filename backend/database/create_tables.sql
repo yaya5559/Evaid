@@ -14,6 +14,9 @@ CREATE TABLE roles (
 CREATE TABLE organizations (
     org_id INT IDENTITY(1,1) PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
+    email NVARCHAR(255) UNIQUE NOT NULL,
+    phone_number NVARCHAR(20) UNIQUE NOT NULL,
+    owner_id INT NULL, -- Owner not added yet
     description NVARCHAR(MAX),
     is_active BIT DEFAULT 1,
     created_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET(),
@@ -78,3 +81,7 @@ CREATE TABLE audit_logs (
     ip_address NVARCHAR(45),
     timestamp DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
 );
+
+ALTER TABLE organizations
+ADD CONSTRAINT FK_organizations_owner
+FOREIGN KEY (owner_id) REFERENCES users(user_id);
