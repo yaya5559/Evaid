@@ -69,6 +69,32 @@ CREATE TABLE cases (
     deleted_at DATETIMEOFFSET NULL
 );
 
+-- Table: Notes for cases 
+CREATE TABLE case_notes(
+    note_id INT IDENTITY(1,1) PRIMARY KEY,
+    case_id INT NOT NULL FOREIGN KEY REFERENCES cases(case_id),
+    created_by_user_id INT NOT NULL FOREIGN KEY REFERENCES users(user_id),
+    content NVARCHAR(MAX) NOT NULL,
+    created_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET(),
+    updated_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
+);
+
+-- Table: This allows 
+CREATE TABLE case_assignments
+(
+    assignment_id INT IDENTITY(1,1) PRIMARY KEY,
+    case_id INT NOT NULL FOREIGN KEY REFERENCES cases(case_id),
+    user_id INT NOT NULL FOREIGN KEY REFERENCES users(user_id),
+    assigned_by INT NOT NULL FOREIGN KEY REFERENCES users(user_id),
+    assigned_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
+);
+
+CREATE INDEX idx_case_assignments_user_id ON case_assignments (user_id);
+CREATE INDEX idx_case_assignments_case_id ON case_assignments (case_id);
+
+CREATE INDEX idx_case_notes_case_id ON case_notes (case_id);
+
+
 -- Table: audit_logs (tracks actions like login/logout and other actions)
 CREATE TABLE audit_logs (
     log_id BIGINT IDENTITY(1,1) PRIMARY KEY,
