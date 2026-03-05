@@ -3,8 +3,8 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 
 const roleHome: Record<string, string> = {
-    admin: "/Dashboard",
-    organization:"/Org_Dashboard",
+    evaide_admin: "/Dashboard",
+    org_admin:"/Org_Dashboard",
     agent: "/Org_Dashboard"
 }
 

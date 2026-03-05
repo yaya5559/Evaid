@@ -62,18 +62,18 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const addAgent = async (agent: AgentPayload) => {
-    try {
-        const res = await api.post(`/Register`, agent)
-        return res.data
-    } catch (err: any) {
-        const msg =
-            err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.response?.data?.detail ||
-            err?.message ||
-            "Unable to register agent";
-        throw new Error(msg);
-    }
+  try {
+    const res = await api.post(`/RegisterAgent`, agent)
+    return res.data
+  } catch (err: any) {
+    const msg = 
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      err?.response?.data?.detail ||
+      err?.message ||
+      "Unable to register agent";
+    throw new Error(msg);
+  }
 }
 
 export const addOrganization = async (organization: OrganizationPayload) => {
