@@ -53,7 +53,7 @@ export const loginUser = async (email: string, password: string) => {
 
 export const addAgent = async (agent: AgentPayload) => {
   try {
-    const res = await api.post(`/Register`, agent)
+    const res = await api.post(`/RegisterAgent`, agent)
     return res.data
   } catch (err: any) {
     const msg = 

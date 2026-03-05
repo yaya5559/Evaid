@@ -1,9 +1,32 @@
-import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
 
 function Nav() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const initials = (user?.name || user?.email || 'Security Admin')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+
+  const onLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await logout()
+      navigate('/Login', { replace: true })
+    } finally {
+      setLoggingOut(false)
+    }
+  }
+
   return (
     <>
       <div className='admin-brand'>
@@ -29,19 +52,23 @@ function Nav() {
             <span className='admin-nav-dot' />
             Edit Organization
           </NavLink>
-          <NavLink className={navClassName} to='/Register_Agent'>
-            <span className='admin-nav-dot' />
-            Register Agent
-          </NavLink>
         </div>
       </nav>
 
       <div className='admin-user-panel'>
-        <div className='admin-user-avatar'>SA</div>
-        <div>
-          <div className='admin-user-name'>Security Admin</div>
-          <div className='admin-user-role'>Organization control</div>
+        <div className='admin-user-avatar'>{initials || 'SA'}</div>
+        <div className='admin-user-meta'>
+          <div className='admin-user-name'>{user?.name || 'Security Admin'}</div>
+          <div className='admin-user-role'>{user?.email || 'admin@evaide.local'}</div>
         </div>
+        <button
+          className='admin-btn admin-btn-ghost admin-logout-btn'
+          disabled={loggingOut}
+          onClick={() => void onLogout()}
+          type='button'
+        >
+          {loggingOut ? 'Signing out...' : 'Sign out'}
+        </button>
       </div>
     </>
   )
