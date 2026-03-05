@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-/*import { editOrganization, getOrganizations, type OrganizationListItem } from '../../helpers/api-communicators'*/
+import { editOrganization, getOrganizations, type OrganizationListItem } from '../../helpers/api-communicators'*/
 import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/EditOrganization.css'
 import Nav from './Nav'
