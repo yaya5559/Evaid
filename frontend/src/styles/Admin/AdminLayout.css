@@ -351,13 +351,3 @@
     flex: 1;
   }
 }
-
-.dashboard-org-row {
-  transition: background-color 0.2s ease, transform 0.1s ease;
-  cursor: pointer;
-}
-
-.dashboard-org-row:hover {
-  background-color: #0a2757;
-  transform: translateX(4px);
-}
