@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/HomePage.css";
 
@@ -10,7 +10,9 @@ function HomePage() {
   // Lock scroll when mobile menu is open (why: prevent background scroll bleed)
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [menuOpen]);
 
   // Observe sections to highlight active nav
@@ -29,7 +31,6 @@ function HomePage() {
     return () => obs.disconnect();
   }, []);
 
-  
   const navLinks = useMemo(
     () => [
       { id: "section1", label: "Home", href: "#section1" },
@@ -44,9 +45,9 @@ function HomePage() {
   return (
     <div className="homePage">
       {/* HEADER / NAV */}
-      <header className="navBar" role="navigation" aria-label="Primary">
+      <header className="navBar" role="navigation" aria-label="Primary" data-cy="nav">
         <div className="navInner">
-          <a className="brand" href="#section1" aria-label="EVAIDE home">
+          <a className="brand" href="#section1" aria-label="EVAIDE home" data-cy="brand-home">
             <span className="brandMark">E</span>VAIDE
           </a>
 
@@ -58,6 +59,7 @@ function HomePage() {
                 onClick={onNavClick}
                 aria-current={activeId === l.id ? "page" : undefined}
                 className={activeId === l.id ? "isActive" : undefined}
+                data-cy={`nav-${l.label.toLowerCase()}`}
               >
                 {l.label}
                 {activeId === l.id && <span className="activeDot" aria-hidden />}
@@ -71,13 +73,15 @@ function HomePage() {
               onClick={() => {
                 document.querySelector("#section2")?.scrollIntoView({ behavior: "smooth" });
               }}
+              data-cy="nav-learn-more"
             >
-              Learn more
+              Learn More
             </button>
             <button
               className="loginButton"
               onClick={() => navigate("/Login")}
               aria-label="Log in to EVAIDE"
+              data-cy="nav-login"
             >
               Login
             </button>
@@ -87,6 +91,7 @@ function HomePage() {
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((s) => !s)}
+              data-cy="nav-hamburger"
             >
               <span />
               <span />
@@ -96,7 +101,7 @@ function HomePage() {
         </div>
 
         {/* MOBILE MENU */}
-        <div className={`mobileMenu ${menuOpen ? "open" : ""}`}>
+        <div className={`mobileMenu ${menuOpen ? "open" : ""}`} data-cy="mobile-menu">
           {navLinks.map((l) => (
             <a
               key={l.id}
@@ -104,11 +109,16 @@ function HomePage() {
               onClick={onNavClick}
               aria-current={activeId === l.id ? "page" : undefined}
               className={activeId === l.id ? "isActive" : undefined}
+              data-cy={`mobile-${l.label.toLowerCase()}`}
             >
               {l.label}
             </a>
           ))}
-          <button className="loginButton full" onClick={() => navigate("/Login")}>
+          <button
+            className="loginButton full"
+            onClick={() => navigate("/Login")}
+            data-cy="mobile-login"
+          >
             Login
           </button>
         </div>
@@ -117,33 +127,46 @@ function HomePage() {
       {/* MAIN */}
       <main className="scroll-snap-container" id="main">
         {/* HERO */}
-        <section id="section1" className="snap-section section1" aria-label="Hero">
+        <section
+          id="section1"
+          className="snap-section section1"
+          aria-label="Hero"
+          data-cy="section-home"
+        >
           <div className="hero">
-            <div className="badge">AI EVIDENCE ASSISTANT</div>
+            <div className="badge" data-cy="home-badge">
+              AI Evidence Assistant
+            </div>
             <h1 className="headline">
               Investigations, <span className="accent">amplified</span>.
             </h1>
             <p className="subhead">
               EVAIDE organizes evidence, surfaces real-time connections, and keeps
-              critical details top-of-mind—so you can follow leads, not files.
+              critical details top-of-mind so you can follow leads, not files.
             </p>
             <div className="ctaRow">
-              <button className="loginButton cta" onClick={() => navigate("/Login")}>
+              <button
+                className="loginButton cta"
+                onClick={() => navigate("/Login")}
+                data-cy="cta-get-started"
+              >
                 Get started
               </button>
-              <a className="secondaryCta" href="#section2">See features</a>
+              <a className="secondaryCta" href="#section2" data-cy="cta-see-features">
+                See features
+              </a>
             </div>
 
-            <div className="stats">
-              <div>
-                <strong>10×</strong>
+            <div className="stats" data-cy="home-stats">
+              <div data-cy="stat-faster-link-discovery">
+                <strong>10x</strong>
                 <span>faster link discovery</span>
               </div>
-              <div>
+              <div data-cy="stat-manual-dedupe">
                 <strong>0</strong>
                 <span>manual dedupe</span>
               </div>
-              <div>
+              <div data-cy="stat-case-memory">
                 <strong>24/7</strong>
                 <span>case memory</span>
               </div>
@@ -152,42 +175,47 @@ function HomePage() {
         </section>
 
         {/* FEATURES */}
-        <section id="section2" className="snap-section section2" aria-label="Features">
-          <div className="features card">
-            <h1>What is EVAIDE?</h1>
+        <section
+          id="section2"
+          className="snap-section section2"
+          aria-label="Features"
+          data-cy="section-features"
+        >
+          <div className="features card" data-cy="features-card">
+            <h1>What is Evaide?</h1>
             <h2 className="lede">
               Your AI copilot for investigators: structured evidence database,
               real-time link discovery, and AI-guided insights.
             </h2>
 
             <div className="featureGrid">
-              <article className="feature">
-                <div className="icon" aria-hidden>🗂️</div>
+              <article className="feature" data-cy="feature-unified-evidence-vault">
+                <div className="icon" aria-hidden>DB</div>
                 <h3>Unified Evidence Vault</h3>
                 <p>Ingest videos, images, docs, and transcripts with automatic enrichment.</p>
               </article>
-              <article className="feature">
-                <div className="icon" aria-hidden>🧠</div>
+              <article className="feature" data-cy="feature-ai-connections">
+                <div className="icon" aria-hidden>AI</div>
                 <h3>AI Connections</h3>
                 <p>Surface entities, timelines, and relationships across cases in seconds.</p>
               </article>
-              <article className="feature">
-                <div className="icon" aria-hidden>🔎</div>
+              <article className="feature" data-cy="feature-query-plain-english">
+                <div className="icon" aria-hidden>QRY</div>
                 <h3>Query in Plain English</h3>
                 <p>Ask questions; get citations to the exact evidence snippets.</p>
               </article>
-              <article className="feature">
-                <div className="icon" aria-hidden>🔐</div>
+              <article className="feature" data-cy="feature-secure-by-default">
+                <div className="icon" aria-hidden>SEC</div>
                 <h3>Secure by Default</h3>
                 <p>Role-based access, encryption at rest and in transit.</p>
               </article>
-              <article className="feature">
-                <div className="icon" aria-hidden>🧩</div>
+              <article className="feature" data-cy="feature-integrations">
+                <div className="icon" aria-hidden>INT</div>
                 <h3>Integrations</h3>
                 <p>Bring your chain-of-custody and RMS with minimal setup.</p>
               </article>
-              <article className="feature">
-                <div className="icon" aria-hidden>📈</div>
+              <article className="feature" data-cy="feature-audit-reporting">
+                <div className="icon" aria-hidden>RPT</div>
                 <h3>Audit & Reporting</h3>
                 <p>One-click briefs, timelines, and exportable link graphs.</p>
               </article>
@@ -196,10 +224,15 @@ function HomePage() {
         </section>
 
         {/* CONTACT */}
-        <section id="section4" className="snap-section section4" aria-label="Contact">
-          <footer className="contact card" role="contentinfo">
+        <section
+          id="section4"
+          className="snap-section section4"
+          aria-label="Contact"
+          data-cy="section-contact"
+        >
+          <footer className="contact card" role="contentinfo" data-cy="contact-card">
             <h1>Contact</h1>
-            <h2>EVAIDE</h2>
+            <h2>Evaide</h2>
             <h3>Email: <a href="mailto:evaide@example.com">evaide@example.com</a></h3>
             <h4>Phone: <a href="tel:+10000000000">(000) 000-0000</a></h4>
             <div className="social">
@@ -207,7 +240,7 @@ function HomePage() {
               <a href="#" aria-label="LinkedIn">Lin</a>
               <a href="#" aria-label="GitHub">GH</a>
             </div>
-            <p className="fine">© {new Date().getFullYear()} EVAIDE. All rights reserved.</p>
+            <p className="fine">(c) 2026 EVAIDE. All rights reserved.</p>
           </footer>
         </section>
       </main>

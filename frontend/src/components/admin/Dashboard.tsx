@@ -1,179 +1,161 @@
-import React from 'react'
+import { Link } from 'react-router-dom'
+import Nav from './Nav'
+import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/Dashboard.css'
 
+type KpiCard = {
+  label: string
+  value: string
+  delta: string
+  tone: 'up' | 'down' | 'neutral'
+}
+
+type OrganizationRow = {
+  name: string
+  region: string
+  users: string
+  cases: string
+  health: 'Healthy' | 'Needs attention' | 'Critical'
+}
+
+type PipelineStage = {
+  stage: string
+  total: number
+  ratio: number
+}
+
+const kpiCards: KpiCard[] = [
+  { label: 'Active organizations', value: '148', delta: '+12 this month', tone: 'up' },
+  { label: 'Pending onboarding', value: '09', delta: '3 blocked by verification', tone: 'neutral' },
+  { label: 'Seats in use', value: '3,842', delta: '+6.8% from last week', tone: 'up' },
+  { label: 'Compliance risk', value: '2.3%', delta: '-0.7% in 14 days', tone: 'down' },
+]
+
+const organizations: OrganizationRow[] = [
+  { name: 'Metro Intelligence Unit', region: 'US / East', users: '620 / 750', cases: '1,284', health: 'Healthy' },
+  { name: 'Westport Cyber Office', region: 'US / West', users: '438 / 500', cases: '986', health: 'Needs attention' },
+  { name: 'Northline Fraud Division', region: 'Canada', users: '211 / 250', cases: '604', health: 'Healthy' },
+  { name: 'Federal Evidence Bureau', region: 'US / Central', users: '794 / 900', cases: '1,907', health: 'Critical' },
+]
+
+const pipeline: PipelineStage[] = [
+  { stage: 'Verification', total: 6, ratio: 72 },
+  { stage: 'Legal review', total: 4, ratio: 52 },
+  { stage: 'Admin invite', total: 3, ratio: 40 },
+  { stage: 'Security setup', total: 2, ratio: 25 },
+]
+
+const activityLog = [
+  'Northline Fraud Division seat limit increased to 250',
+  'Metro Intelligence Unit rotated admin credentials',
+  'Federal Evidence Bureau failed nightly export policy',
+  'Westport Cyber Office completed SSO validation',
+]
+
 function Dashboard() {
-
   return (
-    <div className='root'>
-      <aside className='left'>
-        <div className='brand'>
-          <div className='brand-mark'></div>
-          <div>
-            <div className='brand-title'>Evaid</div>
-            <div className='brand-sub'>Admin console</div>
-          </div>
-        </div>
-
-        <nav className='nav'>
-          <div className='nav-section'>
-            <div className='nav-label'>Core</div>
-            <a className='nav-item active' href='#'>
-              <span className='nav-dot'></span>
-              Overview
-            </a>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Analytics
-            </a>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Organization Summary
-            </a>
-          </div>
-
-          <div className='nav-section'>
-            <div className='nav-label'>Operations</div>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Add Organization
-            </a>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Delete Organization
-            </a>
-            <a className='nav-item' href='#'>
-              <span className='nav-dot'></span>
-              Edit Organization
-            </a>
-          </div>
-        </nav>
-
-        <div className='left-footer'>
-          <div className='user'>
-            <div className='avatar'>IN</div>
-            <div>
-              <div className='user-name'>Investigator</div>
-              <div className='user-role'>Super admin</div>
-            </div>
-          </div>
-        </div>
+    <div className ='admin-shell'>
+      <aside className ='admin-left'>
+        <Nav />
       </aside>
 
-      <main className='center'>
-        <header className='center-header'>
-          <div className='title-block'>
-            <div className='eyebrow'>Admin overview</div>
-            <h1>Operations dashboard</h1>
-            <p className='subtext'>Live metrics, usage, and system health in one place.</p>
+      <main className='admin-main'>
+        <header className='admin-header'>
+          <div>
+            <div className='admin-eyebrow'>Organization command center</div>
+            <h1 className='admin-title'>Operations Dashboard</h1>
+            <p className='admin-subtext'>
+              Monitor organization health, onboarding progress, and platform readiness from one place.
+            </p>
           </div>
-          <div className='actions'>
-            <button className='btn ghost' type='button'>Export</button>
+          <div className='admin-actions'>
+            <Link className='admin-btn admin-btn-primary' to='/Add_Organization'>
+              Add Organization
+            </Link>
+            
           </div>
         </header>
 
-        <section className='stats'>
-          <article className='card stat'>
-            <div className='stat-label'>Active users</div>
-            <div className='stat-value'>-</div>
-            <div className='stat-delta up'>frim Backend</div>
-          </article>
-          <article className='card stat'>
-            <div className='stat-label'>Revenue</div>
-            <div className='stat-value'>-</div>
-            <div className='stat-delta up'>frim Backend</div>
-          </article>
-          <article className='card stat'>
-            <div className='stat-label'>Tickets resolved</div>
-            <div className='stat-value'>0</div>
-            <div className='stat-delta up'>frim Backend</div>
-          </article>
-          <article className='card stat'>
-            <div className='stat-label'>Churn</div>
-            <div className='stat-value'>-</div>
-            <div className='stat-delta down'>frim Backend</div>
-          </article>
+        <section className='dashboard-kpi-grid' aria-label='Key performance indicators'>
+          {kpiCards.map((card) => (
+            <article className='admin-card dashboard-kpi' key={card.label}>
+              <div className='dashboard-kpi-label'>{card.label}</div>
+              <div className='dashboard-kpi-value'>{card.value}</div>
+              <div className={`dashboard-kpi-delta ${card.tone}`}>{card.delta}</div>
+            </article>
+          ))}
         </section>
 
-        <section className='insights'>
-          <article className='card'>
-            <div className='card-header'>
-              <h3>Revenue performance</h3>
-              <span className='tag'>This month</span>
+        <section className='dashboard-grid'>
+          <article className='admin-card dashboard-org-card'>
+            <div className='dashboard-card-header'>
+              <h2>Organization Health Board</h2>
+              <span className='admin-pill info'>Live sync</span>
             </div>
-            <div className='metric'>
-              <div className='metric-value'>-</div>
-              <div className='metric-sub'>-</div>
+            <div className='dashboard-org-head'>
+              <span>Organization</span>
+              <span>Users</span>
+              <span>Cases</span>
+              <span>Status</span>
             </div>
-            <div className='mini-stats'>
-              <div className='mini'>
-                <span className='mini-label'>MRR</span>
-                <span className='mini-value'>-</span>
-              </div>
-              <div className='mini'>
-                <span className='mini-label'>ARPU</span>
-                <span className='mini-value'>-</span>
-              </div>
-              <div className='mini'>
-                <span className='mini-label'>Expansion</span>
-                <span className='mini-value'>-</span>
-              </div>
+            <div className='dashboard-org-body'>
+              {organizations.map((organization) => (
+                <div className='dashboard-org-row' key={organization.name}>
+                  <div className='dashboard-org-name'>
+                    <strong>{organization.name}</strong>
+                    <small>{organization.region}</small>
+                  </div>
+                  <span>{organization.users}</span>
+                  <span>{organization.cases}</span>
+                  <span
+                    className={`admin-pill ${
+                      organization.health === 'Healthy'
+                        ? 'good'
+                        : organization.health === 'Needs attention'
+                          ? 'warn'
+                          : 'critical'
+                    }`}
+                  >
+                    {organization.health}
+                  </span>
+                </div>
+              ))}
             </div>
           </article>
 
-          <article className='card'>
-            <div className='card-header'>
-              <h3>Recent activity</h3>
-              <span className='tag live'>Live</span>
+          <article className='admin-card dashboard-pipeline-card'>
+            <div className='dashboard-card-header'>
+              <h2>Onboarding Pipeline</h2>
+              <span className='admin-pill neutral'>14 day view</span>
             </div>
-            <ul className='activity'>
-              <li>
-                <div className='activity-title'>from backend</div>
-                <div className='activity-meta'>frim Backend</div>
-              </li>
-              <li>
-                <div className='activity-title'>frim Backend</div>
-                <div className='activity-meta'>frim Backend</div>
-              </li>
-              <li>
-                <div className='activity-title'>frim Backend</div>
-                <div className='activity-meta'>frim Backend</div>
-              </li>
-              <li>
-                <div className='activity-title'>frim Backend</div>
-                <div className='activity-meta'>frim Backend</div>
-              </li>
+            <div className='dashboard-pipeline-list'>
+              {pipeline.map((stage) => (
+                <div className='dashboard-pipeline-item' key={stage.stage}>
+                  <div className='dashboard-pipeline-meta'>
+                    <span>{stage.stage}</span>
+                    <span>{stage.total}</span>
+                  </div>
+                  <div className='dashboard-progress-track'>
+                    <span className='dashboard-progress-fill' style={{ width: `${stage.ratio}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link className='admin-btn admin-btn-ghost dashboard-inline-action' to='/Add_Organization'>
+              Start new onboarding
+            </Link>
+          </article>
+
+          <article className='admin-card dashboard-activity-card'>
+            <div className='dashboard-card-header'>
+              <h2>Recent Activity</h2>
+              <span className='admin-pill info'>4 events</span>
+            </div>
+            <ul className='dashboard-activity-list'>
+              {activityLog.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
-          </article>
-        </section>
-
-        <section className='wide-card'>
-          <article className='card'>
-            <div className='card-header'>
-              <h3>Deployment status</h3>
-              <span className='tag'>Last 24 hours</span>
-            </div>
-            <div className='status-grid'>
-              <div className='status-item'>
-                <span className='status-label'>API response</span>
-                <span className='status-value'>142 ms</span>
-                <span className='status-note'>p95 latency</span>
-              </div>
-              <div className='status-item'>
-                <span className='status-label'>Uptime</span>
-                <span className='status-value'>99.98%</span>
-                <span className='status-note'>30-day avg</span>
-              </div>
-              <div className='status-item'>
-                <span className='status-label'>Deploys</span>
-                <span className='status-value'>6</span>
-                <span className='status-note'>Zero rollbacks</span>
-              </div>
-              <div className='status-item'>
-                <span className='status-label'>Errors</span>
-                <span className='status-value'>0.12%</span>
-                <span className='status-note'>Below target</span>
-              </div>
-            </div>
           </article>
         </section>
       </main>

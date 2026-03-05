@@ -27,6 +27,7 @@ type DecodedJwt = {
   email?: string;
   name?: string;
   roles?: string[] | string;
+  role?: string;
   exp: number; // seconds since epoch
   [k: string]: unknown;
 };
@@ -34,6 +35,7 @@ type DecodedJwt = {
 
 type AuthProviderValue = {
     user: User | null;
+    loading: boolean
     login: (email:string, password:string) => Promise<void>;
     logout: () => Promise<void>;
     getAccessToken : ()=> string |null;
@@ -41,22 +43,25 @@ type AuthProviderValue = {
 
 }
 
-//chek token is expired
+//check token is expired
 function isExpired(token : string, skewSeconds = 5): boolean {
     try{
         const {exp} = jwtDecode<DecodedJwt>(token);
-         const nowSec = Math.floor(Date.now() / 1000);
+        const nowSec = Math.floor(Date.now() / 1000);
         return exp <= nowSec + skewSeconds;
     }catch{
         return true;
     }
 }
 
-//Axios instance shared by the app.
-const api: AxiosInstance = axios.create({
+//Axios instance shared by the app, 
+//A preconfigured API messenger that already knows 
+//where your server lives and how authentification works
+export const api: AxiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api",
     withCredentials: true, //send and receives token 
 })
+
 
 const AuthContext = createContext<AuthProviderValue | undefined>(undefined);
 
@@ -75,15 +80,22 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
         accessTokenRef.current = state.accessToken;
 
     }, [state.accessToken])
+    
 
 
     const setAccessToken = useCallback((token: string | null) => {
+        accessTokenRef.current = token;
         if(!token) {
             setState({user: null, accessToken: null, loading: false})
             return
         };
-        const user:User = jwtDecode(token);
-        setState({user:user, accessToken: token, loading:false})
+        const decoded = jwtDecode<DecodedJwt>(token);
+        const role =
+            typeof decoded.role === "string"
+                ? decoded.role.trim().toLowerCase()
+                : "";
+        const user: User = { ...(decoded as unknown as User), role };
+        setState({user: user, accessToken: token, loading:false})
 
     }, []);
 
@@ -115,9 +127,8 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
 
             } finally{
                 //after the refresh clear the in-progress => future refreshes can proceed
-                const lock = refreshingRef.current;
                 refreshingRef.current = null;
-                //retry teh request if refresh succeed
+                //retry the request if refresh succeeded
                 failedQueue.splice(0).forEach(({resolve, reject, config}) => {
                     if(accessTokenRef.current){
                         resolve(api(config));
@@ -126,8 +137,6 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
 
                     }
                 })
-                //Prevent danglinh promise chains on callers of refresh().
-                await lock?.catch(() => {});
             }
         })()
         return refreshingRef.current;
@@ -146,49 +155,58 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
         })()
     }, [refresh])
 
-    
-    api.interceptors.request.use(async (config) => {
-        const token = accessTokenRef.current;
-        if(token && isExpired(token)){
-            await refresh()
-        }
-        const nextToken = accessTokenRef.current;
-        if(nextToken){
-            //config.headers = {...(config.headers || {}), Authorization: `Bearer ${nextToken}`}
-            config.headers?.set?.("Authorization", `Bearer ${nextToken}`);
+    useEffect(() => {
+        //before sending any request run this:   
+        const requestId = api.interceptors.request.use(async (config) => {
+            const token = accessTokenRef.current;//Reading token from ref
 
-        }
-        return config;
-    })
-    
-    /** Response: on 401, attempt one refresh and retry the original request. */
-    api.interceptors.response.use(
-        (res) => res,
-        async (error: AxiosError) => {
-        const original = error.config as AxiosRequestConfig & { _retry?: boolean };
-        const status = error.response?.status;
+            //expiration check
+            if(token && isExpired(token)){
+                await refresh()
+            }
+            const nextToken = accessTokenRef.current;
+            if(nextToken){
+                //config.headers = {...(config.headers || {}), Authorization: `Bearer ${nextToken}`}
+                config.headers?.set?.("Authorization", `Bearer ${nextToken}`);
 
-        if (status === 401 && !original._retry) {
-            original._retry = true;
+            }
+            return config;
+        });
+        
+        /** Response: on 401, attempt one refresh and retry the original request. */
+        const responseId = api.interceptors.response.use(
+            (res) => res,
+            async (error: AxiosError) => {
+                const original = error.config as AxiosRequestConfig & { _retry?: boolean };
+                const status = error.response?.status;
 
-            // Queue this request until refresh completes to avoid token races.
-            return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject, config: original });
-            refresh().catch(() => {
-                // If refresh fails, queue will reject below when lock releases.
-            });
-            });
-        }
+                if (status === 401 && !original._retry) {
+                    original._retry = true;
 
-        // Any other error or already retried: bubble up.
-        return Promise.reject(error);
-        }
-    );
+                    // Queue this request until refresh completes to avoid token races.
+                    return new Promise((resolve, reject) => {
+                        failedQueue.push({ resolve, reject, config: original });
+                        refresh().catch(() => {
+                            // If refresh fails, queue will reject below when lock releases.
+                        });
+                    });
+                }
+
+                // Any other error or already retried: bubble up.
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            api.interceptors.request.eject(requestId);
+            api.interceptors.response.eject(responseId);
+        };
+    }, [refresh]);
 
     const login = useCallback(
         async (email: string, password: string) => {
-        const res = await api.post<{ accessToken: string }>("/auth/login", { email, password });
-        setAccessToken(res.data.accessToken); // refresh cookie is set by server via Set-Cookie
+            const res = await api.post<{accessToken: string }>("/auth/login", { email, password });
+            setAccessToken(res.data.accessToken); // refresh cookie is set by server via Set-Cookie
         },
         [setAccessToken]
     );
@@ -221,6 +239,3 @@ export function useAuth(): AuthProviderValue {
     if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
     return ctx;
 }
-
-
-   

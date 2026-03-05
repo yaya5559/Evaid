@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router as api_router
+from routes import evidence
 
 app = FastAPI()
 
@@ -18,4 +19,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix="/Evaide/v1")
+app.include_router(api_router)
+

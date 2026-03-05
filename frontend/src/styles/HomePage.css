@@ -36,7 +36,6 @@ body::after{
   opacity:.35; pointer-events:none; mix-blend-mode:soft-light;
 }
 
-/
 .scroll-snap-container{
   min-height:100vh;
   scroll-snap-type:y mandatory;

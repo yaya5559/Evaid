@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "cy:open": "node cypress-start.js",
+    "cy:run": "node cypress-start.js --run"
+  },
+  "devDependencies": {
+    "cypress": "^15.9.0"
+  }
+}
