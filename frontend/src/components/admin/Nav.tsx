@@ -33,6 +33,10 @@ function Nav() {
             <span className='admin-nav-dot' />
             Register Agent
           </NavLink>
+          <NavLink className={navClassName} to='/Cases'>
+            <span className='admin-nav-dot' />
+            Cases
+          </NavLink>
         </div>
       </nav>
 

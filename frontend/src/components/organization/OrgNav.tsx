@@ -37,10 +37,10 @@ function OrgNav() {
             <span className='admin-nav-dot' />
             Overview
           </NavLink>
-          <a className='admin-nav-item' href='#org-case-progress'>
+          <NavLink className={navClassName} to='/OrgCaseProgress'>
             <span className='admin-nav-dot' />
             Case Progress
-          </a>
+          </NavLink>
           <a className='admin-nav-item' href='#org-workload'>
             <span className='admin-nav-dot' />
             Workload
