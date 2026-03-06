@@ -7,29 +7,40 @@ import Nav from './Nav'
 type OrganizationStatus = 'active' | 'onboarding' | 'suspended'
 
 type OrganizationRecord = {
-  id: string
-  name: string
-  email: string
-  phoneNumber: string
-  region: string
-  status: OrganizationStatus
-  seatLimit: number
-  primaryContact: string
-  notes: string
-  lastUpdated: string
-  openCases: number
-}
+  org_id: number;
+  companyName: string;
+  companyEmail: string;
+  companyPhoneNumber: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhoneNumber: string;
+  status: OrganizationStatus;
+  description: string;
+  lastUpdated: string;
+};
+
+// type OrganizationForm = {
+//   name: string
+//   email: string
+//   phoneNumber: string
+//   status: OrganizationStatus
+//   primaryContact: string
+//   notes: string
+// }
 
 type OrganizationForm = {
-  name: string
-  email: string
-  phoneNumber: string
-  region: string
-  status: OrganizationStatus
-  seatLimit: string
-  primaryContact: string
-  notes: string
-}
+  org_id: number;
+  companyName: string;
+  companyEmail: string;
+  companyPhoneNumber: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhoneNumber: string;
+  status: OrganizationStatus;
+  description: string;
+};
 
 type FormErrors = Partial<Record<keyof OrganizationForm, string>>
 
@@ -39,45 +50,45 @@ const statusLabel: Record<OrganizationStatus, string> = {
   suspended: 'Suspended',
 }
 
-const mockOrganizations: OrganizationRecord[] = [
+const demoOrganizations: OrganizationRecord[] = [
   {
-    id: 'ORG-1001',
-    name: 'Metro Intelligence Unit',
-    email: 'ops@metrointel.gov',
-    phoneNumber: '+1 555 010 1200',
-    region: 'US / East',
+    org_id: 9001,
+    companyName: 'Metro Intelligence Unit',
+    companyEmail: 'ops@metrointel.gov',
+    companyPhoneNumber: '+1 555 010 1200',
+    ownerFirstName: 'Amira',
+    ownerLastName: 'Patel',
+    ownerEmail: 'amira.patel@metrointel.gov',
+    ownerPhoneNumber: '+1 555 010 1201',
     status: 'active',
-    seatLimit: 750,
-    primaryContact: 'Amira Patel',
-    notes: 'Tier-1 priority. Strict access controls required.',
+    description: 'Tier-1 priority. Strict access controls required.',
     lastUpdated: '2026-02-24T14:20:00Z',
-    openCases: 1284,
   },
   {
-    id: 'ORG-1002',
-    name: 'Westport Cyber Office',
-    email: 'admin@westportcyber.org',
-    phoneNumber: '+1 555 010 2104',
-    region: 'US / West',
+    org_id: 9002,
+    companyName: 'Westport Cyber Office',
+    companyEmail: 'admin@westportcyber.org',
+    companyPhoneNumber: '+1 555 010 2104',
+    ownerFirstName: 'Liam',
+    ownerLastName: 'Chen',
+    ownerEmail: 'liam.chen@westportcyber.org',
+    ownerPhoneNumber: '+1 555 010 2105',
     status: 'onboarding',
-    seatLimit: 500,
-    primaryContact: 'Liam Chen',
-    notes: 'Pending legal review before full activation.',
+    description: 'Pending legal review before full activation.',
     lastUpdated: '2026-02-21T09:48:00Z',
-    openCases: 986,
   },
   {
-    id: 'ORG-1003',
-    name: 'Federal Evidence Bureau',
-    email: 'secops@feb.gov',
-    phoneNumber: '+1 555 010 3880',
-    region: 'US / Central',
+    org_id: 9003,
+    companyName: 'Federal Evidence Bureau',
+    companyEmail: 'secops@feb.gov',
+    companyPhoneNumber: '+1 555 010 3880',
+    ownerFirstName: 'R.',
+    ownerLastName: 'Johnson',
+    ownerEmail: 'r.johnson@feb.gov',
+    ownerPhoneNumber: '+1 555 010 3881',
     status: 'suspended',
-    seatLimit: 900,
-    primaryContact: 'R. Johnson',
-    notes: 'Suspended pending credential rotation and audit completion.',
+    description: 'Suspended pending credential rotation and audit completion.',
     lastUpdated: '2026-02-23T18:05:00Z',
-    openCases: 1907,
   },
 ]
 
@@ -93,35 +104,44 @@ function normalizeStatus(status: string | undefined): OrganizationStatus {
 
 function toForm(organization: OrganizationRecord): OrganizationForm {
   return {
-    name: organization.name,
-    email: organization.email,
-    phoneNumber: organization.phoneNumber,
-    region: organization.region,
+    org_id: organization.org_id,
+    companyName: organization.companyName,
+    companyEmail: organization.companyEmail,
+    companyPhoneNumber: organization.companyPhoneNumber,
+    ownerFirstName: organization.ownerFirstName,
+    ownerLastName: organization.ownerLastName,
+    ownerEmail: organization.ownerEmail,
+    ownerPhoneNumber: organization.ownerPhoneNumber,
     status: organization.status,
-    seatLimit: String(organization.seatLimit),
-    primaryContact: organization.primaryContact,
-    notes: organization.notes,
-  }
+    description: organization.description,
+  };
 }
 
-function toRecord(apiItem: OrganizationListItem, index: number): OrganizationRecord {
-  const id = String(apiItem.id ?? `ORG-DEMO-${index + 1}`)
-  const name = apiItem.name?.trim() || `Organization ${index + 1}`
-  const seatLimit = Number.isFinite(apiItem.seat_limit) ? Number(apiItem.seat_limit) : 250
+function toRecord(apiItem: OrganizationListItem): OrganizationRecord {
+  const org_id = Number(apiItem.org_id)
+  if (!Number.isFinite(org_id) || org_id <= 0) {
+    throw new Error('Organization list response included an invalid organization id.')
+  }
+
+  const companyName = apiItem.companyName?.trim()
+  const companyEmail = apiItem.companyEmail?.trim()
+  if (!companyName || !companyEmail) {
+    throw new Error(`Organization ${org_id} is missing required profile fields.`)
+  }
 
   return {
-    id,
-    name,
-    email: apiItem.email?.trim() || `admin+${index + 1}@evaide.local`,
-    phoneNumber: apiItem.phone_number?.trim() || '+1 555 010 0000',
-    region: apiItem.region?.trim() || 'Unassigned',
+    org_id,
+    companyName,
+    companyEmail,
+    companyPhoneNumber: apiItem.companyPhoneNumber?.trim() || '',
+    ownerFirstName: apiItem.ownerFirstName?.trim() || '',
+    ownerLastName: apiItem.ownerLastName?.trim() || '',
+    ownerEmail: apiItem.ownerEmail?.trim() || '',
+    ownerPhoneNumber: apiItem.ownerPhoneNumber?.trim() || '',
+    description: apiItem.description?.trim() || "",
     status: normalizeStatus(apiItem.status),
-    seatLimit: seatLimit > 0 ? seatLimit : 250,
-    primaryContact: apiItem.primary_contact?.trim() || 'Unassigned contact',
-    notes: apiItem.notes?.trim() || '',
-    lastUpdated: apiItem.updated_at || new Date().toISOString(),
-    openCases: Number(apiItem.open_cases ?? 0),
-  }
+    lastUpdated: apiItem.updatedAt || "",
+  };
 }
 
 function statusPillClass(status: OrganizationStatus): 'good' | 'warn' | 'critical' {
@@ -132,22 +152,26 @@ function statusPillClass(status: OrganizationStatus): 'good' | 'warn' | 'critica
 
 function validate(form: OrganizationForm): FormErrors {
   const errors: FormErrors = {}
-  const seats = Number(form.seatLimit)
 
-  if (!form.name.trim()) errors.name = 'Organization name is required.'
-  if (!emailRegex.test(form.email)) errors.email = 'Enter a valid email address.'
-  if (!phoneRegex.test(form.phoneNumber)) errors.phoneNumber = 'Enter a valid phone number.'
-  if (!form.region.trim()) errors.region = 'Region is required.'
-  if (!Number.isInteger(seats) || seats < 1) errors.seatLimit = 'Seat limit must be a positive whole number.'
-  if (!form.primaryContact.trim()) errors.primaryContact = 'Primary contact is required.'
-  if (form.notes.length > 600) errors.notes = 'Notes should stay under 600 characters.'
+    if (!form.companyName.trim())
+      errors.companyName = "Company name is required.";
+    if (!emailRegex.test(form.companyEmail))
+      errors.companyEmail = "Enter a valid email address.";
+    if (!phoneRegex.test(form.companyPhoneNumber))
+      errors.companyPhoneNumber = "Enter a valid phone number.";
+    if (form.ownerEmail.trim() && !emailRegex.test(form.ownerEmail))
+      errors.ownerEmail = "Enter a valid email address.";
+    if (form.ownerPhoneNumber.trim() && !phoneRegex.test(form.ownerPhoneNumber))
+      errors.ownerPhoneNumber = "Enter a valid phone number.";
+    if (form.description.length > 600)
+      errors.description = "Notes should stay under 600 characters.";
 
-  return errors
+    return errors
 }
 
 function EditOrganization() {
   const [organizations, setOrganizations] = useState<OrganizationRecord[]>([])
-  const [selectedId, setSelectedId] = useState('')
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | OrganizationStatus>('all')
   const [form, setForm] = useState<OrganizationForm | null>(null)
@@ -175,13 +199,13 @@ function EditOrganization() {
 
       setOrganizations(mapped)
       setUseDemoData(false)
-      setSelectedId((current) => (current && mapped.some((org) => org.id === current) ? current : mapped[0].id))
+      setSelectedId((current) => (current && mapped.some((org) => org.org_id === current) ? current : mapped[0].org_id))
     } catch {
-      setOrganizations(mockOrganizations)
+      setOrganizations(demoOrganizations)
       setUseDemoData(true)
       setNotice('Live edit endpoints are unavailable. You are currently using demo organization data.')
       setSelectedId((current) =>
-        current && mockOrganizations.some((org) => org.id === current) ? current : mockOrganizations[0].id
+        current && demoOrganizations.some((org) => org.org_id === current) ? current : demoOrganizations[0].org_id
       )
     } finally {
       setLoading(false)
@@ -193,7 +217,7 @@ function EditOrganization() {
   }, [])
 
   const selectedOrganization = useMemo(
-    () => organizations.find((organization) => organization.id === selectedId) ?? null,
+    () => organizations.find((organization) => organization.org_id === selectedId) ?? null,
     [organizations, selectedId]
   )
 
@@ -219,9 +243,9 @@ function EditOrganization() {
       const matchesStatus = statusFilter === 'all' || organization.status === statusFilter
       const matchesQuery =
         query.length === 0 ||
-        `${organization.name} ${organization.email} ${organization.region} ${organization.primaryContact}`
+        `${organization.companyName} ${organization.companyEmail} ${organization.ownerFirstName} ${organization.ownerLastName} ${organization.ownerEmail} ${organization.ownerPhoneNumber}`
           .toLowerCase()
-          .includes(query)
+          .includes(query);
 
       return matchesStatus && matchesQuery
     })
@@ -272,14 +296,15 @@ function EditOrganization() {
 
     const cleanedForm: OrganizationForm = {
       ...form,
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phoneNumber: form.phoneNumber.trim(),
-      region: form.region.trim(),
-      seatLimit: String(Number(form.seatLimit)),
-      primaryContact: form.primaryContact.trim(),
-      notes: form.notes.trim(),
-    }
+      companyName: form.companyName.trim(),
+      companyEmail: form.companyEmail.trim(),
+      companyPhoneNumber: form.companyPhoneNumber.trim(),
+      ownerFirstName: form.ownerFirstName.trim(),
+      ownerLastName: form.ownerLastName.trim(),
+      ownerEmail: form.ownerEmail.trim(),
+      ownerPhoneNumber: form.ownerPhoneNumber.trim(),
+      description: form.description.trim(),
+    };
 
     setSaving(true)
     setError(null)
@@ -287,36 +312,39 @@ function EditOrganization() {
 
     try {
       if (!useDemoData) {
-        await editOrganization(selectedOrganization.id, {
-          name: cleanedForm.name,
-          email: cleanedForm.email,
-          phone_number: cleanedForm.phoneNumber,
-          region: cleanedForm.region,
-          status: cleanedForm.status,
-          seat_limit: Number(cleanedForm.seatLimit),
-          primary_contact: cleanedForm.primaryContact,
-          notes: cleanedForm.notes,
+        await editOrganization(selectedOrganization.org_id, {
+          org_id: selectedOrganization.org_id,
+          companyName: cleanedForm.companyName,
+          companyEmail: cleanedForm.companyEmail,
+          companyPhoneNumber: cleanedForm.companyPhoneNumber,
+          ownerFirstName: cleanedForm.ownerFirstName,
+          ownerLastName: cleanedForm.ownerLastName,
+          ownerEmail: cleanedForm.ownerEmail,
+          ownerPhoneNumber: cleanedForm.ownerPhoneNumber,
+          description: cleanedForm.description,
+          status:cleanedForm.status
         })
       }
 
       setOrganizations((current) =>
         current.map((organization) =>
-          organization.id === selectedOrganization.id
+              organization.org_id === selectedOrganization.org_id
             ? {
                 ...organization,
-                name: cleanedForm.name,
-                email: cleanedForm.email,
-                phoneNumber: cleanedForm.phoneNumber,
-                region: cleanedForm.region,
+                companyName: cleanedForm.companyName,
+                companyEmail: cleanedForm.companyEmail,
+                companyPhoneNumber: cleanedForm.companyPhoneNumber,
+                ownerFirstName: cleanedForm.ownerFirstName,
+                ownerLastName: cleanedForm.ownerLastName,
+                ownerEmail: cleanedForm.ownerEmail,
+                ownerPhoneNumber: cleanedForm.ownerPhoneNumber,
                 status: cleanedForm.status,
-                seatLimit: Number(cleanedForm.seatLimit),
-                primaryContact: cleanedForm.primaryContact,
-                notes: cleanedForm.notes,
+                description: cleanedForm.description,
                 lastUpdated: new Date().toISOString(),
               }
-            : organization
-        )
-      )
+            : organization,
+        ),
+      );
 
       setForm(cleanedForm)
       setOriginalForm(cleanedForm)
@@ -404,18 +432,17 @@ function EditOrganization() {
               {!loading &&
                 filteredOrganizations.map((organization) => (
                   <button
-                    className={`edit-org-item ${organization.id === selectedId ? 'active' : ''}`}
-                    key={organization.id}
-                    onClick={() => setSelectedId(organization.id)}
+                    className={`edit-org-item ${organization.org_id === selectedId ? 'active' : ''}`}
+                    key={organization.org_id}
+                    onClick={() => setSelectedId(organization.org_id)}
                     type='button'
                   >
                     <div className='edit-org-item-main'>
-                      <strong>{organization.name}</strong>
-                      <small>{organization.region}</small>
+                      <strong>{organization.companyName}</strong>
                     </div>
                     <div className='edit-org-item-meta'>
-                      <span>{organization.email}</span>
-                      <span>{organization.primaryContact}</span>
+                      <span>{organization.companyEmail}</span>
+                      <span>{organization.companyPhoneNumber}</span>
                     </div>
                     <span className={`admin-pill ${statusPillClass(organization.status)}`}>
                       {statusLabel[organization.status]}
@@ -435,7 +462,7 @@ function EditOrganization() {
               <>
                 <div className='edit-org-panel-head'>
                   <div>
-                    <h2>{selectedOrganization.name}</h2>
+                    <h2>{selectedOrganization.companyName}</h2>
                     <p>Edit identity, contact, status, and capacity settings.</p>
                   </div>
                   <span className={`admin-pill ${statusPillClass(form.status)}`}>{statusLabel[form.status]}</span>
@@ -444,34 +471,30 @@ function EditOrganization() {
                 <form className='edit-org-form' noValidate onSubmit={onSubmit}>
                   <div className='edit-org-grid'>
                     <div className='edit-org-field'>
-                      <label htmlFor='name'>Organization Name</label>
-                      <input id='name' name='name' onChange={onFieldChange} type='text' value={form.name} />
-                      {fieldErrors.name && <span className='edit-org-field-error'>{fieldErrors.name}</span>}
+                      <label htmlFor='companyName'>Organization Name</label>
+                      <input id='companyName' name='companyName' onChange={onFieldChange} type='text' value={form.companyName} />
+                      {fieldErrors.companyName && <span className='edit-org-field-error'>{fieldErrors.companyName}</span>}
                     </div>
 
                     <div className='edit-org-field'>
-                      <label htmlFor='email'>Contact Email</label>
-                      <input id='email' name='email' onChange={onFieldChange} type='email' value={form.email} />
-                      {fieldErrors.email && <span className='edit-org-field-error'>{fieldErrors.email}</span>}
+                      <label htmlFor='companyEmail'>Contact Email</label>
+                      <input id='companyEmail' name='companyEmail' onChange={onFieldChange} type='email' value={form.companyEmail} />
+                      {fieldErrors.companyEmail && <span className='edit-org-field-error'>{fieldErrors.companyEmail}</span>}
                     </div>
 
                     <div className='edit-org-field'>
-                      <label htmlFor='phoneNumber'>Phone Number</label>
-                      <input id='phoneNumber' name='phoneNumber' onChange={onFieldChange} type='text' value={form.phoneNumber} />
-                      {fieldErrors.phoneNumber && <span className='edit-org-field-error'>{fieldErrors.phoneNumber}</span>}
+                      <label htmlFor='companyPhoneNumber'>Phone Number</label>
+                      <input id='companyPhoneNumber' name='companyPhoneNumber' onChange={onFieldChange} type='text' value={form.companyPhoneNumber} />
+                      {fieldErrors.companyPhoneNumber && <span className='edit-org-field-error'>{fieldErrors.companyPhoneNumber}</span>}
                     </div>
 
                     <div className='edit-org-field'>
-                      <label htmlFor='primaryContact'>Primary Contact</label>
-                      <input id='primaryContact' name='primaryContact' onChange={onFieldChange} type='text' value={form.primaryContact} />
-                      {fieldErrors.primaryContact && <span className='edit-org-field-error'>{fieldErrors.primaryContact}</span>}
+                      <label htmlFor='ownerPhoneNumber'>Primary Contact</label>
+                      <input id='ownerPhoneNumber' name='ownerPhoneNumber' onChange={onFieldChange} type='text' value={form.ownerPhoneNumber} />
+                      {fieldErrors.ownerPhoneNumber && <span className='edit-org-field-error'>{fieldErrors.ownerPhoneNumber}</span>}
                     </div>
 
-                    <div className='edit-org-field'>
-                      <label htmlFor='region'>Region</label>
-                      <input id='region' name='region' onChange={onFieldChange} type='text' value={form.region} />
-                      {fieldErrors.region && <span className='edit-org-field-error'>{fieldErrors.region}</span>}
-                    </div>
+                    
 
                     <div className='edit-org-field'>
                       <label htmlFor='status'>Status</label>
@@ -482,31 +505,25 @@ function EditOrganization() {
                       </select>
                     </div>
 
-                    <div className='edit-org-field'>
-                      <label htmlFor='seatLimit'>Seat Limit</label>
-                      <input id='seatLimit' min={1} name='seatLimit' onChange={onFieldChange} type='number' value={form.seatLimit} />
-                      {fieldErrors.seatLimit && <span className='edit-org-field-error'>{fieldErrors.seatLimit}</span>}
-                    </div>
-
                     <div className='edit-org-field full'>
-                      <label htmlFor='notes'>Internal Notes</label>
-                      <textarea id='notes' name='notes' onChange={onFieldChange} rows={4} value={form.notes} />
-                      {fieldErrors.notes && <span className='edit-org-field-error'>{fieldErrors.notes}</span>}
+                      <label htmlFor='description'>Internal Notes</label>
+                      <textarea id='description' name='description' onChange={onFieldChange} rows={4} value={form.description} />
+                      {fieldErrors.description && <span className='edit-org-field-error'>{fieldErrors.description}</span>}
                     </div>
                   </div>
 
                   <div className='edit-org-meta-grid'>
                     <div className='edit-org-meta-card'>
                       <span>Organization ID</span>
-                      <strong>{selectedOrganization.id}</strong>
+                      <strong>{selectedOrganization.org_id}</strong>
                     </div>
                     <div className='edit-org-meta-card'>
-                      <span>Open Cases</span>
-                      <strong>{selectedOrganization.openCases}</strong>
+                      <span>Current Status</span>
+                      <strong>{statusLabel[selectedOrganization.status]}</strong>
                     </div>
                     <div className='edit-org-meta-card'>
                       <span>Last Updated</span>
-                      <strong>{new Date(selectedOrganization.lastUpdated).toLocaleString()}</strong>
+                      <strong>{selectedOrganization.lastUpdated ? new Date(selectedOrganization.lastUpdated).toLocaleString() : 'Not available'}</strong>
                     </div>
                   </div>
 

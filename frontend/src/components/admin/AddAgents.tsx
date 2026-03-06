@@ -184,7 +184,7 @@ function AddAgent() {
                 >
                   <option value={0} disabled>Select an organization</option>
                   {orgs.map((org) => (
-                    <option key={org.id} value={org.id}>{org.name}</option>
+                    <option key={org.org_id} value={org.org_id}>{org.companyName}</option>
                   ))}
                 </select>
               </div>

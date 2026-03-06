@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from database import get_db_connection 
-from models.organization import Organization
+from models.organization import Organization, editedOrg
 from passlib.context import CryptContext # for password hashing
 import pyodbc
 
@@ -170,12 +170,42 @@ def list_active_organization():
   cursor = conn.cursor()
 
   try:
-    query = "SELECT org_id, name, email FROM Organizations WHERE is_active = 1"
+    query = """
+      SELECT
+        o.org_id,
+        o.name,
+        o.email,
+        COALESCE(o.phone_number, ''),
+        COALESCE(u.first_name, ''),
+        COALESCE(u.last_name, ''),
+        COALESCE(u.email, ''),
+        COALESCE(u.phone_number, ''),
+        CASE WHEN o.is_active = 0 THEN 'suspended' ELSE 'active' END,
+        COALESCE(o.description, ''),
+        COALESCE(CONVERT(VARCHAR(33), o.updated_at, 127), '')
+      FROM organizations AS o
+      LEFT JOIN users AS u
+        ON u.user_id = o.owner_id
+      WHERE o.is_active = 1
+      ORDER BY o.name
+    """
     cursor.execute(query)
     rows = cursor.fetchall()
     
     organizations = [
-      {"id": row[0], "name": row[1], "email": row[2]}
+      {
+        "org_id": row[0],
+        "companyName": row[1],
+        "companyEmail": row[2],
+        "companyPhoneNumber": row[3],
+        "ownerFirstName": row[4],
+        "ownerLastName": row[5],
+        "ownerEmail": row[6],
+        "ownerPhoneNumber": row[7],
+        "status": row[8],
+        "description": row[9],
+        "updatedAt": row[10],
+      }
       for row in rows
     ]
     
@@ -183,11 +213,10 @@ def list_active_organization():
       "message": "Success",
       "organizations": organizations
     }
-  
   except pyodbc.Error as e:
     print(f"Database error: {e}")
-    return "Failed"
-  
+    raise
+   
   finally:
     conn.close()
 
@@ -263,6 +292,86 @@ def list_disabled_agents(name: str):
   
   finally:
     conn.close()
+
+def edit_organization(org_id: int, data: editedOrg):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  try:
+    is_active = 0 if data.status.strip().lower() == "suspended" else 1
+
+    cursor.execute(
+      "SELECT owner_id FROM organizations WHERE org_id = ? AND deleted_at IS NULL",
+      (org_id,),
+    )
+    owner_row = cursor.fetchone()
+    if not owner_row:
+      return False
+
+    owner_id = owner_row[0]
+
+    organization_update_query = """
+      UPDATE organizations
+      SET name = ?,
+          email = ?,
+          phone_number = ?,
+          description = ?,
+          is_active = ?,
+          updated_at = SYSDATETIMEOFFSET()
+      WHERE org_id = ? AND deleted_at IS NULL
+    """
+    cursor.execute(
+      organization_update_query,
+      (
+        data.companyName,
+        data.companyEmail,
+        data.companyPhoneNumber,
+        data.description,
+        is_active,
+        org_id,
+      ),
+    )
+
+    organization_updated = cursor.rowcount > 0
+    if not organization_updated:
+      conn.rollback()
+      return False
+
+    if owner_id is not None:
+      owner_update_query = """
+        UPDATE users
+        SET first_name = COALESCE(NULLIF(?, ''), first_name),
+            last_name = COALESCE(NULLIF(?, ''), last_name),
+            email = COALESCE(NULLIF(?, ''), email),
+            phone_number = COALESCE(NULLIF(?, ''), phone_number),
+            updated_at = SYSDATETIMEOFFSET()
+        WHERE user_id = ? AND deleted_at IS NULL
+      """
+      cursor.execute(
+        owner_update_query,
+        (
+          data.ownerFirstName,
+          data.ownerLastName,
+          data.ownerEmail,
+          data.ownerPhoneNumber,
+          owner_id,
+        ),
+      )
+
+    conn.commit()
+    return True
+  
+  except pyodbc.Error:
+    conn.rollback()
+    raise
+
+  finally:
+    conn.close()
+    
+
+
+
+
 
 # def disable_agent(org: str, agent: int):
 #   conn = get_db_connection()

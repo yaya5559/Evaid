@@ -19,18 +19,18 @@ type AgentPayload = {
     org_id: number
 }
 
-    export type OrganizationListItem = {
-  id: string;
-  name: string;
-  email?: string;
-  phone_number?: string;
+export type OrganizationListItem = {
+  org_id: number;
+  companyName: string;
+  companyEmail: string;
+  companyPhoneNumber?: string;
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  ownerEmail?: string;
+  ownerPhoneNumber?: string;
   status?: string;
-  region?: string;
-  seat_limit?: number;
-  primary_contact?: string;
-  notes?: string;
-  updated_at?: string;
-  open_cases?: number;
+  description?: string;
+  updatedAt?: string;
 };
 
 export const loginUser = async (email: string, password: string) => {
@@ -90,6 +90,7 @@ export const getOrganizations = async () => {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });
+    console.log(res)
     const payload = res.data as
       | OrganizationListItem[]
       | { data?: OrganizationListItem[]; organizations?: OrganizationListItem[] };
@@ -111,18 +112,20 @@ export const getOrganizations = async () => {
 };
 
 type OrganizationUpdatePayload = {
-  name: string;
-  email: string;
-  phone_number: string;
-  region: string;
+  org_id: number;
+  companyName: string;
+  companyEmail: string;
+  companyPhoneNumber: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhoneNumber: string;
   status: string;
-  seat_limit: number;
-  primary_contact: string;
-  notes: string;
+  description?: string;
 };
 
 export const editOrganization = async (
-  organizationId: string,
+  organizationId: number,
   organization: OrganizationUpdatePayload
 ) => {
   try {
