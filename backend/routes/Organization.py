@@ -61,7 +61,6 @@ def delete_organization(name: str):
       return "Failed"
     
 
-<<<<<<< HEAD
 @router.put("/{organization_id}")
 def Edit_organization(organization_id: int, organization: editedOrg):
    try:
@@ -86,6 +85,4 @@ def Edit_organization(organization_id: int, organization: editedOrg):
    return {"message":"Organization updated successfully"}
 
 
-=======
-    
->>>>>>> 7fd52c4a (logout button)
+
