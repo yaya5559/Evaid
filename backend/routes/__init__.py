@@ -3,7 +3,7 @@ from .auth import router as Login_router
 from .Organization import router as Organization_router
 from .register import router as register_router
 from .evidence import router as evidence_router
-from .casesRoutes import router as case_router
+from .agent.case_agent import router as case_router
 
 
 router = APIRouter(prefix="/Evaide")
