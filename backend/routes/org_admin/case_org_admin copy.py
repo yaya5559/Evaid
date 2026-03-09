@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status, APIRouter
 from models.cases import Case
-import backend.services.evaide_admin.caseServices as services
+import backend.services.evaide_admin.admin_case_services as services
 
 router = APIRouter(prefix="/Cases", tags=["Cases"])
 
