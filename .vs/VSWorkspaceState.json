@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\backend",
+    "\\backend\\routes",
+    "\\backend\\services"
+  ],
+  "SelectedNode": "\\backend\\services\\bulk_link_service.py",
+  "PreviewInSolutionExplorer": false
+}
