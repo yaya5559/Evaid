@@ -9,6 +9,7 @@ import OrgDashboard from './components/organization/OrgDashboard'
 import OrgCaseProgress from './components/organization/OrgCaseProgress'
 import AddAgent from './components/admin/AddAgents'
 import Cases from './components/admin/Cases'
+import EvidenceUpload from './components/Evidence/EvidenceUpload';
 
 
 function App() {
@@ -22,7 +23,8 @@ function App() {
         <Route path='/Dashboard' element = {<Dashboard/>}/>
         <Route path='/Add_Organization' element = {<AddOrganization/>}/>
         <Route path='/Edit_Organization' element = {<EditOrganization/>}/>
-        <Route path='/Org_Dashboard' element = {<OrgDashboard/>}/>
+        <Route path='/Org_Dashboard' element={<OrgDashboard />} />
+        <Route path='/Evidence_Upload' element={<EvidenceUpload />} />
         <Route path='/OrgCaseProgress' element={<OrgCaseProgress/>} />
         <Route path='/Register_Agent' element = {<AddAgent/>}/>
         <Route path='/Cases' element = {<Cases/>} />
