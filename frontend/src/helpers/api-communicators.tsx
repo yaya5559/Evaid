@@ -87,7 +87,6 @@ export const addOrganization = async (organization: OrganizationPayload) => {
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to add organization";
         throw new Error(msg);
@@ -132,21 +131,24 @@ export const getCases = async () => {
 };
 
 type OrganizationUpdatePayload = {
-    name: string;
-    email: string;
-    phone_number: string;
-    region: string;
-    status: string;
-    seat_limit: number;
-    primary_contact: string;
-    notes: string;
+  org_id: number;
+  companyName: string;
+  companyEmail: string;
+  companyPhoneNumber: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhoneNumber: string;
+  status: string;
+  description?: string;
 };
 
-export const editOrganization = async (
-    organizationId: string,
+export const Edit_Organization = async(    
     organization: OrganizationUpdatePayload
+
 ) => {
     try {
+        const organizationId = organization.org_id
         const res = await api.put(`/Organization/${organizationId}`, organization, {
             headers: { "Content-Type": "application/json" },
             withCredentials: true,
@@ -156,7 +158,6 @@ export const editOrganization = async (
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to edit organization";
         throw new Error(msg);

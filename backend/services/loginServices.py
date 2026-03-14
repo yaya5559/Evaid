@@ -23,6 +23,8 @@ def verify_password(password, password_hash):
     # Verifies the plain text password against the stored hash.
     return pwd_context.verify(password, password_hash)
     
+
+
 # Grabs user info from database by email
 def get_user_by_email(email):
     conn = get_db_connection()#opens a database connection
@@ -187,3 +189,22 @@ def getRoleName(role_id:int):
     finally:
         conn.close()
 
+
+   
+def get_current_user(request:Request):
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid auth header")
+    
+    token = auth_header.replace("Bearer", "")
+
+    try:
+        payload = decode_access_token(token)
+    except:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    return payload

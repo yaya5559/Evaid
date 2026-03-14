@@ -5,13 +5,12 @@ import json
 def get_evidence_network():
     pass 
 
-def getGraph(caseId):
-    pass 
 
-def upload_evidence():
-    return
+def get_evidence_network() :
+    return 
 
-def create_evidence_link(case_id, from_id, to_id, reason, confidence=1.0, created_by: int | None = None):
+
+def create_evidence_link(from_id, to_id, reason, confidence=1.0):
     conn = get_db_connection()
     cursor = conn.cursor()
     
