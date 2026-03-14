@@ -19,7 +19,6 @@ export type CaseListItem = {
 
 
 
-
 export const loginUser = async (email: string, password: string) => {
     try {
         const response = await api.post(
@@ -58,7 +57,6 @@ export const getCases = async () => {
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to load cases";
         throw new Error(msg);
