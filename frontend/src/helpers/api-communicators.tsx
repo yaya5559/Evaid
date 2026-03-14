@@ -30,19 +30,6 @@ type AgentPayload = {
 }
 
 export type OrganizationListItem = {
-<<<<<<< HEAD
-  org_id: number;
-  companyName: string;
-  companyEmail: string;
-  companyPhoneNumber?: string;
-  ownerFirstName?: string;
-  ownerLastName?: string;
-  ownerEmail?: string;
-  ownerPhoneNumber?: string;
-  status?: string;
-  description?: string;
-  updatedAt?: string;
-=======
     id: string;
     name: string;
     email?: string;
@@ -54,7 +41,6 @@ export type OrganizationListItem = {
     notes?: string;
     updated_at?: string;
     open_cases?: number;
->>>>>>> cd8c9003d9fc05295ed7a5cffca6526ae3c1a7e4
 };
 
 export const loginUser = async (email: string, password: string) => {
@@ -76,7 +62,7 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const addAgent = async (agent: AgentPayload) => {
-<<<<<<< HEAD
+
   try {
     const res = await api.post(`/RegisterAgent`, agent)
     return res.data
@@ -89,20 +75,6 @@ export const addAgent = async (agent: AgentPayload) => {
       "Unable to register agent";
     throw new Error(msg);
   }
-=======
-    try {
-        const res = await api.post(`/Register`, agent)
-        return res.data
-    } catch (err: any) {
-        const msg =
-            err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.response?.data?.detail ||
-            err?.message ||
-            "Unable to register agent";
-        throw new Error(msg);
-    }
->>>>>>> cd8c9003d9fc05295ed7a5cffca6526ae3c1a7e4
 }
 
 export const addOrganization = async (organization: OrganizationPayload) => {
@@ -116,7 +88,6 @@ export const addOrganization = async (organization: OrganizationPayload) => {
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to add organization";
         throw new Error(msg);
@@ -124,17 +95,6 @@ export const addOrganization = async (organization: OrganizationPayload) => {
 };
 
 export const getOrganizations = async () => {
-<<<<<<< HEAD
-  try {
-    const res = await api.get(`/Organization`, {
-      headers: { "Content-Type": "application/json" },
-      withCredentials: true,
-    });
-    console.log(res)
-    const payload = res.data as
-      | OrganizationListItem[]
-      | { data?: OrganizationListItem[]; organizations?: OrganizationListItem[] };
-=======
     try {
         const res = await api.get(`/Organization`, {
             headers: { "Content-Type": "application/json" },
@@ -143,7 +103,6 @@ export const getOrganizations = async () => {
         const payload = res.data as
             | OrganizationListItem[]
             | { data?: OrganizationListItem[]; organizations?: OrganizationListItem[] };
->>>>>>> cd8c9003d9fc05295ed7a5cffca6526ae3c1a7e4
 
         if (Array.isArray(payload)) return payload;
         if (Array.isArray(payload?.data)) return payload.data;
@@ -173,7 +132,6 @@ export const getCases = async () => {
 };
 
 type OrganizationUpdatePayload = {
-<<<<<<< HEAD
   org_id: number;
   companyName: string;
   companyEmail: string;
@@ -186,26 +144,12 @@ type OrganizationUpdatePayload = {
   description?: string;
 };
 
-export const editOrganization = async (
-  organizationId: number,
-  organization: OrganizationUpdatePayload
-=======
-    name: string;
-    email: string;
-    phone_number: string;
-    region: string;
-    status: string;
-    seat_limit: number;
-    primary_contact: string;
-    notes: string;
-};
-
-export const editOrganization = async (
-    organizationId: string,
+export const Edit_Organization = async(    
     organization: OrganizationUpdatePayload
->>>>>>> cd8c9003d9fc05295ed7a5cffca6526ae3c1a7e4
+
 ) => {
     try {
+        const organizationId = organization.org_id
         const res = await api.put(`/Organization/${organizationId}`, organization, {
             headers: { "Content-Type": "application/json" },
             withCredentials: true,
@@ -215,7 +159,6 @@ export const editOrganization = async (
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to edit organization";
         throw new Error(msg);

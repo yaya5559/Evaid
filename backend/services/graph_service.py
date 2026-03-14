@@ -10,6 +10,11 @@
 
 from database import get_db_connection
 
+
+def get_evidence_network() :
+    return 
+
+
 def create_evidence_link(from_id, to_id, reason, confidence=1.0):
     conn = get_db_connection()
     cursor = conn.cursor()
