@@ -2,7 +2,7 @@ from fastapi import Request, HTTPException, status, Response, Cookie
 from pydantic import BaseModel, EmailStr
 from datetime import timedelta, datetime, timezone
 from dotenv import load_dotenv
-from database import get_db_connection  # imports the database logic
+from backend.services.database import get_db_connection  # imports the database logic
 from passlib.context import CryptContext # for password hashing
 import jwt
 import os
@@ -23,8 +23,6 @@ def verify_password(password, password_hash):
     # Verifies the plain text password against the stored hash.
     return pwd_context.verify(password, password_hash)
     
-
-
 # Grabs user info from database by email
 def get_user_by_email(email):
     conn = get_db_connection()#opens a database connection
@@ -165,7 +163,6 @@ def end_user_session(refresh_token):
     finally:
         conn.close()
 
-
 #gets role name :
 def getRoleName(role_id:int):
     conn = get_db_connection()#opens a database connection
@@ -187,8 +184,6 @@ def getRoleName(role_id:int):
     finally:
         conn.close()
 
-
-   
 def get_current_user(request:Request):
     auth_header = request.headers.get("Authorization")
 

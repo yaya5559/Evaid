@@ -25,9 +25,6 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)],
 )
 
-router = APIRouter(prefix="/evidence", tags=["evidence"])
-
-
 @router.post("/upload")
 async def upload_for_preview(
     case_id: str = Form(...),   # change int to str here to prevent the strict 400 error

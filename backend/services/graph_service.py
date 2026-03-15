@@ -1,35 +1,37 @@
-# Author: Bria Tran
-# Date: Feburary 4th, 2026
-#
-# NOTE: This code is still in progress
-# These files/logic are for how the system COULD work once fully implemented
-# 
-# Handles the graph database operations for linking evidence
-# This is where we create connections between files and query the network
-# Uses Azure SQL Server's graph features to build relationships between evidence
-
-from database import get_db_connection
-
+from backend.services.database import get_db_connection
+from fastapi import HTTPException
+import json
 
 def get_evidence_network() :
     return 
 
 
-def create_evidence_link(from_id, to_id, reason, confidence=1.0):
+def getGraph(caseId):
+    return 
+
+
+def create_evidence_link(case_id, from_id, to_id, reason, confidence=1.0, created_by: int | None =None):
     conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
         # Retrieve the internal Graph Node IDs
-        cursor.execute("SELECT $node_id FROM Evidence WHERE FileId = ?", (from_id,))
+        cursor.execute("SELECT $node_id FROM Evidence WHERE FileId = ? and case_id = ?", (from_id, case_id))
         from_node = cursor.fetchone()
         
-        cursor.execute("SELECT $node_id FROM Evidence WHERE FileId = ?", (to_id,))
+        cursor.execute("SELECT $node_id FROM Evidence WHERE FileId = ? and case_id = ?", (to_id, case_id))
         to_node = cursor.fetchone()
 
-        if not from_node or not to_node:
-            return False
-
+        if from_node is None:
+            raise HTTPException(status_code=404, detail=f"source node {from_id} not found")
+        
+        if to_node is None: 
+            raise HTTPException(status_code=404, detail=f"Target node {to_id} doesn't  exist")
+        
+        if from_node[0] == to_node[0]:#tuples returned from SQL
+            raise HTTPException(status_code=400, detail="cannot create evidence link to the same node")
+        
+        metadata = json.dumps({"source": "USER", "create_by_user_id": created_by})
         # Insert into Edge table EvidenceLink
         query = """
         INSERT INTO EvidenceLink ($from_id, $to_id, connection_reason, ai_confidence)
@@ -37,9 +39,9 @@ def create_evidence_link(from_id, to_id, reason, confidence=1.0):
         """
         cursor.execute(query, (from_node[0], to_node[0], reason, confidence))
         conn.commit()
-        return True
+        return {"statuse": "success"}
     except Exception as e:
-        print(f"Graph Connection Error: {e}")
-        return False
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
