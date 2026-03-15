@@ -1,9 +1,12 @@
 from enum import Enum
 from dataclasses import dataclass
+<<<<<<< HEAD
 from pydantic import BaseModel
 
 from uuid import UUID
 
+=======
+>>>>>>> 2932d978 (graph backend)
 
 class NodeType(str, Enum):
     PERSON = 'person'
@@ -11,7 +14,10 @@ class NodeType(str, Enum):
     EVENT = "event"
     EVIDENCE = "evidence"
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2932d978 (graph backend)
 class EdgeSource(str, Enum):
     AI = "AI"
     USER="USER"
@@ -31,7 +37,6 @@ class GraphEdge:
     to: str #node id
     type : str 
     source: str 
-
     type : str 
     source: str 
     confidence: float | None = None

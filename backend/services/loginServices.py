@@ -23,8 +23,6 @@ def verify_password(password, password_hash):
     # Verifies the plain text password against the stored hash.
     return pwd_context.verify(password, password_hash)
     
-
-
 # Grabs user info from database by email
 def get_user_by_email(email):
     conn = get_db_connection()#opens a database connection
