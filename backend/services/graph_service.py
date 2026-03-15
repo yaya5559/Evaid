@@ -10,7 +10,11 @@ def get_evidence_network() :
     return 
 
 
-def create_evidence_link(from_id, to_id, reason, confidence=1.0):
+def getGraph(caseId):
+    return 
+
+
+def create_evidence_link(case_id, from_id, to_id, reason, confidence=1.0, created_by: int | None =None):
     conn = get_db_connection()
     cursor = conn.cursor()
     

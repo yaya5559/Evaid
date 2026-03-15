@@ -4,6 +4,7 @@ from .Organization import router as organization_router
 from .register import router as register_router
 from .evidence import router as evidence_router
 from .Graph import router as Graph_router
+<<<<<<< HEAD
 
 # Agent routes
 from .agent.case_agent import router as agent_case_router
@@ -22,6 +23,8 @@ from .evaide_admin.case_evaide_admin import router as admin_case_router
 from .evaide_admin.user_evaide_admin import router as admin_user_router
 from .evaide_admin.evidence_evaide_admin import router as admin_evidence_router
 from .evaide_admin.note_evaide_admin import router as admin_note_router
+=======
+>>>>>>> 2f48ea4e (graph backend)
 
 
 router = APIRouter(prefix="/Evaide")
