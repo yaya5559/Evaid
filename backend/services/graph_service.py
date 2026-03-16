@@ -34,12 +34,19 @@ def create_evidence_link(case_id, from_id, to_id, reason, confidence=1.0, create
         metadata = json.dumps({"source": "USER", "create_by_user_id": created_by})
         # Insert into Edge table EvidenceLink
         query = """
-        INSERT INTO EvidenceLink ($from_id, $to_id, connection_reason, ai_confidence)
-        VALUES (?, ?, ?, ?)
+            INSERT INTO EvidenceLink ($from_id, $to_id, connection_reason, ai_confidence, link_metadata_json)
+            VALUES (?, ?, ?, ?)
         """
-        cursor.execute(query, (from_node[0], to_node[0], reason, confidence))
+        cursor.execute(query, (from_node[0], to_node[0], reason, confidence, metadata))
         conn.commit()
-        return {"statuse": "success"}
+        return {
+            "case_id": case_id,
+            "from": from_id,
+            "to": to_id,
+            "reason": reason,
+            "source": "USER",
+            "confidence": confidence,
+        }
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
