@@ -7,7 +7,6 @@ load_dotenv()
 
 
 def list_my_cases(agent_id: int):
-    """Returns all cases the agent created OR is assigned to."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -35,23 +34,27 @@ def list_my_cases(agent_id: int):
         columns = [col[0] for col in cursor.description]
         cases = [dict(zip(columns, row)) for row in rows]
 
-        return {"message": "Success", "cases": cases}
+        return {
+            "message": "Success", 
+            "cases": cases
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
-
+        return {
+            "message": "Error",
+              "error": str(e)
+              }
     finally:
         cursor.close()
         conn.close()
 
 
 def get_my_case(case_id: int, agent_id: int):
-    """Returns a single case only if the agent created it or is assigned to it."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        query = """
+        cursor.execute("""
             SELECT DISTINCT
                 c.case_id,
                 c.CaseNumber,
@@ -69,32 +72,41 @@ def get_my_case(case_id: int, agent_id: int):
             WHERE c.case_id = ?
               AND c.deleted_at IS NULL
               AND (c.created_by_user_id = ? OR ca.user_id = ?)
-        """
-        cursor.execute(query, (case_id, agent_id, agent_id))
+            """, (case_id, agent_id, agent_id))
         row = cursor.fetchone()
+        columns = [column[0] for column in cursor.description]
+        case = dict(zip(columns, row))
 
         if not row:
             return {"message": "Case not found or access denied"}
 
         columns = [col[0] for col in cursor.description]
-        return {"message": "Success", "case": dict(zip(columns, row))}
+        return {
+            "message": "Success", 
+            "case": case
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error",
+              "error": str(e)
+              }
 
     finally:
         cursor.close()
         conn.close()
 
 
-def create_case(data: Case):
-    """Creates a new case. The agent becomes the creator."""
+def create_case(data: Case, user_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
         query = """
-            INSERT INTO Cases (org_id, created_by_user_id, title, description, status, priority, severity_level, due_date)
+            INSERT INTO Cases 
+            (org_id, created_by_user_id, title, 
+            description, status, priority, severity_level, 
+            due_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         cursor.execute(query, (

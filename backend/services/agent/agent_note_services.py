@@ -5,8 +5,10 @@ import pyodbc
 load_dotenv()
 
 
-def _agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
-    """Returns True if the agent created the case or is assigned to it."""
+def agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     cursor.execute("""
         SELECT 1 FROM Cases c
         LEFT JOIN case_assignments ca ON c.case_id = ca.case_id
@@ -18,12 +20,11 @@ def _agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
 
 
 def list_case_notes(case_id: int, agent_id: int):
-    """Returns all notes on a case, only if the agent is on that case."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        if not _agent_is_on_case(cursor, case_id, agent_id):
+        if not agent_is_on_case(cursor, case_id, agent_id):
             return {"message": "Case not found or access denied"}
 
         cursor.execute("""
@@ -39,16 +40,22 @@ def list_case_notes(case_id: int, agent_id: int):
             JOIN users u ON cn.created_by_user_id = u.user_id
             WHERE cn.case_id = ?
             ORDER BY cn.created_at ASC
-        """, (case_id,))
+            """, (case_id,))
 
         rows = cursor.fetchall()
         columns = [col[0] for col in cursor.description]
         notes = [dict(zip(columns, row)) for row in rows]
 
-        return {"message": "Success", "notes": notes}
+        return {
+            "message": "Success", 
+            "notes": notes
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -56,12 +63,11 @@ def list_case_notes(case_id: int, agent_id: int):
 
 
 def create_case_note(case_id: int, agent_id: int, content: str):
-    """Adds a note to a case. Agent must be on the case."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        if not _agent_is_on_case(cursor, case_id, agent_id):
+        if not agent_is_on_case(cursor, case_id, agent_id):
             return {"message": "Case not found or access denied"}
 
         cursor.execute("""
@@ -74,7 +80,10 @@ def create_case_note(case_id: int, agent_id: int, content: str):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -82,7 +91,6 @@ def create_case_note(case_id: int, agent_id: int, content: str):
 
 
 def update_my_note(note_id: int, agent_id: int, content: str):
-    """Updates a note. Agents can only edit their own notes."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -101,7 +109,10 @@ def update_my_note(note_id: int, agent_id: int, content: str):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()

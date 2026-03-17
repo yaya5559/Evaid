@@ -28,10 +28,16 @@ def list_case_notes(case_id: int):
         columns = [col[0] for col in cursor.description]
         notes = [dict(zip(columns, row)) for row in rows]
 
-        return {"message": "Success", "notes": notes}
+        return {
+            "message": "Success", 
+            "notes": notes
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -39,7 +45,6 @@ def list_case_notes(case_id: int):
 
 
 def delete_note(note_id: int):
-    """Deletes any note. No org boundary."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -54,7 +59,10 @@ def delete_note(note_id: int):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()

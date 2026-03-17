@@ -6,7 +6,6 @@ load_dotenv()
 
 
 def list_case_assignments(case_id: int, org_id: int):
-    """Returns all agents assigned to a case within the organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -33,18 +32,22 @@ def list_case_assignments(case_id: int, org_id: int):
         columns = [col[0] for col in cursor.description]
         assignments = [dict(zip(columns, row)) for row in rows]
 
-        return {"message": "Success", "assignments": assignments}
+        return {
+            "message": "Success", 
+            "assignments": assignments
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
-
+        return {
+            "message": "Error",
+              "error": str(e)
+              }
     finally:
         cursor.close()
         conn.close()
 
 
 def assign_agent_to_case(case_id: int, user_id: int, assigned_by: int, org_id: int):
-    """Assigns an agent to a case. Both the case and the agent must belong to the org."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -73,7 +76,10 @@ def assign_agent_to_case(case_id: int, user_id: int, assigned_by: int, org_id: i
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error",
+              "error": str(e)
+              }
 
     finally:
         cursor.close()
@@ -81,12 +87,10 @@ def assign_agent_to_case(case_id: int, user_id: int, assigned_by: int, org_id: i
 
 
 def remove_agent_from_case(case_id: int, user_id: int, org_id: int):
-    """Removes an agent from a case within the organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        # Verify the case belongs to this org before deleting
         cursor.execute("""
             SELECT 1 FROM Cases WHERE case_id = ? AND org_id = ? AND deleted_at IS NULL
         """, (case_id, org_id))
@@ -105,7 +109,10 @@ def remove_agent_from_case(case_id: int, user_id: int, org_id: int):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error",
+              "error": str(e)
+              }
 
     finally:
         cursor.close()

@@ -6,7 +6,6 @@ load_dotenv()
 
 
 def list_org_agents(org_id: int):
-    """Returns all agents (role_id = 3) in the organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -25,16 +24,22 @@ def list_org_agents(org_id: int):
             FROM users u
             WHERE u.org_id = ? AND u.role_id = 3 AND u.deleted_at IS NULL
             ORDER BY u.last_name ASC
-        """, (org_id,))
+            """, (org_id,))
 
         rows = cursor.fetchall()
         columns = [col[0] for col in cursor.description]
         agents = [dict(zip(columns, row)) for row in rows]
 
-        return {"message": "Success", "agents": agents}
+        return {
+            "message": "Success", 
+            "agents": agents
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error",
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -42,7 +47,6 @@ def list_org_agents(org_id: int):
 
 
 def get_org_agent(user_id: int, org_id: int):
-    """Returns a single agent within the organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -60,17 +64,24 @@ def get_org_agent(user_id: int, org_id: int):
                 u.created_at
             FROM users u
             WHERE u.user_id = ? AND u.org_id = ? AND u.deleted_at IS NULL
-        """, (user_id, org_id))
+            """, (user_id, org_id))
 
         row = cursor.fetchone()
         if not row:
             return {"message": "Agent not found or access denied"}
 
         columns = [col[0] for col in cursor.description]
-        return {"message": "Success", "agent": dict(zip(columns, row))}
+        agent = dict(zip(columns, row))
+        return {
+            "message": "Success", 
+            "agent": agent
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -78,15 +89,15 @@ def get_org_agent(user_id: int, org_id: int):
 
 
 def enable_org_agent(user_id: int, org_id: int):
-    """Enables an agent account within the organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
         cursor.execute("""
-            UPDATE users SET is_enabled = 1, updated_at = SYSDATETIMEOFFSET()
+            UPDATE users 
+            SET is_enabled = 1
             WHERE user_id = ? AND org_id = ? AND deleted_at IS NULL
-        """, (user_id, org_id))
+            """, (user_id, org_id))
 
         if cursor.rowcount == 0:
             return {"message": "Agent not found or access denied"}
@@ -96,7 +107,10 @@ def enable_org_agent(user_id: int, org_id: int):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -104,15 +118,15 @@ def enable_org_agent(user_id: int, org_id: int):
 
 
 def disable_org_agent(user_id: int, org_id: int):
-    """Disables an agent account within the organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
         cursor.execute("""
-            UPDATE users SET is_enabled = 0, updated_at = SYSDATETIMEOFFSET()
+            UPDATE users 
+            SET is_enabled = 0
             WHERE user_id = ? AND org_id = ? AND deleted_at IS NULL
-        """, (user_id, org_id))
+            """, (user_id, org_id))
 
         if cursor.rowcount == 0:
             return {"message": "Agent not found or access denied"}
@@ -122,7 +136,10 @@ def disable_org_agent(user_id: int, org_id: int):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()

@@ -31,16 +31,22 @@ def list_org_cases(org_id: int):
             JOIN users u ON c.created_by_user_id = u.user_id
             WHERE c.org_id = ? AND c.deleted_at IS NULL
             ORDER BY c.created_at DESC
-        """, (org_id,))
+            """, (org_id,))
 
         rows = cursor.fetchall()
         columns = [col[0] for col in cursor.description]
         cases = [dict(zip(columns, row)) for row in rows]
 
-        return {"message": "Success", "cases": cases}
+        return {
+            "message": "Success",
+            "cases": cases
+            }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -48,8 +54,6 @@ def list_org_cases(org_id: int):
 
 
 def get_org_case(case_id: int, org_id: int):
-    """Returns a single case with full detail — agents, notes, evidence.
-    Enforces org boundary so admins cannot access cases outside their org."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -99,7 +103,7 @@ def get_org_case(case_id: int, org_id: int):
             JOIN users assigner ON ca.assigned_by = assigner.user_id
             WHERE ca.case_id = ?
             ORDER BY ca.assigned_at ASC
-        """, (case_id,))
+            """, (case_id,))
 
         agent_rows = cursor.fetchall()
         agent_cols = [col[0] for col in cursor.description]
@@ -119,7 +123,7 @@ def get_org_case(case_id: int, org_id: int):
             JOIN users u ON cn.created_by_user_id = u.user_id
             WHERE cn.case_id = ?
             ORDER BY cn.created_at ASC
-        """, (case_id,))
+            """, (case_id,))
 
         note_rows = cursor.fetchall()
         note_cols = [col[0] for col in cursor.description]
@@ -139,7 +143,7 @@ def get_org_case(case_id: int, org_id: int):
             FROM Evidence
             WHERE case_id = ?
             ORDER BY upload_date DESC
-        """, (case_id,))
+            """, (case_id,))
 
         evidence_rows = cursor.fetchall()
         evidence_cols = [col[0] for col in cursor.description]
@@ -154,7 +158,10 @@ def get_org_case(case_id: int, org_id: int):
         }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -162,13 +169,15 @@ def get_org_case(case_id: int, org_id: int):
 
 
 def create_case(org_id: int, data: Case):
-    """Creates a new case scoped to the org admin's organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
         cursor.execute("""
-            INSERT INTO Cases (org_id, created_by_user_id, title, description, status, priority, severity_level, due_date)
+            INSERT INTO Cases 
+            (org_id, created_by_user_id, title,
+             description, status, priority, 
+            severity_level, due_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             org_id,
@@ -185,7 +194,10 @@ def create_case(org_id: int, data: Case):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -193,7 +205,6 @@ def create_case(org_id: int, data: Case):
 
 
 def close_org_case(case_id: int, org_id: int, closed_by_user_id: int, resolution: str):
-    """Closes a case within the org admin's organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -206,7 +217,7 @@ def close_org_case(case_id: int, org_id: int, closed_by_user_id: int, resolution
                 resolution = ?,
                 updated_at = SYSDATETIMEOFFSET()
             WHERE case_id = ? AND org_id = ? AND deleted_at IS NULL
-        """, (closed_by_user_id, resolution, case_id, org_id))
+            """, (closed_by_user_id, resolution, case_id, org_id))
 
         if cursor.rowcount == 0:
             return {"message": "Case not found or access denied"}
@@ -216,7 +227,10 @@ def close_org_case(case_id: int, org_id: int, closed_by_user_id: int, resolution
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()
@@ -224,7 +238,6 @@ def close_org_case(case_id: int, org_id: int, closed_by_user_id: int, resolution
 
 
 def delete_org_case(case_id: int, org_id: int):
-    """Soft-deletes a case within the org admin's organization."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -233,7 +246,7 @@ def delete_org_case(case_id: int, org_id: int):
             UPDATE Cases
             SET deleted_at = SYSDATETIMEOFFSET()
             WHERE case_id = ? AND org_id = ? AND deleted_at IS NULL
-        """, (case_id, org_id))
+            """, (case_id, org_id))
 
         if cursor.rowcount == 0:
             return {"message": "Case not found or access denied"}
@@ -243,7 +256,10 @@ def delete_org_case(case_id: int, org_id: int):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
 
     finally:
         cursor.close()

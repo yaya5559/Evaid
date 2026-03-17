@@ -5,8 +5,10 @@ import pyodbc
 load_dotenv()
 
 
-def _agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
-    """Returns True if the agent created the case or is assigned to it."""
+def agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     cursor.execute("""
         SELECT 1 FROM Cases c
         LEFT JOIN case_assignments ca ON c.case_id = ca.case_id
@@ -63,7 +65,7 @@ def list_case_evidence(case_id: int, agent_id: int):
     cursor = conn.cursor()
 
     try:
-        if not _agent_is_on_case(cursor, case_id, agent_id):
+        if not agent_is_on_case(cursor, case_id, agent_id):
             return {"message": "Case not found or access denied"}
 
         cursor.execute("""
@@ -110,7 +112,7 @@ def get_evidence_file(file_id: str, agent_id: int):
             return {"message": "Evidence not found"}
 
         case_id = row[0]
-        if not _agent_is_on_case(cursor, case_id, agent_id):
+        if not agent_is_on_case(cursor, case_id, agent_id):
             return {"message": "Access denied"}
 
         cursor.execute("""
@@ -150,7 +152,7 @@ def confirm_evidence(file_id: str, agent_id: int):
             return {"message": "Pending evidence not found"}
 
         case_id = row[0]
-        if not _agent_is_on_case(cursor, case_id, agent_id):
+        if not agent_is_on_case(cursor, case_id, agent_id):
             return {"message": "Access denied"}
 
         cursor.execute("""
@@ -182,7 +184,7 @@ def cancel_evidence(file_id: str, agent_id: int):
             return {"message": "Pending evidence not found"}
 
         case_id = row[0]
-        if not _agent_is_on_case(cursor, case_id, agent_id):
+        if not agent_is_on_case(cursor, case_id, agent_id):
             return {"message": "Access denied"}
 
         cursor.execute("DELETE FROM Evidence WHERE FileId = ?", (file_id,))

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from database import get_db_connection
-from models.cases import Case
+from datetime import datetime, timezone
+from models.cases import Case, UpdateCase, CloseCase
 import pyodbc
 
 load_dotenv()
@@ -10,8 +11,18 @@ def list_all_cases():
   cursor = conn.cursor()
 
   try: 
-    query = "SELECT * FROM cases"
-    cursor.execute(query,)
+    cursor.execute("""
+      SELECT
+      c.case_id,
+      c.CaseNumber,
+      c.title,
+      c.status,
+      c.severity_level,
+      o.org_id,
+      o.name
+      FROM Cases c
+      JOIN organizations o ON c.org_id = o.org_id
+      """)
     rows = cursor.fetchall()
     columns = [column[0] for column in cursor.description]
     cases = [dict(zip(columns, row)) for row in rows]
@@ -22,9 +33,10 @@ def list_all_cases():
     }
   
   except pyodbc.Error as e:
-    print(f"Database error: {e}")
-    return "Failed"
-  
+      return {
+          "message": "Error", 
+          "error": str(e)
+          }
   finally:
     conn.close()
 
@@ -33,80 +45,63 @@ def list_org_cases(org: int):
   cursor = conn.cursor()
 
   try: 
-    query = "SELECT * FROM cases WHERE org_id = ?"
-    cursor.execute(query, (org))
+    cursor.execute("""
+      SELECT
+      c.case_id,
+      c.CaseNumber,
+      c.title,
+      c.status,
+      c.severity_level,
+      o.org_id,
+      o.name
+      FROM Cases c
+      JOIN organizations o ON c.org_id = o.org_id
+      WHERE c.org_id = ?
+      ORDER BY c.created_at DESC
+      """, (org,))
     rows = cursor.fetchall()
     columns = [column[0] for column in cursor.description]
     cases = [dict(zip(columns, row)) for row in rows]
 
     return {
       "message": "Success",
-      "org_id": org_row[0],
-      "org_name": org_row[1],
       "cases": cases
     }
   
   except pyodbc.Error as e:
-    print(f"Database error: {e}")
-    return "Failed"
-  
+      return {
+          "message": "Error", 
+          "error": str(e)
+          }
   finally:
     conn.close()
 
-def create_case(data: Case):
+def create_case(data: Case, user: int):
   conn = get_db_connection()
   cursor = conn.cursor()
 
   try: 
     query = """
-    INSERT INTO cases (org_id, created_by_user_id, title, description, status)
-    VALUES (? ? ? ? ?)
+    INSERT INTO cases 
+    (CaseNumber, title, description, 
+    org_id, created_by_user_id, status, 
+    priority, severity_level, due_date)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,)
     """
-    cursor.execute(query, (data.org_id, data.created_by, data.title, data.description, data.status))
+    cursor.execute(query, 
+                   (data.case_number, data.title, data.description, 
+                    data.org_id, data.created_by_user_id, data.status,
+                    data.priority, data.severity_level, data.due_date,))
     conn.commit()
     return True
-  except pyodbc.Error:
+  except pyodbc.Error as e:
     conn.rollback()
-    return False
+    return {
+        "message": "Error", 
+        "error": str(e)
+    }
   finally:
     conn.close()
-    
-def list_case_evidence(case_id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        query = "SELECT * FROM Evidence WHERE case_id = ?"
-        cursor.execute(query, (case_id,))
-        rows = cursor.fetchall()
-
-        evidence = [
-            {
-              "file_id":           str(row[0]),
-              "case_id":           row[1],
-              "file_name":         row[2],
-              "file_extension":    row[3],
-              "content_type":      row[4],
-              "checksum_sha256":   row[5],
-              "metadata_json":     row[6],
-              "upload_date":       row[7],
-              "uploaded_by":       row[8],
-              "processing_status": row[9],
-            }
-            for row in rows
-        ]
-
-        return {
-           "Message": "Success", 
-           "Evidence": evidence
-        }
-
-    except pyodbc.Error as e:
-        print(f"Database error: {e}")
-        return "Failed"
-
-    finally:
-        conn.close()
 
 def get_case_detail(case_id: int):
     conn = get_db_connection()
@@ -133,9 +128,13 @@ def get_case_detail(case_id: int):
                 u.first_name    AS creator_first_name,
                 u.last_name     AS creator_last_name,
                 u.email         AS creator_email
+                uc.first_name    AS closed_first_name,
+                uc.last_name     AS closed_last_name,
+                uc.email         AS closed_email,
             FROM Cases c
             JOIN organizations o ON c.org_id = o.org_id
             JOIN users u         ON c.created_by_user_id = u.user_id
+            LEFT JOIN users uc ON c.closed_by_user_id = uc.user_id
             WHERE c.case_id = ? AND c.deleted_at IS NULL
         """, (case_id,))
 
@@ -216,70 +215,93 @@ def get_case_detail(case_id: int):
         }
 
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
-
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
     finally:
         cursor.close()
         conn.close()
 
-def get_org_case(case_id: int, org_id: int):
+def update_case(case_id: int, data: UpdateCase):
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    updates = data.model_dump(exclude_unset=True)
+
+    if not updates:
+      return {"message": "No fields to update"}
+
+    set_clause = ", ".join([f"{key} = ?" for key in updates])
+    values = list(updates.values()) + [case_id]
+
     try:
-        # SELECT * FROM Cases WHERE case_id = ? AND org_id = ? AND deleted_at IS NULL
-        # Ensures org admin cannot access cases outside their org
-        pass
+        cursor.execute(f"""
+          UPDATE Cases SET
+          {set_clause}
+          WHERE case_id = ?
+          """, values)
+        conn.commit()
+
+        return {"message": "Update Success"}
+    
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
     finally:
         cursor.close()
         conn.close()
 
-def get_case(case_id: int):
+def close_case(data: CloseCase):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # SELECT * FROM Cases WHERE case_id = ? AND deleted_at IS NULL
-        pass
+        cursor.execute("""
+          UPDATE Cases
+          SET 
+          status = ?,
+          closed_at = SYSDATETIMEOFFSET(),
+          resolution = ?,
+          closed_by_user_id = ?
+          WHERE case_id = ?
+          """, 
+          (data.status, data.resolution, data.closed_by_user_id, data.case_id,))
+      
+        conn.commit()
+        return {"message": "Cased closed successfully"}
+    
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
     finally:
         cursor.close()
         conn.close()
 
-def update_case(case_id: int, **fields):
+def delete_case(case_id: int, user: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # UPDATE Cases SET ... WHERE case_id = ? AND deleted_at IS NULL
-        pass
+        cursor.execute(""""
+          UPDATE Cases
+          SET 
+          deleted_at = SYSDATETIMEOFFSET(),
+          closed_by_user_id = ? 
+          WHERE case_id = ?            
+          """, 
+          (user, case_id,))
+        
+        conn.commit()
+        return {"message": "Cased deleted successfully"}
+    
     except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
-    finally:
-        cursor.close()
-        conn.close()
-
-def close_case(case_id: int, closed_by_user_id: int, resolution: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        # UPDATE Cases SET status = 'Closed', closed_at = SYSDATETIMEOFFSET(),
-        # closed_by_user_id = ?, resolution = ? WHERE case_id = ?
-        pass
-    except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
-    finally:
-        cursor.close()
-        conn.close()
-
-def delete_case(case_id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        # UPDATE Cases SET deleted_at = SYSDATETIMEOFFSET() WHERE case_id = ?
-        pass
-    except pyodbc.Error as e:
-        return {"message": "Error", "error": str(e)}
+         return {
+            "message": "Error", 
+            "error": str(e)
+            }
     finally:
         cursor.close()
         conn.close()
