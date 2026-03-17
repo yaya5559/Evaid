@@ -14,12 +14,7 @@ const path = require("path");
 const ROOT     = __dirname;
 const BACKEND  = path.join(ROOT, "backend");
 const FRONTEND = path.join(ROOT, "frontend");
-
-// Cross-platform: detect OS
-const isWindows = process.platform === "win32";
-const UVICORN = isWindows
-  ? path.join(BACKEND, "venv", "Scripts", "uvicorn.exe")
-  : path.join(BACKEND, "venv", "bin", "uvicorn");
+const UVICORN  = path.join(BACKEND, "venv", "Scripts", "uvicorn.exe");
 
 const BACKEND_URL  = "http://localhost:8000";
 const FRONTEND_URL = "http://localhost:5173";
@@ -28,20 +23,14 @@ const headless = process.argv.includes("--run");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-// Cross-platform command execution
+// On Windows, run everything through cmd /c "command" to avoid spawn quoting issues
 function start(label, cmdString, cwd, extraEnv = {}) {
   console.log(`[${label}] starting…`);
-  const proc = isWindows
-    ? spawn("cmd", ["/c", cmdString], {
-        cwd,
-        stdio: "pipe",
-        env: { ...process.env, ...extraEnv },
-      })
-    : spawn("sh", ["-c", cmdString], {
-        cwd,
-        stdio: "pipe",
-        env: { ...process.env, ...extraEnv },
-      });
+  const proc = spawn("cmd", ["/c", cmdString], {
+    cwd,
+    stdio: "pipe",
+    env: { ...process.env, ...extraEnv },
+  });
   proc.stdout.on("data", (d) => process.stdout.write(`[${label}] ${d}`));
   proc.stderr.on("data", (d) => process.stderr.write(`[${label}] ${d}`));
   proc.on("error", (e) => console.error(`[${label}] error: ${e.message}`));
@@ -51,18 +40,8 @@ function start(label, cmdString, cwd, extraEnv = {}) {
 function killTree(proc, label) {
   if (!proc || proc.exitCode !== null) return;
   console.log(`[${label}] stopping…`);
-  if (isWindows) {
-    // On Windows, taskkill kills the whole process tree
-    spawn("taskkill", ["/pid", String(proc.pid), "/f", "/t"], { stdio: "ignore" });
-  } else {
-    // On Unix, kill the process group
-    try {
-      process.kill(-proc.pid, "SIGTERM");
-    } catch (e) {
-      // Fallback if process group kill fails
-      proc.kill("SIGTERM");
-    }
-  }
+  // On Windows, taskkill kills the whole process tree (including uvicorn --reload children)
+  spawn("taskkill", ["/pid", String(proc.pid), "/f", "/t"], { stdio: "ignore" });
 }
 
 function waitFor(url, label, maxSeconds = 90) {

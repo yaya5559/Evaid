@@ -21,6 +21,10 @@ function Nav() {
             <span className='admin-nav-dot' />
             Dashboard
           </NavLink>
+          <NavLink className={navClassName} to='/Evidence_Upload'>
+            <span className='admin-nav-dot' />
+            Upload Evidence
+          </NavLink>
           <NavLink className={navClassName} to='/Add_Organization'>
             <span className='admin-nav-dot' />
             Add Organization
@@ -32,6 +36,10 @@ function Nav() {
           <NavLink className={navClassName} to='/Register_Agent'>
             <span className='admin-nav-dot' />
             Register Agent
+          </NavLink>
+          <NavLink className={navClassName} to='/Cases'>
+            <span className='admin-nav-dot' />
+            Cases
           </NavLink>
         </div>
       </nav>
