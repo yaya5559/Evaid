@@ -32,6 +32,18 @@ function App() {
       <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />
+<<<<<<< HEAD
+=======
+      <Route element={<AuthGate roles={["evaide_admin","org_admin" ]} />}>
+        <Route path='/Add_Organization' element = {<AddOrganization/>}/>
+        <Route path='/Edit_Organization' element = {<EditOrganization/>}/>
+        <Route path='/Org_Dashboard' element={<OrgDashboard />} />
+        <Route path='/Evidence_Upload' element={<EvidenceUpload />} />
+        <Route path='/OrgCaseProgress' element={<OrgCaseProgress/>} />
+        <Route path='/Register_Agent' element = {<AddAgent/>}/>
+        <Route path='/Cases' element = {<Cases/>} />
+      </Route>
+>>>>>>> f6d532b5 (remove node_modules from repo + graph and access system backend)
 
       {/* Evaide Admin only */}
       <Route path="/Dashboard" element={<ProtectedRoute allowedRoles={['evaide_admin']}><Dashboard /></ProtectedRoute>} />

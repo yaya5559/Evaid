@@ -143,7 +143,7 @@ type OrganizationUpdatePayload = {
   description?: string;
 };
 
-export const Edit_Organization = async(    
+export const editOrganization = async(    
     organization: OrganizationUpdatePayload
 
 ) => {
@@ -165,11 +165,14 @@ export const Edit_Organization = async(
 };
 
 // accept caseId + File separately and build FormData here
-export const uploadEvidence = async (caseId: number, file: File) => {
+export const uploadEvidence = async (caseId: number, file: File, description:string, title:string, evidence_type:string) => {
     try {
         const formData = new FormData();
         // case_id must match the Form(...) field name in evidence.py
         formData.append("case_id", String(caseId));
+        formData.append("description", description)
+        formData.append("title", title)
+        formData.append("evidence_type", evidence_type)
         // file must match the File(...) field name in evidence.py
         formData.append("file", file);
 
