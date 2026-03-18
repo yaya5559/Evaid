@@ -21,7 +21,7 @@ function App() {
 
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />
-      <Route element={<AuthGate roles={["evaide_admin"]} />}>
+      <Route element={<AuthGate roles={["evaide_admin","org_admin" ]} />}>
         <Route path='/Add_Organization' element = {<AddOrganization/>}/>
         <Route path='/Edit_Organization' element = {<EditOrganization/>}/>
         <Route path='/Org_Dashboard' element={<OrgDashboard />} />
