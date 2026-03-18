@@ -187,6 +187,7 @@ def getRoleName(role_id:int):
     finally:
         conn.close()
 
+<<<<<<< HEAD
 def get_current_user(request:Request):
     auth_header = request.headers.get("Authorization")
 
@@ -204,3 +205,5 @@ def get_current_user(request:Request):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     return payload
+=======
+>>>>>>> f6d532b5 (remove node_modules from repo + graph and access system backend)
