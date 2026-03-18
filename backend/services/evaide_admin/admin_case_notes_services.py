@@ -44,6 +44,53 @@ def list_case_notes(case_id: int):
         conn.close()
 
 
+def create_note(case_id: int, content: str, user_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO case_notes (case_id, content, created_by_user_id, created_at, updated_at)
+            VALUES (?, ?, ?, SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET())
+        """, (case_id, content, user_id))
+        conn.commit()
+        return {"message": "Note created successfully"}
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {"message": "Error", "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_note(note_id: int, content: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            UPDATE case_notes
+            SET content = ?, updated_at = SYSDATETIMEOFFSET()
+            WHERE note_id = ?
+        """, (content, note_id))
+
+        if cursor.rowcount == 0:
+            return {"message": "Note not found"}
+
+        conn.commit()
+        return {"message": "Success"}
+
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {
+            "message": "Error",
+            "error": str(e)
+            }
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 def delete_note(note_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()

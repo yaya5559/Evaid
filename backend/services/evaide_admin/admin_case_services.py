@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from database import get_db_connection
 from datetime import datetime, timezone
-from models.cases import Case, UpdateCase, CloseCase
+from models.cases import CreateCase, UpdateCase, CloseCase
 import pyodbc
 
 load_dotenv()
@@ -16,6 +16,7 @@ def list_all_cases():
       c.case_id,
       c.CaseNumber,
       c.title,
+      CAST(c.created_at AS NVARCHAR(50)) AS created_at,
       c.status,
       c.severity_level,
       o.org_id,
@@ -52,6 +53,8 @@ def list_org_cases(org: int):
       c.title,
       c.status,
       c.severity_level,
+      CAST(c.created_at AS NVARCHAR(50)) AS created_at,
+      CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
       o.org_id,
       o.name
       FROM Cases c
@@ -76,22 +79,25 @@ def list_org_cases(org: int):
   finally:
     conn.close()
 
-def create_case(data: Case, user: int):
+def create_case(data: CreateCase, user: int):
   conn = get_db_connection()
   cursor = conn.cursor()
 
-  try: 
+  severity_map = {'Low': 1, 'Medium': 2, 'High': 3, 'Critical': 4}
+  severity_int = severity_map.get(data.severity_level, None) if data.severity_level else None
+
+  try:
     query = """
-    INSERT INTO cases 
-    (CaseNumber, title, description, 
-    org_id, created_by_user_id, status, 
+    INSERT INTO cases
+    (CaseNumber, title, description,
+    org_id, created_by_user_id, status,
     priority, severity_level, due_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
-    cursor.execute(query, 
-                   (data.case_number, data.title, data.description, 
-                    data.org_id, data.created_by_user_id, data.status,
-                    data.priority, data.severity_level, data.due_date,))
+    cursor.execute(query,
+                   (data.case_number, data.title, data.description,
+                    data.org_id, user, data.status,
+                    data.priority, severity_int, data.due_date,))
     conn.commit()
     return True
   except pyodbc.Error as e:
@@ -118,19 +124,19 @@ def get_case_detail(case_id: int):
                 c.status,
                 c.priority,
                 c.severity_level,
-                c.due_date,
-                c.created_at,
-                c.closed_at,
+                CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
+                CAST(c.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
                 c.resolution,
                 o.org_id,
                 o.name          AS org_name,
                 u.user_id       AS creator_id,
                 u.first_name    AS creator_first_name,
                 u.last_name     AS creator_last_name,
-                u.email         AS creator_email
+                u.email         AS creator_email,
                 uc.first_name    AS closed_first_name,
                 uc.last_name     AS closed_last_name,
-                uc.email         AS closed_email,
+                uc.email         AS closed_email
             FROM Cases c
             JOIN organizations o ON c.org_id = o.org_id
             JOIN users u         ON c.created_by_user_id = u.user_id
@@ -152,7 +158,7 @@ def get_case_detail(case_id: int):
                 u.first_name,
                 u.last_name,
                 u.email,
-                ca.assigned_at,
+                CAST(ca.assigned_at AS NVARCHAR(50)) AS assigned_at,
                 assigner.first_name AS assigned_by_first_name,
                 assigner.last_name  AS assigned_by_last_name
             FROM case_assignments ca
@@ -171,8 +177,8 @@ def get_case_detail(case_id: int):
             SELECT
                 cn.note_id,
                 cn.content,
-                cn.created_at,
-                cn.updated_at,
+                CAST(cn.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(cn.updated_at AS NVARCHAR(50)) AS updated_at,
                 u.user_id       AS author_id,
                 u.first_name    AS author_first_name,
                 u.last_name     AS author_last_name
@@ -193,10 +199,9 @@ def get_case_detail(case_id: int):
                 FileName        AS file_name,
                 FileExtension   AS file_extension,
                 ContentType     AS content_type,
-                upload_date,
+                CAST(upload_date AS NVARCHAR(50)) AS upload_date,
                 uploaded_by,
-                processing_status,
-                metadata_json
+                processing_status
             FROM Evidence
             WHERE case_id = ?
             ORDER BY upload_date DESC
@@ -299,9 +304,54 @@ def delete_case(case_id: int, user: int):
     
     except pyodbc.Error as e:
          return {
-            "message": "Error", 
+            "message": "Error",
             "error": str(e)
             }
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_org_agents(org_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                u.user_id,
+                u.first_name,
+                u.last_name,
+                u.email
+            FROM users u
+            JOIN roles r ON u.role_id = r.role_id
+            WHERE u.org_id = ?
+              AND u.is_enabled = 1
+              AND u.deleted_at IS NULL
+              AND r.role_name = 'Agent'
+            ORDER BY u.first_name, u.last_name
+        """, (org_id,))
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+        agents = [dict(zip(columns, row)) for row in rows]
+        return {"message": "Success", "agents": agents}
+    except pyodbc.Error as e:
+        return {"message": "Error", "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+def assign_agent(case_id: int, user_id: int, assigned_by: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO case_assignments (case_id, user_id, assigned_by, assigned_at)
+            VALUES (?, ?, ?, SYSDATETIMEOFFSET())
+        """, (case_id, user_id, assigned_by))
+        conn.commit()
+        return {"message": "Agent assigned successfully"}
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {"message": "Error", "error": str(e)}
     finally:
         cursor.close()
         conn.close()

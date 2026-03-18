@@ -16,5 +16,5 @@ class UsersUpdate(BaseModel):
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
-    role_id = Optional[int] = None
-    org_id = Optional[int] = None
+    role_id: Optional[int] = None
+    org_id: Optional[int] = None

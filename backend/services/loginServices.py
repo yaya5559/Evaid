@@ -31,7 +31,7 @@ def get_user_by_email(email):
     try:
         # only get active users (checks for soft delete)
         query = """
-            SELECT u.user_id, u.password_hash, u.email, r.role_name
+            SELECT u.user_id, u.password_hash, u.email, r.role_name, u.org_id
             FROM users u
             JOIN roles r ON r.role_id = u.role_id
             WHERE u.email = ? AND u.deleted_at IS NULL
@@ -47,25 +47,27 @@ def get_user_by_email(email):
             "user_id": row[0],
             "password_hash": row[1],
             "email": row[2],
-            "role_name": row[3]
+            "role_name": row[3],
+            "org_id": row[4]
         })
     finally:
         conn.close()
 
-def create_access_token(user_id: int, email: str, role: str, remember: bool = False):
-    expires =  timedelta(minutes=15) # represents a duration of time 
+def create_access_token(user_id: int, email: str, role: str, org_id: int = None, remember: bool = False):
+    expires =  timedelta(minutes=15) # represents a duration of time
 
     #remember signifies how long this login should stay valid
-    # token lifetime policy 
-    if remember : 
+    # token lifetime policy
+    if remember :
         expires = timedelta(days=7)
 
-    # Abenezer: updated payload and parameters of 
+    # Abenezer: updated payload and parameters of
     # function to include userid, email and role
     payload = {
         "user_id": user_id,
         "email": email,
         "role": role,
+        "org_id": org_id,
         # "sub": user_name,
         "exp": datetime.utcnow()+expires
     }
@@ -126,7 +128,7 @@ def get_refresh_token(refresh_token):
     try:
         hashedRefresh = hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
         query = """
-            SELECT u.user_id, u.email, r.role_name
+            SELECT u.user_id, u.email, r.role_name, u.org_id
             FROM user_sessions s
             INNER JOIN users u ON s.user_id = u.user_id
             INNER JOIN roles r ON r.role_id = u.role_id
@@ -141,7 +143,8 @@ def get_refresh_token(refresh_token):
         return type('User', (object,), {
             "user_id": row[0],
             "email": row[1],
-            "role_name": row[2]
+            "role_name": row[2],
+            "org_id": row[3]
         })
     finally:
         conn.close()

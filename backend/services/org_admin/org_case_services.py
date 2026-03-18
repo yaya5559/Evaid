@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from database import get_db_connection
 from models.cases import Case
 import pyodbc
+import time
 
 load_dotenv()
 
@@ -21,9 +22,9 @@ def list_org_cases(org_id: int):
                 c.status,
                 c.priority,
                 c.severity_level,
-                c.due_date,
-                c.created_at,
-                c.closed_at,
+                CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
+                CAST(c.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
                 u.first_name    AS created_by_first_name,
                 u.last_name     AS created_by_last_name,
                 u.email         AS created_by_email
@@ -68,9 +69,9 @@ def get_org_case(case_id: int, org_id: int):
                 c.status,
                 c.priority,
                 c.severity_level,
-                c.due_date,
-                c.created_at,
-                c.closed_at,
+                CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
+                CAST(c.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
                 c.resolution,
                 u.user_id       AS creator_id,
                 u.first_name    AS creator_first_name,
@@ -95,7 +96,7 @@ def get_org_case(case_id: int, org_id: int):
                 u.first_name,
                 u.last_name,
                 u.email,
-                ca.assigned_at,
+                CAST(ca.assigned_at AS NVARCHAR(50)) AS assigned_at,
                 assigner.first_name AS assigned_by_first_name,
                 assigner.last_name  AS assigned_by_last_name
             FROM case_assignments ca
@@ -114,8 +115,8 @@ def get_org_case(case_id: int, org_id: int):
             SELECT
                 cn.note_id,
                 cn.content,
-                cn.created_at,
-                cn.updated_at,
+                CAST(cn.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(cn.updated_at AS NVARCHAR(50)) AS updated_at,
                 u.user_id       AS author_id,
                 u.first_name    AS author_first_name,
                 u.last_name     AS author_last_name
@@ -136,7 +137,7 @@ def get_org_case(case_id: int, org_id: int):
                 FileName        AS file_name,
                 FileExtension   AS file_extension,
                 ContentType     AS content_type,
-                upload_date,
+                CAST(upload_date AS NVARCHAR(50)) AS upload_date,
                 uploaded_by,
                 processing_status,
                 metadata_json
@@ -173,13 +174,15 @@ def create_case(org_id: int, data: Case):
     cursor = conn.cursor()
 
     try:
+        case_number = f"CASE-{int(time.time() * 1000)}"
         cursor.execute("""
-            INSERT INTO Cases 
-            (org_id, created_by_user_id, title,
-             description, status, priority, 
+            INSERT INTO Cases
+            (CaseNumber, org_id, created_by_user_id, title,
+             description, status, priority,
             severity_level, due_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
+            case_number,
             org_id,
             data.created_by_user_id,
             data.title,
@@ -198,6 +201,53 @@ def create_case(org_id: int, data: Case):
             "message": "Error", 
             "error": str(e)
             }
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_org_case(case_id: int, org_id: int, description: str = None, priority: str = None, severity_level: str = None, due_date: str = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    fields = []
+    values = []
+
+    if description is not None:
+        fields.append("description = ?")
+        values.append(description)
+    if priority is not None:
+        fields.append("priority = ?")
+        values.append(priority)
+    if severity_level is not None:
+        fields.append("severity_level = ?")
+        values.append(severity_level)
+    if due_date is not None:
+        fields.append("due_date = ?")
+        values.append(due_date if due_date != '' else None)
+
+    if not fields:
+        return {"message": "No fields to update"}
+
+    values += [case_id, org_id]
+
+    try:
+        cursor.execute(f"""
+            UPDATE Cases
+            SET {', '.join(fields)}, updated_at = SYSDATETIMEOFFSET()
+            WHERE case_id = ? AND org_id = ? AND deleted_at IS NULL
+        """, values)
+
+        if cursor.rowcount == 0:
+            return {"message": "Case not found or access denied"}
+
+        conn.commit()
+        return {"message": "Success"}
+
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {"message": "Error", "error": str(e)}
 
     finally:
         cursor.close()
