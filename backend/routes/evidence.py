@@ -14,8 +14,9 @@ from services.evidence_service import (
     confirm_evidence,
     get_evidence_file
 )
-from services.loginServices import get_current_user
+from dependencies.auth import get_current_user
 from services.graph_service import get_evidence_network
+from models.evidence import EvidenceItemCreate
 from services.database import get_db_connection
 
 
@@ -25,35 +26,43 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)],
 )
 
+#I am registering a new piece of evidence in the system.
 @router.post("/upload")
-async def upload_for_preview(
-    case_id: str = Form(...),   # change int to str here to prevent the strict 400 error
-    file: UploadFile = File(...),
-    user_id: str = Form("System")
-):
-    # manually convert to int so we can control the error
-    try:
-        int_case_id = int(case_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="case_id must be a number")
+async def upload_evidence(item:EvidenceItemCreate):
 
-    # read raw bytes from the upload
-    file_bytes = await file.read()
+    return
+
+
+
+# @router.post("/upload")
+# async def upload_for_preview(
+#     case_id: str = Form(...),  #I EXPECT PLAIN TEXT
+#     file: UploadFile = File(...), #i EXPECT FILE STREAM
+#     user_id: str = Form("System")
+# ):
+#     # manually convert to int so we can control the error
+#     try:
+#         int_case_id = int(case_id)
+#     except ValueError:
+#         raise HTTPException(status_code=400, detail="case_id must be a number")
+
+#     # read raw bytes from the upload
+#     file_bytes = await file.read()
     
-    # use the converted int_case_id
-    file_id, metadata = analyze_and_stage_evidence(
-        int_case_id, file.filename, file.content_type, file_bytes, user_id
-    )
+#     # use the converted int_case_id
+#     file_id, metadata = analyze_and_stage_evidence(
+#         int_case_id, file.filename, file.content_type, file_bytes, user_id
+#     )
 
-    if not file_id:
-        raise HTTPException(status_code=500, detail="Failed to stage evidence to database")
+#     if not file_id:
+#         raise HTTPException(status_code=500, detail="Failed to stage evidence to database")
 
-    return {
-        "file_id": file_id,
-        "filename": file.filename,
-        "metadata": metadata,
-        "message": "File staged successfully."
-    }
+#     return {
+#         "file_id": file_id,
+#         "filename": file.filename,
+#         "metadata": metadata,
+#         "message": "File staged successfully."
+#     }
 
 @router.post("/confirm/{file_id}")
 async def confirm_upload(file_id: str):

@@ -1,4 +1,4 @@
-from backend.services.database import get_db_connection
+from services.database import get_db_connection
 from fastapi import HTTPException
 import json
 
@@ -9,6 +9,9 @@ def get_evidence_network() :
 def getGraph(caseId):
     return 
 
+
+def upload_evidence():
+    
 
 def create_evidence_link(case_id, from_id, to_id, reason, confidence=1.0, created_by: int | None =None):
     conn = get_db_connection()
