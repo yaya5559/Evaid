@@ -1,57 +1,49 @@
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Evidence]
-(
-  [FileId] [uniqueidentifier] NOT NULL,
-  [case_id] [int] NOT NULL,
-  [FileName] [nvarchar](260) NOT NULL,
-  [FileExtension] [nvarchar](20) NULL,
-  [ContentType] [nvarchar](100) NULL,
-  [FileData] [varbinary](max) NOT NULL,
-  [ChecksumSha256] [char](64) NULL,
-  [metadata_json] [nvarchar](max) NULL,
-  [upload_date] [datetimeoffset](7) NULL,
-  [uploaded_by] [nvarchar](100) NULL,
-  [processing_status] [nvarchar](20) NULL
+
+
+
+--the case-scoped anchor record.
+-- can exist with zero attachments
+-- must not store OCR output, entities, links, or hypotheses
+CREATE TABLE EvidenceItem (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
+    case_id UNIQUEIDENTIFIER NOT NULL,
+    evidenceItem_description NVARCHAR(200),
+    title NVARCHAR(20),
+    created_by_user_id INT NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY case_id REFERENCES cases(case_id),
+    FOREIGN KEY created_by_user_id REFERENCES users(user_id)
+    
 )
-AS NODE ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-ALTER TABLE [dbo].[Evidence] ADD PRIMARY KEY CLUSTERED 
-(
-	[FileId] ASC
-)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-GO
-CREATE UNIQUE NONCLUSTERED INDEX [GRAPH_UNIQUE_INDEX_589D55D2A6FE41058369A84BE5E52FD2] ON [dbo].[Evidence]
-(
-	$node_id
-)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-GO
-CREATE NONCLUSTERED INDEX [idx_Evidence_case_id] ON [dbo].[Evidence]
-(
-	[case_id] ASC
-)WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-GO
-CREATE NONCLUSTERED INDEX [idx_Evidence_CaseId] ON [dbo].[Evidence]
-(
-	[case_id] ASC
-)WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-GO
-ALTER TABLE [dbo].[Evidence] ADD  DEFAULT (newid()) FOR [FileId]
-GO
-ALTER TABLE [dbo].[Evidence] ADD  DEFAULT (sysdatetimeoffset()) FOR [upload_date]
-GO
-ALTER TABLE [dbo].[Evidence] ADD  DEFAULT ('pending') FOR [processing_status]
-GO
-ALTER TABLE [dbo].[Evidence]  WITH CHECK ADD  CONSTRAINT [FK_Evidence_Case] FOREIGN KEY([case_id])
-REFERENCES [dbo].[Cases] ([case_id])
-GO
-ALTER TABLE [dbo].[Evidence] CHECK CONSTRAINT [FK_Evidence_Case]
-GO
-ALTER TABLE [dbo].[Evidence]  WITH CHECK ADD  CONSTRAINT [FK_Evidence_Cases] FOREIGN KEY([case_id])
-REFERENCES [dbo].[Cases] ([case_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Evidence] CHECK CONSTRAINT [FK_Evidence_Cases]
-GO
+
+--immutable after ingest
+--raw thruth lives here 
+--one evidenceItem can have many attachement
+CREATE TABLE Attachment(
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
+    evidence_id UNIQUEIDENTIFIER NOT NULL,
+    attachment_kind NVARCHAR(200) NOT NULL,
+    storage_url VARCHAR (100),
+    checksum_sha256 CHAR(64),
+    attachment_status NVARCHAR(100),
+    captured_at DATETIME NOT NULL,
+    FOREIGN KEY evidence_id REFERENCES EvidenceItem(Id),
+)
+
+
+-- process log we trued to analyze this evidence at 
+--this time using this method, every asyc extraction start shere
+-- do not overwrite old runs
+CREATE TABLE AnalysisRun(
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
+    evidence_id UNIQUEIDENTIFIER NOT NULL,
+    attachment_id UNIQUEIDENTIFIER NOT NULL,
+    run_type NVARCHAR(200) NOT NULL,
+    analysisrun_status NVARCHAR(200),
+    started_at DATETIME NOT NULL,
+    finished_at DATETIME NOT NULL,
+    error_message NVARCHAR(200),
+    FOREIGN KEY evidence_id REFERENCES EvidenceItem(Id),
+    FOREIGN KEY attachment_id REFERENCES Attachment(Id)
+
+) 

@@ -1,22 +1,13 @@
-# Author: Bria Tran
-# Date: Feburary 4th, 2026
-#
-# NOTE: This code is still in progress
-# These files/logic are for how the system COULD work once fully implemented
-# 
-# This file handles all the API endpoints for evidence management
-# Basically this is where the frontend hits when users want to upload files,
-# download them, view them, or search through evidence
-
+import datetime
 from fastapi import Depends, APIRouter, UploadFile, File, Form, Response, HTTPException
 from services.evidence_service import (
     analyze_and_stage_evidence,
     confirm_evidence,
     get_evidence_file
 )
-from dependencies.auth import get_current_user
+from dependencies.auth import get_current_user, get_user_org_id, case_belong_to_org
 from services.graph_service import get_evidence_network
-from models.evidence import EvidenceItemCreate
+from backend.models.evidenceShape import EvidenceItemCreate, EvidenceItemResponse
 from services.database import get_db_connection
 
 
@@ -26,11 +17,48 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)],
 )
 
-#I am registering a new piece of evidence in the system.
-@router.post("/upload")
-async def upload_evidence(item:EvidenceItemCreate):
+#create EvidenceItem.
+@router.post("/EvidenceItem")
+async def Create_EvidenceItem(
+        item: EvidenceItemCreate,
+        user: dict = Depends(get_current_user)
+    ):
+    
+        case_id = int(item.case_id)
+        org_id = get_user_org_id(user["user_id"])
+        if org_id is None or not case_belong_to_org(case_id, org_id):
+            raise HTTPException(status_code=403, detail="Forbidden for this case")
+        
 
-    return
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            created_at = datetime.datetime.now()
+
+            cursor.execute(
+                "INSERT INTO EvidenceItem (case_id, evidenceItem_description, title, created_by_user_id, created_at)" \
+                "VALUES (?, ?, ?, ?, ?)", (item.case_id, item.description, item.title, user["user_id"], created_at)
+            )
+
+            evidence_item_id = cursor.fetchone()[0]
+            conn.commit()
+
+
+            return  EvidenceItemResponse(
+                evidence_item_id=evidence_item_id,
+                created_at=created_at,
+                status="queued",
+                message="Evidence item created successfully"
+
+            )
+            
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            conn.close()
+        
+
+ 
 
 
 
