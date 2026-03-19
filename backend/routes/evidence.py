@@ -4,21 +4,12 @@ from services.evidence.triage_service import confirm_pending_signal, reject_pend
 from services.evidence_service import (
     analyze_and_stage_evidence,
     confirm_evidence,
-<<<<<<< HEAD
     get_evidence_file,
     _hash_uploadfile_sha256, 
     _ensure_evidence_exists,
     _insert_analysis_run,
     _insert_attachment,
     _get_evidence_case_id
-=======
-    get_evidence_file
-)
-from dependencies.auth import get_current_user
-from services.graph_service import get_evidence_network
-from models.evidence import EvidenceItemCreate
-from services.database import get_db_connection
->>>>>>> f6d532b5 (remove node_modules from repo + graph and access system backend)
 
 )
 from services.evidence.triage_service import get_pending_signals
@@ -36,7 +27,6 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)],
 )
 
-<<<<<<< HEAD
 CHUNK_SIZE: Final[int] = 8192
 MAX_UPLOAD_BYTES: Final[int] =  50 * 1024 *1024 
 ALLOWED_CONTENT_TYPES: Final[set[str]] = {
@@ -77,45 +67,6 @@ async def Create_EvidenceItem(
                 """, (item.case_id, item.description, item.title, user["user_id"], created_at)
                 
             )
-=======
-#I am registering a new piece of evidence in the system.
-@router.post("/upload")
-async def upload_evidence(item:EvidenceItemCreate):
-
-    return
-
-
-
-# @router.post("/upload")
-# async def upload_for_preview(
-#     case_id: str = Form(...),  #I EXPECT PLAIN TEXT
-#     file: UploadFile = File(...), #i EXPECT FILE STREAM
-#     user_id: str = Form("System")
-# ):
-#     # manually convert to int so we can control the error
-#     try:
-#         int_case_id = int(case_id)
-#     except ValueError:
-#         raise HTTPException(status_code=400, detail="case_id must be a number")
-
-#     # read raw bytes from the upload
-#     file_bytes = await file.read()
-    
-#     # use the converted int_case_id
-#     file_id, metadata = analyze_and_stage_evidence(
-#         int_case_id, file.filename, file.content_type, file_bytes, user_id
-#     )
-
-#     if not file_id:
-#         raise HTTPException(status_code=500, detail="Failed to stage evidence to database")
-
-#     return {
-#         "file_id": file_id,
-#         "filename": file.filename,
-#         "metadata": metadata,
-#         "message": "File staged successfully."
-#     }
->>>>>>> f6d532b5 (remove node_modules from repo + graph and access system backend)
 
             evidence_item_id = cursor.fetchone()[0]
             conn.commit()
