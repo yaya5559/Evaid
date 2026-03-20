@@ -6,11 +6,8 @@ from pydantic import BaseModel, Field
 from dependencies.auth import get_current_user
 from uuid import UUID
 
-<<<<<<< HEAD
 
 
-=======
->>>>>>> 2ec97799 (remove node_modules from repo + graph and access system backend)
 router = APIRouter(prefix="/graph")
 
 class CreatEdgeModel(BaseModel):

@@ -27,6 +27,7 @@ class AttachmentUploadResponse(BaseModel):
     size_bytes: int
     status: str
 
+<<<<<<< HEAD
 
 class ExtractorInput(BaseModel):
     attachment_id: UUID
@@ -39,6 +40,8 @@ class ExtractedSignal(BaseModel):
     normalized_value: Optional[str] = None
     confidence: float
     source_locator: dict
+=======
+>>>>>>> e40537b6 (upload evidence done)
 
 
 
