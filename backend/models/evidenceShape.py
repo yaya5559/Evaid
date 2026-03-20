@@ -1,23 +1,30 @@
 from pydantic import BaseModel
-import uuid
+from uuid import UUID
 import datetime
 
 
 class EvidenceItemCreate(BaseModel):
-    case_id: uuid.uuid4
+    case_id: UUID
     title: str
-    created_by_user_id: int
     description:str
 
 
-class EvidenceItemResponse:
-    evidenceItem_id: uuid
-    created_at: datetime
+class EvidenceItemResponse(BaseModel):
+    evidenceItem_id: UUID
+    created_at: datetime.datetime
+    status: str
     message: str
 
 
 class AttachementCreate(BaseModel):
-    evidence_id: uuid.uuid4
+    evidence_id: UUID
+
+class AttachmentUploadResponse(BaseModel):
+    attachment_id: UUID
+    analysis_run_id: UUID
+    checksum_sha256: str
+    size_bytes: int
+    status: str
 
 
 

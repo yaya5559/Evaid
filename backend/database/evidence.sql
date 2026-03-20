@@ -8,11 +8,11 @@ CREATE TABLE EvidenceItem (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
     case_id UNIQUEIDENTIFIER NOT NULL,
     evidenceItem_description NVARCHAR(200),
-    title NVARCHAR(20),
+    title NVARCHAR(200),
     created_by_user_id INT NOT NULL,
     created_at DATETIME NOT NULL,
-    FOREIGN KEY case_id REFERENCES cases(case_id),
-    FOREIGN KEY created_by_user_id REFERENCES users(user_id)
+    FOREIGN KEY (case_id) REFERENCES cases(case_id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users(user_id)
     
 )
 
@@ -23,11 +23,11 @@ CREATE TABLE Attachment(
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
     evidence_id UNIQUEIDENTIFIER NOT NULL,
     attachment_kind NVARCHAR(200) NOT NULL,
-    storage_url VARCHAR (100),
+    file_bytes VARBINARY(MAX),
     checksum_sha256 CHAR(64),
     attachment_status NVARCHAR(100),
     captured_at DATETIME NOT NULL,
-    FOREIGN KEY evidence_id REFERENCES EvidenceItem(Id),
+    FOREIGN KEY (evidence_id) REFERENCES EvidenceItem(Id)
 )
 
 
@@ -39,11 +39,10 @@ CREATE TABLE AnalysisRun(
     evidence_id UNIQUEIDENTIFIER NOT NULL,
     attachment_id UNIQUEIDENTIFIER NOT NULL,
     run_type NVARCHAR(200) NOT NULL,
-    analysisrun_status NVARCHAR(200),
-    started_at DATETIME NOT NULL,
-    finished_at DATETIME NOT NULL,
+    analysisrun_status NVARCHAR(200) NOT NULL,
+    started_at DATETIME,
+    finished_at DATETIME,
     error_message NVARCHAR(200),
-    FOREIGN KEY evidence_id REFERENCES EvidenceItem(Id),
-    FOREIGN KEY attachment_id REFERENCES Attachment(Id)
-
+    FOREIGN KEY (evidence_id) REFERENCES EvidenceItem(Id),
+    FOREIGN KEY (attachment_id) REFERENCES Attachment(Id)
 ) 

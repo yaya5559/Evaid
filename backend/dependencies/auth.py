@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from services.loginServices import decode_access_token
 from services.database import get_db_connection
+from uuid import UUID
 
 #source of truth :
 #evaide admin: full system access
@@ -66,7 +67,7 @@ def get_user_org_id(user_id:int) -> int | None:
     finally:
         conn.close()
 
-def case_belong_to_org(case_id: int, org_id: int) -> bool:
+def case_belong_to_org(case_id: UUID, org_id: int) -> bool:
     conn = get_db_connection()
     cur = conn.cursor()
     try:

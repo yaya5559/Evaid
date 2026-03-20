@@ -1,6 +1,7 @@
 from enum import Enum
 from dataclasses import dataclass
 from pydantic import BaseModel
+from uuid import UUID
 
 class NodeType(str, Enum):
     PERSON = 'person'
@@ -33,7 +34,7 @@ class GraphEdge:
 
 @dataclass
 class GraphResponse:
-    case_id: int
+    case_id: UUID
     nodes: list[GraphNode]
     edges: list[GraphEdge]
 
