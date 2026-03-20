@@ -1,11 +1,11 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 from fastapi import APIRouter, status, Depends
 from models.GraphShape import GraphEdge
 from services.graph_service import create_evidence_link
 from pydantic import BaseModel, Field
 from dependencies.auth import get_current_user
 from uuid import UUID
+
 
 router = APIRouter(prefix="/graph")
 
