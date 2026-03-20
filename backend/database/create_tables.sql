@@ -58,7 +58,7 @@ CREATE TABLE user_sessions (
 
 -- Table: cases (stores organizations case information)
 CREATE TABLE cases (
-    case_id INT IDENTITY(1,1) PRIMARY KEY,
+    case_id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
     org_id INT NOT NULL FOREIGN KEY REFERENCES organizations (org_id),
     created_by_user_id INT NOT NULL FOREIGN KEY REFERENCES users (user_id),
     title NVARCHAR(255) NOT NULL,
