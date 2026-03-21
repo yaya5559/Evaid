@@ -1,5 +1,9 @@
 import os
 from azure.ai.documentintelligence import DocumentIntelligenceClient
+from typing import Optional
+from models.evidenceShape import ExtractedSignal, ExtractorInput
+from azure.ai.vision.imageanalysis import ImageAnalysisClient
+from azure.ai.vision.imageanalysis.models import VisualFeatures
 from azure.core.credentials import AzureKeyCredential
 
 #converts any supported files
