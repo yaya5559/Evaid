@@ -45,7 +45,6 @@ CREATE TABLE AnalysisRun(
     error_message NVARCHAR(200),
     FOREIGN KEY (evidence_id) REFERENCES EvidenceItem(Id),
     FOREIGN KEY (attachment_id) REFERENCES Attachment(Id)
-<<<<<<< HEAD
 ) 
 
 CREATE TABLE Signal(
@@ -59,6 +58,3 @@ CREATE TABLE Signal(
     confidence FLOAT NOT NULL,
     dource_loactor NVARCHAR(200) NOT NULL 
 )
-=======
-) 
->>>>>>> e40537b6 (upload evidence done)

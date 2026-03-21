@@ -1,6 +1,10 @@
 import os
 from typing import Optional
+<<<<<<< HEAD
 from models.evidenceShape import ExtractedSignal, ExtractorInput
+=======
+from backend.models.evidenceShape import ExtractedSignal, ExtractorInput
+>>>>>>> 743eb03d ( extraction + ocr need to determine how to find signals to proceeds)
 from azure.ai.vision.imageanalysis import ImageAnalysisClient
 from azure.ai.vision.imageanalysis.models import VisualFeatures
 from azure.core.credentials import AzureKeyCredential
