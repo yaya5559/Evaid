@@ -10,6 +10,7 @@ import OrgCaseProgress from './components/organization/OrgCaseProgress'
 import AddAgent from './components/admin/AddAgents'
 import Cases from './components/admin/Cases'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
+import AgentCases from './components/agent/AgentCases'
 
 type ProtectedRouteProps = {
   allowedRoles: string[]
@@ -24,7 +25,7 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
   if (!allowedRoles.includes(role)) {
     if (role === 'evaide_admin') return <Navigate to="/Dashboard" replace />
     if (role === 'org_admin') return <Navigate to="/Org_Dashboard" replace />
-    if (role === 'agent') return <Navigate to="/Org_Dashboard" replace />
+    if (role === 'agent') return <Navigate to="/AgentCases" replace />
     return <Navigate to="/" replace />
   }
   return <>{children}</>
@@ -46,6 +47,9 @@ function App() {
       {/* Org Admin only */}
       <Route path="/Org_Dashboard" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgDashboard /></ProtectedRoute>} />
       <Route path="/OrgCaseProgress" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgCaseProgress /></ProtectedRoute>} />
+
+      {/* Agent only */}
+      <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
 
       {/* Any authenticated user */}
       <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />

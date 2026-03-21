@@ -866,76 +866,47 @@ useEffect(() => {
               )}
               {caseDetail.notes.map((note) => (
                 <div key={note.note_id} className="orgdash-progress-row">
-                  <div className="orgdash-progress-meta" style={{ justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <span>{note.author_first_name} {note.author_last_name}</span>
-                      <span>{formatDate(note.created_at)}</span>
+                  {editingNoteId === note.note_id ? (
+                    <div style={{ width: '100%' }}>
+                      <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
+                        <button type="button" className="admin-btn" onClick={() => setEditingNoteId(null)}>Cancel</button>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        className="admin-btn"
-                        style={{ padding: '2px 8px', fontSize: '0.75rem' }}
-                        onClick={() => {
-                          setEditingNoteId(note.note_id)
-                          setEditNoteContent(note.content)
-                          setConfirmDeleteNoteId(null)
-                        }}
-                        disabled={loading}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-btn critical"
-                        style={{ padding: '2px 8px', fontSize: '0.75rem' }}
-                        onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }}
-                        disabled={loading}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                  {confirmDeleteNoteId === note.note_id ? (
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem' }}>Delete this note?</span>
-                      <button type="button" className="admin-btn critical" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
-                      <button type="button" className="admin-btn" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
-                    </div>
-                  ) : editingNoteId === note.note_id ? (
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <textarea
-                        className="edit-org-input"
-                        value={editNoteContent}
-                        onChange={(e) => setEditNoteContent(e.target.value)}
-                        rows={2}
-                        style={{ flex: 1, resize: 'vertical' }}
-                      />
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <button type="button" className="admin-btn primary" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
-                        <button type="button" className="admin-btn" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => setEditingNoteId(null)}>Cancel</button>
+                  ) : confirmDeleteNoteId === note.note_id ? (
+                    <div style={{ width: '100%' }}>
+                      <p style={{ margin: '0 0 8px' }}>{note.content}</p>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
+                        <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
+                        <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
                       </div>
                     </div>
                   ) : (
-                    <p>{note.content}</p>
+                    <>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0 }}>{note.content}</p>
+                        <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+                        <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
+                        <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
+                      </div>
+                    </>
                   )}
                 </div>
               ))}
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'flex-start' }}>
+              <div style={{ marginTop: '12px' }}>
                 <textarea
                   className="edit-org-input"
                   placeholder="Add a note..."
                   value={newNoteContent}
                   onChange={(e) => setNewNoteContent(e.target.value)}
-                  rows={2}
-                  style={{ flex: 1, resize: 'vertical' }}
+                  rows={3}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
-                <button
-                  type="button"
-                  className="admin-btn primary"
-                  onClick={() => void handleAddNote()}
-                  disabled={loading || !newNoteContent.trim()}
-                >
+                <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>
                   Add Note
                 </button>
               </div>

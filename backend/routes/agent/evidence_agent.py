@@ -27,3 +27,8 @@ def confirm_evidence(file_id: str, agent_id: int):
 @router.delete("/cancel/{file_id}")
 def cancel_evidence(file_id: str, agent_id: int):
     return services.cancel_evidence(file_id, agent_id)
+
+
+@router.delete("/{file_id}")
+def delete_my_evidence(file_id: str, agent_id: int):
+    return services.delete_my_evidence(file_id, agent_id)

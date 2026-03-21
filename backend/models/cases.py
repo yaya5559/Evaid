@@ -52,3 +52,10 @@ class CloseCase(BaseModel):
     status: str
     resolution: str
     closed_by_user_id: int
+
+class AgentCreateCase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    priority: Optional[str] = None
+    severity_level: Optional[str] = None
+    due_date: Optional[str] = None

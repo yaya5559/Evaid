@@ -172,6 +172,30 @@ def confirm_evidence(file_id: str, agent_id: int):
         conn.close()
 
 
+def delete_my_evidence(file_id: str, agent_id: int):
+    """Deletes any evidence the agent uploaded, regardless of status."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT case_id FROM Evidence WHERE FileId = ? AND uploaded_by = ?", (file_id, agent_id))
+        row = cursor.fetchone()
+        if not row:
+            return {"message": "Evidence not found or access denied"}
+
+        cursor.execute("DELETE FROM Evidence WHERE FileId = ?", (file_id,))
+        conn.commit()
+        return {"message": "Success"}
+
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {"message": "Error", "error": str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 def cancel_evidence(file_id: str, agent_id: int):
     """Deletes a pending evidence upload. Agent must be on the case."""
     conn = get_db_connection()

@@ -5,10 +5,7 @@ import pyodbc
 load_dotenv()
 
 
-def agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
+def _agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
     cursor.execute("""
         SELECT 1 FROM Cases c
         LEFT JOIN case_assignments ca ON c.case_id = ca.case_id
@@ -19,55 +16,12 @@ def agent_is_on_case(cursor, case_id: int, agent_id: int) -> bool:
     return cursor.fetchone() is not None
 
 
-def list_case_notes(case_id: int, agent_id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        if not agent_is_on_case(cursor, case_id, agent_id):
-            return {"message": "Case not found or access denied"}
-
-        cursor.execute("""
-            SELECT
-                cn.note_id,
-                cn.content,
-                cn.created_at,
-                cn.updated_at,
-                u.user_id       AS author_id,
-                u.first_name    AS author_first_name,
-                u.last_name     AS author_last_name
-            FROM case_notes cn
-            JOIN users u ON cn.created_by_user_id = u.user_id
-            WHERE cn.case_id = ?
-            ORDER BY cn.created_at ASC
-            """, (case_id,))
-
-        rows = cursor.fetchall()
-        columns = [col[0] for col in cursor.description]
-        notes = [dict(zip(columns, row)) for row in rows]
-
-        return {
-            "message": "Success", 
-            "notes": notes
-            }
-
-    except pyodbc.Error as e:
-        return {
-            "message": "Error", 
-            "error": str(e)
-            }
-
-    finally:
-        cursor.close()
-        conn.close()
-
-
 def create_case_note(case_id: int, agent_id: int, content: str):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        if not agent_is_on_case(cursor, case_id, agent_id):
+        if not _agent_is_on_case(cursor, case_id, agent_id):
             return {"message": "Case not found or access denied"}
 
         cursor.execute("""
@@ -75,15 +29,11 @@ def create_case_note(case_id: int, agent_id: int, content: str):
             VALUES (?, ?, ?)
         """, (case_id, agent_id, content))
         conn.commit()
-
         return {"message": "Success"}
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {
-            "message": "Error", 
-            "error": str(e)
-            }
+        return {"message": "Error", "error": str(e)}
 
     finally:
         cursor.close()
@@ -109,10 +59,7 @@ def update_my_note(note_id: int, agent_id: int, content: str):
 
     except pyodbc.Error as e:
         conn.rollback()
-        return {
-            "message": "Error", 
-            "error": str(e)
-            }
+        return {"message": "Error", "error": str(e)}
 
     finally:
         cursor.close()
