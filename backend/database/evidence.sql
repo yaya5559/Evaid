@@ -46,3 +46,15 @@ CREATE TABLE AnalysisRun(
     FOREIGN KEY (evidence_id) REFERENCES EvidenceItem(Id),
     FOREIGN KEY (attachment_id) REFERENCES Attachment(Id)
 ) 
+
+CREATE TABLE Signal(
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(), 
+    evidence_id UNIQUEIDENTIFIER NOT NULL,
+    attachment_id UNIQUEIDENTIFIER NOT NULL,
+    analysis_run_id UNIQUEIDENTIFIER NOT NULL,
+    signal_type NVARCHAR(200) NOT NULL, -- platform_hint, alias, server_name
+    raw_value NVARCHAR(900) NOT NULL, --exactly what etractor saw
+    normalized_value NVARCHAR(200) NOT NULL, --cleaned version
+    confidence FLOAT NOT NULL,
+    dource_loactor NVARCHAR(200) NOT NULL 
+)
