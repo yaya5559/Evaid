@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from uuid import UUID
 import datetime
+from typing import Optional
 
 
 class EvidenceItemCreate(BaseModel):
@@ -26,6 +27,18 @@ class AttachmentUploadResponse(BaseModel):
     size_bytes: int
     status: str
 
+
+class ExtractorInput(BaseModel):
+    attachment_id: UUID
+    attachment_kind: str
+    file_bytes: bytes
+
+class ExtractedSignal(BaseModel):
+    signal_type: str
+    raw_value: str
+    normalized_value: Optional[str] = None
+    confidence: float
+    source_locator: dict
 
 
 
