@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Nav from './Nav'
-import { addAgent, getOrganizations } from '../../helpers/api-communicators'
-import type { OrganizationListItem } from '../../helpers/api-communicators'
+import { addAgent } from '../../helpers/admin/AddAgent'
+import { getOrganizations,type OrganizationListItem } from '../../helpers/admin/organizations'
 import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/AddAgent.css'
 

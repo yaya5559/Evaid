@@ -1,9 +1,12 @@
 {
   "scripts": {
+    "dev": "node start-dev.js",
     "cy:open": "node cypress-start.js",
-    "cy:run": "node cypress-start.js --run"
+    "cy:run": "node cypress-start.js --run",
+    "build": "vite build"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "cypress": "^15.9.0"
   }
 }

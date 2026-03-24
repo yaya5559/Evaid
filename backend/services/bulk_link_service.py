@@ -8,7 +8,7 @@
 # Right now it just finds duplicate files (same hash) and connects them
 # Could add more auto-linking logic later like matching by metadata
 
-from database import get_db_connection
+from services.database import get_db_connection
 from services.graph_service import create_evidence_link
 
 # automatically links files that are duplicates
