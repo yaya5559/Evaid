@@ -10,8 +10,7 @@ def list_organizations():
    return services.list_active_organization()
 
 @router.post("/Add")
-def addOrganization(data: Organization): 
-    
+def addOrganization(data: Organization):  
     if not services.check_organization(data.company_name):
       raise HTTPException(
          status_code = status.HTTP_409_CONFLICT,
