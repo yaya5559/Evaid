@@ -4,7 +4,6 @@ import OrgNav from './OrgNav'
 import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/OrgDashboard.css'
 
-
 type CaseStatus = 'Solved' | 'Pending' | 'Discarded'
 
 type CaseRecord = {

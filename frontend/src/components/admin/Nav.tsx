@@ -1,30 +1,16 @@
-import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
 
-function Nav() {
-  const { user, logout } = useAuth()
+function AdminNav() {
+  const { logout } = useAuth()
   const navigate = useNavigate()
-  const [loggingOut, setLoggingOut] = useState(false)
-
-  const initials = (user?.name || user?.email || 'Security Admin')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
 
   const onLogout = async () => {
-    setLoggingOut(true)
-    try {
-      await logout()
-      navigate('/Login', { replace: true })
-    } finally {
-      setLoggingOut(false)
-    }
+  await logout()
+  navigate('/Login', { replace: true })
   }
 
   return (
@@ -86,8 +72,12 @@ function Nav() {
           {loggingOut ? "Signing out..." : "Sign out"}
         </button>
       </div>
+
+      <button className='admin-btn admin-btn-ghost org-nav-logout' onClick={() => void onLogout()} type='button'>
+      Sign out
+      </button>
     </>
   );
 }
 
-export default Nav
+export default AdminNav

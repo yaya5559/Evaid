@@ -10,7 +10,7 @@ DROP TABLE IF EXISTS Evidence;
 -- Evidence Node: Updated with tracking and status columns
 CREATE TABLE Evidence (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),  -- auto-generates UUID for each file
-    case_id INT NOT NULL,                                          -- which case this evidence belongs to
+    case_id UNIQUEIDENTIFIER NOT NULL,                                          -- which case this evidence belongs to
     evidence_type NVARCHAR(20) NOT NULL, --image, video, audio, text, document
     title NVARCHAR(255) NOT NULL,
     evidence_description NVARCHAR(500),

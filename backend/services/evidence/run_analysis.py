@@ -1,6 +1,7 @@
 from services.database import get_db_connection
 from fastapi import HTTPException
 from datetime import datetime, timezone
+from backend.services.evidence.extractors import DocumentExtractor
 
 
 
@@ -64,8 +65,6 @@ def claim_next_analysis_run():
     finally:
         conn.close()
 
-
-
 def load_run_attachment(analysis_run_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -108,12 +107,11 @@ def load_run_attachment(analysis_run_id):
         conn.close()
 
 #choose extractor by MIME type
-def select_extractor(attachment_kind):
-    kind = (attachment_kind or "").lower()
+def select_extractor(attachment_kind: str):
+    if attachment_kind in DocumentExtractor.SUPPORTED_TYPES:
+        return DocumentExtractor()
+    return None
 
-    if kind.startswith("text/"):
-        return
-    return 
 
     
 
@@ -147,4 +145,5 @@ def run_analysis(analysis_run_id):
 
     
     except Exception as e:
+        return
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Nav from './Nav'
-import { addOrganization } from '../../helpers/api-communicators'
+import { addOrganization } from '../../helpers/admin/organizations'
 import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/AddOrganization.css'
 

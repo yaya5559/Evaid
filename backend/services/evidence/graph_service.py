@@ -11,6 +11,7 @@ def getGraph(caseId):
 
 
 def upload_evidence():
+    return 
     
 
 def create_evidence_link(case_id, from_id, to_id, reason, confidence=1.0, created_by: int | None =None):

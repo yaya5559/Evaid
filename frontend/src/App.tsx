@@ -1,36 +1,58 @@
-import './App.css'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { useAuth } from './context/AuthContext'
 import HomePage from './components/HomePage'
 import Login from './components/Login'
-
+import Dashboard from './components/admin/Dashboard'
 import AddOrganization from './components/admin/AddOrganization'
 import EditOrganization from './components/admin/EditOrganization'
 import OrgDashboard from './components/organization/OrgDashboard'
 import OrgCaseProgress from './components/organization/OrgCaseProgress'
 import AddAgent from './components/admin/AddAgents'
 import Cases from './components/admin/Cases'
-import EvidenceUpload from './components/Evidence/EvidenceUpload';
-import AuthGate from './components/AuthGate'
+import EvidenceUpload from './components/Evidence/EvidenceUpload'
+import AgentCases from './components/agent/AgentCases'
 
+type ProtectedRouteProps = {
+  allowedRoles: string[]
+  children: React.ReactNode
+}
+
+function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/Login" replace />
+  const role = (user as any).role as string
+  if (!allowedRoles.includes(role)) {
+    if (role === 'evaide_admin') return <Navigate to="/Dashboard" replace />
+    if (role === 'org_admin') return <Navigate to="/Org_Dashboard" replace />
+    if (role === 'agent') return <Navigate to="/AgentCases" replace />
+    return <Navigate to="/" replace />
+  }
+  return <>{children}</>
+}
 
 function App() {
-
-
   return (
     <Routes>
-
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />
-      <Route element={<AuthGate roles={["evaide_admin","org_admin" ]} />}>
-        <Route path='/Add_Organization' element = {<AddOrganization/>}/>
-        <Route path='/Edit_Organization' element = {<EditOrganization/>}/>
-        <Route path='/Org_Dashboard' element={<OrgDashboard />} />
-        <Route path='/Evidence_Upload' element={<EvidenceUpload />} />
-        <Route path='/OrgCaseProgress' element={<OrgCaseProgress/>} />
-        <Route path='/Register_Agent' element = {<AddAgent/>}/>
-        <Route path='/Cases' element = {<Cases/>} />
-      </Route>
 
+      {/* Evaide Admin only */}
+      <Route path="/Dashboard" element={<ProtectedRoute allowedRoles={['evaide_admin']}><Dashboard /></ProtectedRoute>} />
+      <Route path="/Add_Organization" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AddOrganization /></ProtectedRoute>} />
+      <Route path="/Edit_Organization" element={<ProtectedRoute allowedRoles={['evaide_admin']}><EditOrganization /></ProtectedRoute>} />
+      <Route path="/Register_Agent" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AddAgent /></ProtectedRoute>} />
+      <Route path="/Cases" element={<ProtectedRoute allowedRoles={['evaide_admin']}><Cases /></ProtectedRoute>} />
+
+      {/* Org Admin only */}
+      <Route path="/Org_Dashboard" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgDashboard /></ProtectedRoute>} />
+      <Route path="/OrgCaseProgress" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgCaseProgress /></ProtectedRoute>} />
+
+      {/* Agent only */}
+      <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
+
+      {/* Any authenticated user */}
+      <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
     </Routes>
   );
 }
