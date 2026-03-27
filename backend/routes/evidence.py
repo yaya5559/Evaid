@@ -13,7 +13,7 @@ from services.evidence_service import (
 )
 from dependencies.auth import get_current_user, get_user_org_id, case_belong_to_org
 from services.graph_service import get_evidence_network
-from backend.models.evidenceShape import AttachmentUploadResponse, EvidenceItemCreate, EvidenceItemResponse
+from models.evidenceShape import AttachmentUploadResponse, EvidenceItemCreate, EvidenceItemResponse
 from services.database import get_db_connection
 from uuid import UUID
 import hashlib
