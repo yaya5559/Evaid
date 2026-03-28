@@ -7,13 +7,24 @@ import re, json
 
 #universal Regex
 
+<<<<<<< HEAD
 def run_universal_extraction(markdown: str, attachement_id: str, cursor) -> list[ExtractedSignal]:
+=======
+def run_universal_extraction(markdown: str, attachement_id:str) -> list[ExtractedSignal]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+>>>>>>> b0dbcb09 (AI done)
     cursor.execute(
         "SELECT name, regex_pattern FROM SignalTypeDefinition "
         "WHERE scope = 'universal' AND regex_pattern IS NOT NULL"
     )
 
     definitions = cursor.fetchall()
+<<<<<<< HEAD
+=======
+    conn.close()
+>>>>>>> b0dbcb09 (AI done)
 
     signals = []
 
@@ -62,13 +73,21 @@ def detect_platform(markdown: str) ->  tuple[str, float, str]:
     return result["platform"], result["confidence"], result["reasoning"]
 
 
+<<<<<<< HEAD
 def load_case_hints(case_id: str, cursor) -> list[dict]:
+=======
+def load_case_hints(case_id:str) -> list[dict]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+>>>>>>> b0dbcb09 (AI done)
     cursor.execute(
         "SELECT name, llm_hint FROM SignalTypeDefinition "
         "WHERE scope = 'custom' and case_id = ?",
         (case_id,)
     )
     rows = cursor.fetchall()
+<<<<<<< HEAD
     return [{"name": r[0], "hint": r[1]} for r in rows]
 
 
@@ -76,6 +95,16 @@ def run_llm_extraction(
     markdown: str, platform_hint: str, case_id: str, attachment_id: str, cursor
 ) -> list[ExtractedSignal]:
     custom_hints = load_case_hints(case_id, cursor)
+=======
+    conn.close()
+    return [{"name":r[0], "hint": r[1]} for r in rows ]
+
+
+def run_llm_extraction(
+    markdown: str, platform_hint: str, case_id: str, attachment_id: str
+) -> list[ExtractedSignal]:
+    custom_hints = load_case_hints(case_id)
+>>>>>>> b0dbcb09 (AI done)
     hints_block = ""
 
     if custom_hints: 
