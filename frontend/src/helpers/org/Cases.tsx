@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto'
 import { api } from '../../context/AuthContext'
 
 export type OrgCaseListItem = {
@@ -252,6 +253,15 @@ export const orgDeleteEvidence = async (fileId: string, orgId: string) => {
     throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete evidence')
   }
 }
+export const orgCreateEvidenceItem = async (case_id: UUID, title: string, description: string) => {
+  try{
+    const formData = new FormData()
+
+  }catch(err:any){
+
+  }
+}
+
 
 export const orgUploadEvidence = async (caseId: string, file: File, userId: number) => {
   try {

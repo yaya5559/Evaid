@@ -137,7 +137,7 @@ def run_llm_extraction(
                 """
             }]
     )
-    items = json.loads(response.choices[0].message.content)
+    items = json.loads(response.choices[0].message.content)["results"]
 
     return [
         ExtractedSignal(
