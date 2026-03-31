@@ -4,7 +4,8 @@ import {
   agentGetCaseDetail, agentUpdateCase,
   agentCreateNote, agentUpdateNote,
   agentUploadEvidence, agentConfirmEvidence, agentDeleteEvidence,
-  type AgentCaseDetailResponse,
+  getActorsForCase,
+  type AgentCaseDetailResponse, type Actor,
 } from '../../helpers/agent/Cases'
 import { useAuth } from '../../context/AuthContext'
 import AgentLayout from './AgentLayout'
@@ -22,6 +23,12 @@ function normalizeStatus(s: string | undefined): CaseStatus {
 
 const statusTone: Record<CaseStatus, string> = { Solved: 'good', Closed: 'good', Open: 'good', Discarded: 'critical' }
 const severityLabel: Record<number, string> = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' }
+
+function roleColor(role: string): string {
+  if (role === 'Suspect') return 'critical'
+  if (role === 'Person of Interest') return 'info'
+  return 'neutral'
+}
 
 function formatDate(d: string | undefined | null) {
   if (!d) return '—'
@@ -52,6 +59,9 @@ function AgentCaseDetail() {
   // evidence
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
   const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
+
+  const [actors, setActors] = useState<Actor[]>([])
+  const [actorsLoading, setActorsLoading] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -124,6 +134,15 @@ function AgentCaseDetail() {
   useEffect(() => { void loadDetail() }, [caseId, agentId, orgId])
 
   useEffect(() => {
+    if (!caseId) return
+    setActorsLoading(true)
+    getActorsForCase(caseId)
+      .then(setActors)
+      .catch(() => setActors([]))
+      .finally(() => setActorsLoading(false))
+  }, [caseId])
+
+  useEffect(() => {
     if (!success && !error) return
     const t = setTimeout(() => { setSuccess(null); setError(null) }, 4000)
     return () => clearTimeout(t)
@@ -185,6 +204,28 @@ function AgentCaseDetail() {
               {detail.case.due_date && <span>Due: {formatDate(detail.case.due_date)}</span>}
             </div>
             {detail.case.description && <p style={{ marginTop: '12px' }}>{detail.case.description}</p>}
+          </section>
+
+          {/* Actors */}
+          <section className="admin-card" style={{ marginBottom: '16px' }}>
+            <h2>Actors ({actors.length})</h2>
+            {actorsLoading && <p style={{ opacity: 0.6 }}>Loading actors...</p>}
+            {!actorsLoading && actors.length === 0 && <p style={{ opacity: 0.7 }}>No actors linked to this case.</p>}
+            {!actorsLoading && actors.map((actor) => (
+              <div key={actor.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <strong>{actor.primaryName}</strong>
+                  <span className={`admin-pill ${roleColor(actor.role)}`}>{actor.role}</span>
+                  <span className={`admin-pill ${actor.source === 'AI' ? 'info' : 'neutral'}`}>{actor.source}</span>
+                </div>
+                <div style={{ fontSize: '0.82rem', opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                  <span>Aliases: {actor.aliases.length > 0 ? actor.aliases.join(', ') : '—'}</span>
+                  {actor.confidenceScore !== null && <span>Confidence: {Math.round(actor.confidenceScore * 100)}%</span>}
+                  <span>Added: {formatDate(actor.createdAt)}</span>
+                  <span>{actor.evidenceCount} evidence · {actor.casesCount} cases</span>
+                </div>
+              </div>
+            ))}
           </section>
 
           {/* Evidence */}

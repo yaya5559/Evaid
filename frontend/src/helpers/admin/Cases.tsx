@@ -78,6 +78,23 @@ export type CaseNotes = {
     author_last_name: string
 }
 
+export type Actor = {
+  id: string
+  primaryName: string
+  aliases: string[]
+  role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
+  confidenceScore: number | null
+  source: 'AI' | 'User'
+  createdAt: string
+  evidenceCount: number
+  casesCount: number
+}
+
+// Stub — connect to /cases/{case_id}/actors when backend is available
+export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
+  return []
+}
+
 export const adminGetOrgCases = async (orgId: string) => {
     try {
         const res = await api.get(`/admin/cases/org/${orgId}`, {

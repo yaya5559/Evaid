@@ -1,5 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
+import { SignalProvider } from './context/SignalContext'
+import { SignalToast } from './components/shared/SignalToast'
+import { SignalModal } from './components/shared/SignalModal'
+import { SignalPanel } from './components/shared/SignalPanel'
+import { FloatingSignalButton } from './components/shared/FloatingSignalButton'
 import HomePage from './components/HomePage'
 import Login from './components/Login'
 import Dashboard from './components/admin/Dashboard'
@@ -36,7 +41,12 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
 
 function App() {
   return (
-    <Routes>
+    <SignalProvider>
+      <SignalToast />
+      <SignalModal />
+      <SignalPanel />
+      <FloatingSignalButton />
+      <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />
 
@@ -60,6 +70,7 @@ function App() {
       {/* Any authenticated user */}
       <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
     </Routes>
+    </SignalProvider>
   )
 }
 
