@@ -2,9 +2,13 @@
   "ExpandedNodes": [
     "",
     "\\backend",
+    "\\backend\\dependencies",
     "\\backend\\routes",
-    "\\backend\\services"
+    "\\backend\\routes\\org_admin",
+    "\\backend\\services",
+    "\\backend\\services\\agent",
+    "\\backend\\services\\org_admin"
   ],
-  "SelectedNode": "\\backend\\services\\bulk_link_service.py",
+  "SelectedNode": "\\backend\\services\\org_admin\\org_case_services.py",
   "PreviewInSolutionExplorer": false
 }

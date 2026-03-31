@@ -2,6 +2,8 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router as api_router
 from routes import evidence
+from routes.org_admin import assignment_org_admin
+from uuid import UUID
 
 app = FastAPI()
 
@@ -37,3 +39,4 @@ async def get_mock_cases():
 app.include_router(cases_filler)
 app.include_router(api_router)
 app.include_router(evidence.router)
+app.include_router(assignment_org_admin.router)
