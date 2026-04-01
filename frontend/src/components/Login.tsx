@@ -77,8 +77,10 @@ function Login() {
     if (!loading && user) {
       if (user.role === "evaide_admin") {
         navigate("/Dashboard");
-      } else if (user.role === "org_admin" || user.role === "agent") {
+      } else if (user.role === "org_admin") {
         navigate("/Org_Dashboard");
+      } else if (user.role === "agent") {
+        navigate("/AgentCases");
       } else {
         navigate("/")
       }

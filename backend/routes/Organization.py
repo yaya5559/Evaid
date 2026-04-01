@@ -24,6 +24,10 @@ def addOrganization(data: Organization):
          detail = "Organization failed to be created"
        )
     
+# @router.get("/Organization_Info")
+# def get_information(name:str):
+#    return services.organization_info(name)
+    
 @router.patch("/disable_org")
 def disable(org_name: str):
    if services.disable_organization(org_name):

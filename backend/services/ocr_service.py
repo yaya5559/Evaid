@@ -1,12 +1,4 @@
-# ocr_service.py
-# Author: Bria Tran
-# Date: February 15th, 2026
-#
-# NOTE: This code is still in progress
-# These files/logic are for how the system COULD work once fully implemented
-#
-# handles extracting text and other metadata from uploaded evidence files
-# supports PDFs, images (jpg/png), and word docs (.docx)
+
 
 import fitz  # fitz is the import name for pymupdf, kind of confusing naming but thats just how it is
 import docx
