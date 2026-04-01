@@ -560,12 +560,12 @@ function OrgCaseProgress() {
                                 <p style={{ opacity: 0.7 }}>No agents found in this organization.</p>
                             ) : (
                                 <div className="orgdash-table-wrap" style={{ maxHeight: '260px', overflowY: 'auto' }}>
-                                    <table className="orgdash-table">
+                                    <table className="orgdash-table" style={{ width: '100%' }}>
                                         <thead>
                                             <tr>
-                                                <th>Agent</th>
-                                                <th>Status</th>
-                                                <th style={{ textAlign: 'right' }}>Action</th>
+                                                <th style={{ width: '50%', padding: '10px 12px' }}>Agent</th>
+                                                <th style={{ width: '25%', padding: '10px 12px' }}>Status</th>
+                                                <th style={{ width: '25%', padding: '10px 12px', textAlign: 'right' }}>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -575,16 +575,16 @@ function OrgCaseProgress() {
                                                 )
                                                 return (
                                                     <tr key={agent.user_id}>
-                                                        <td>
-                                                            <strong>{agent.first_name} {agent.last_name}</strong>
+                                                        <td style={{ padding: '10px 12px', verticalAlign: 'middle' }}>
+                                                            <strong style={{ display: 'block' }}>{agent.first_name} {agent.last_name}</strong>
                                                             <small style={{ display: 'block', opacity: 0.6 }}>{agent.email}</small>
                                                         </td>
-                                                        <td>
+                                                        <td style={{ padding: '10px 12px', verticalAlign: 'middle' }}>
                                                             <span className={`admin-pill ${isAssigned ? 'good' : 'neutral'}`}>
                                                                 {isAssigned ? 'Assigned' : 'Unassigned'}
                                                             </span>
                                                         </td>
-                                                        <td style={{ textAlign: 'right' }}>
+                                                        <td style={{ padding: '10px 12px', textAlign: 'right', verticalAlign: 'middle' }}>
                                                             {isAssigned ? (
                                                                 <button
                                                                     type="button"

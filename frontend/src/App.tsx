@@ -10,7 +10,7 @@ import OrgCaseProgress from './components/organization/OrgCaseProgress'
 import AddAgent from './components/admin/AddAgents'
 import Cases from './components/admin/Cases'
 import EvidenceUpload from './components/Evidence/EvidenceUpload';
-
+import AgentCases from './components/agent/AgentCases'
 
 function App() {
 
@@ -28,7 +28,7 @@ function App() {
         <Route path='/OrgCaseProgress' element={<OrgCaseProgress/>} />
         <Route path='/Register_Agent' element = {<AddAgent/>}/>
         <Route path='/Cases' element = {<Cases/>} />
-
+        <Route path='/AgentCases' element={<AgentCases />} />
       {/* </Route> */}
     </Routes>
   )
