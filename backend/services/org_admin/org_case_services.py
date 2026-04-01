@@ -16,20 +16,27 @@ def list_org_cases(org_id: int):
         cursor.execute("""
             SELECT
                 c.case_id,
-                c.CaseNumber,
+                c.CaseNumber as id,
                 c.title,
-                c.description,
+                CONCAT(u.first_name, ' ', LEFT(u.last_name, 1), '.') as assignedAgent,
+                COALESCE(ev.evidence_count, 0) as evidenceCount,
                 c.status,
-                c.priority,
-                c.severity_level,
-                CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
-                CAST(c.created_at AS NVARCHAR(50)) AS created_at,
-                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
-                u.first_name    AS created_by_first_name,
-                u.last_name     AS created_by_last_name,
-                u.email         AS created_by_email
+                CASE
+                    WHEN c.status = 'Closed' THEN 100
+                    WHEN c.status = 'In Progress' THEN 50
+                    WHEN c.status = 'Open' THEN 25
+                    ELSE 0
+                END as progress,
+                CAST(c.created_at AS NVARCHAR(50)) AS openedOn,
+                CAST(COALESCE(c.updated_at, c.created_at) AS NVARCHAR(50)) AS lastUpdate
             FROM Cases c
-            JOIN users u ON c.created_by_user_id = u.user_id
+            LEFT JOIN case_assignments ca ON c.case_id = ca.case_id
+            LEFT JOIN users u ON ca.user_id = u.user_id
+            LEFT JOIN (
+                SELECT case_id, COUNT(*) as evidence_count
+                FROM Evidence
+                GROUP BY case_id
+            ) ev ON c.case_id = ev.case_id
             WHERE c.org_id = ? AND c.deleted_at IS NULL
             ORDER BY c.created_at DESC
             """, (org_id,))

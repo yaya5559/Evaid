@@ -1,12 +1,16 @@
-﻿from fastapi import APIRouter
+﻿from fastapi import APIRouter, Depends
 from models.cases import OrgCreateCase, CloseCase
 import services.org_admin.org_case_services as services
+from dependencies.auth import require_roles, get_user_org_id
 
 router = APIRouter(prefix="/org/cases", tags=["Org Admin - Cases"])
 
 
 @router.get("/")
-def list_org_cases(org_id: int):
+def list_org_cases(user: dict = Depends(require_roles("org_admin"))):
+    org_id = get_user_org_id(user["user_id"])
+    if not org_id:
+        return {"message": "User not associated with an organization"}
     return services.list_org_cases(org_id)
 
 
