@@ -67,6 +67,19 @@
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.14);
 }
 
+select.edit-org-input,
+select.edit-org-select {
+  color-scheme: dark;
+  background: #111d27;
+  color: #ebf3ff;
+}
+
+select.edit-org-input option,
+select.edit-org-select option {
+  background: #111d27;
+  color: #ebf3ff;
+}
+
 .edit-org-stat-chips {
   display: flex;
   flex-wrap: wrap;

@@ -1,5 +1,5 @@
-from dotenv import load_dotenv
-from database import get_db_connection  # imports the database logic
+﻿from dotenv import load_dotenv
+from .database import get_db_connection  # imports the database logic
 from passlib.context import CryptContext # for password hashing
 import pyodbc
 from models.register import RegisterRequest 
@@ -31,3 +31,4 @@ def register_user(data: RegisterRequest):
         return False
     finally:
         conn.close()
+

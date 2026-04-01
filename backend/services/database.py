@@ -1,4 +1,4 @@
-# Author: Bria Tran
+﻿# Author: Bria Tran
 # Date: November 30th, 2025
 # Handles database connection to Azure SQL Database 
 # using pyodbc and environment variables
@@ -57,3 +57,4 @@ def get_db_connection():
     except Exception as e:
         print(f"[DB] Unexpected error: {type(e).__name__}: {e}")
         raise
+

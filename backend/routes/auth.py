@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, Response, APIRouter, Depends, Header, Cookie
+﻿from fastapi import HTTPException, status, Response, APIRouter, Depends, Header, Cookie
 from pydantic import BaseModel, EmailStr
 from dotenv import load_dotenv
 import services.loginServices as logFuncs
@@ -134,3 +134,4 @@ def logout(response: Response, refresh_token: str = Cookie(None)):
         raise HTTPException(status_code=401, detail="Unable to logout user")
     
     return "logout success"
+

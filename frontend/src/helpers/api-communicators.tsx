@@ -1,51 +1,23 @@
 import { api } from "../context/AuthContext";
 
-// payload types used by API helpers
-export type AgentPayload = {
-    id?: string;
-    name: string;
-    email: string;
-    role?: string;
-    org_id?: number;
-    password?: string;
-};
-
-export type OrganizationPayload = {
-    name: string;
-    email?: string;
-    phone_number?: string;
-    region?: string;
-    status?: string;
-    seat_limit?: number;
-    primary_contact?: string;
-    notes?: string;
-};
-
-export type OrganizationListItem = {
-    id: string;
-    name: string;
-    email?: string;
-    phone_number?: string;
-    status?: string;
-    region?: string;
-    seat_limit?: number;
-    primary_contact?: string;
-    notes?: string;
-    updated_at?: string;
-    open_cases?: number;
-};
-
-// shape returned by GET /evidence/cases
-// used by the case-selection table on the upload page
 export type CaseListItem = {
-    id: string;
-    title: string;
-    status: string;
-    assigned_agent: string | null;
-    opened_on: string | null;
-    last_update: string | null;
-    evidence_count: number;
+    case_id: number
+    CaseNumber: string
+    title: string
+    description: string
+    created_at: string
+    org_id: string
+    created_by_user_id: number
+    status: string
+    priority: string
+    severity_level: string
+    due_date: string
+    closed_at: string
+    resolution: string
+    closed_by_user_id: number
 };
+
+
 
 export const loginUser = async (email: string, password: string) => {
     try {
@@ -65,139 +37,49 @@ export const loginUser = async (email: string, password: string) => {
     }
 };
 
-export const addAgent = async (agent: AgentPayload) => {
-    try {
-        const res = await api.post(`/RegisterAgent`, agent)
-        return res.data
-    } catch (err: any) {
-        const msg =
-            err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.response?.data?.detail ||
-            err?.message ||
-            "Unable to register agent";
-        throw new Error(msg);
-    }
-}
 
-export const addOrganization = async (organization: OrganizationPayload) => {
+export const getCases = async () => {
     try {
-        const res = await api.post(`/Organization/Add`, organization, {
-            headers: { "Content-Type": "application/json" },
+        const res = await api.get(`/admin/cases`, {
+            headers: { "Content-Type": "application/json"},
             withCredentials: true,
         });
-        return res.data;
-    } catch (err: any) {
-        const msg =
-            err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.response?.data?.detail ||
-            err?.message ||
-            "Unable to add organization";
-        throw new Error(msg);
-    }
-};
-
-export const getOrganizations = async () => {
-    try {
-        const res = await api.get(`/Organization`, {
-            headers: { "Content-Type": "application/json" },
-            withCredentials: true,
-        });
-        const payload = res.data as
-            | OrganizationListItem[]
-            | { data?: OrganizationListItem[]; organizations?: OrganizationListItem[] };
+        const payload =  res.data as 
+            | CaseListItem[]
+            | { data?: CaseListItem; cases?: CaseListItem};
 
         if (Array.isArray(payload)) return payload;
         if (Array.isArray(payload?.data)) return payload.data;
-        if (Array.isArray(payload?.organizations)) return payload.organizations;
+        if (Array.isArray(payload?.cases)) return payload.cases;
 
-        throw new Error("Organization list response has an invalid format.");
+        throw new Error("Case list response has an invalid format.");
     } catch (err: any) {
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
-            err?.message ||
-            "Unable to load organizations";
-        throw new Error(msg);
-    }
-};
-
-type OrganizationUpdatePayload = {
-    name: string;
-    email: string;
-    phone_number: string;
-    region: string;
-    status: string;
-    seat_limit: number;
-    primary_contact: string;
-    notes: string;
-};
-
-export const editOrganization = async (
-    organizationId: string,
-    organization: OrganizationUpdatePayload
-) => {
-    try {
-        const res = await api.put(`/Organization/${organizationId}`, organization, {
-            headers: { "Content-Type": "application/json" },
-            withCredentials: true,
-        });
-        return res.data;
-    } catch (err: any) {
-        const msg =
-            err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.response?.data?.detail ||
-            err?.message ||
-            "Unable to edit organization";
-        throw new Error(msg);
-    }
-};
-
-// fetches real cases from GET /evidence/cases so the upload page can show
-// a table of valid cases instead of hardcoded dummy data
-// pass orgId to filter by org (org admins / agents), omit for admin view-all
-export const getCases = async (orgId?: string): Promise<CaseListItem[]> => {
-    try {
-        const res = await api.get(`/evidence/cases`, {
-            params: orgId ? { org_id: orgId } : {},
-            headers: { "Content-Type": "application/json" },
-            withCredentials: true,
-        });
-        const payload = res.data;
-        if (Array.isArray(payload)) return payload;
-        throw new Error("Cases response has an invalid format.");
-    } catch (err: any) {
-        const msg =
-            err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to load cases";
         throw new Error(msg);
     }
 };
 
-export const uploadEvidence = async (caseId: string, file: File) => {
+// accept caseId + File separately and build FormData here
+export const uploadEvidence = async (caseId: number, file: File, description:string, title:string, evidence_type:string) => {
     try {
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('case_id', caseId); // Ensure this is lowercase to match backend
+        // case_id must match the Form(...) field name in evidence.py
+        formData.append("case_id", String(caseId));
+        formData.append("description", description)
+        formData.append("title", title)
+        formData.append("evidence_type", evidence_type)
+        // file must match the File(...) field name in evidence.py
+        formData.append("file", file);
 
-        // don't set Content-Type manually � axios needs to set it so the
-        // multipart boundary gets included correctly
-        const res = await api.post(`/evidence/upload`, formData, {
-            withCredentials: true,
-        });
-
+        // let the browser set the content-type automatically
+        // so the multipart boundary is included correctly in the header.
+        const res = await api.post("/evidence/upload", formData);
         return res.data;
-    } catch (err: unknown) { // Change 'any' to 'unknown'
-        // We cast it to a generic object locally to access the message
-        // FastAPI returns errors in 'detail' not 'message' so check both
-        const error = err as { response?: { data?: { detail?: string; message?: string } } };
-        const msg = error.response?.data?.detail || error.response?.data?.message || "Upload failed";
-        throw new Error(msg);
+    } catch (err: any) {
+        throw new Error(err.response?.data?.detail || "Upload failed");
     }
 };

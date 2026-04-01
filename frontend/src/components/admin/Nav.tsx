@@ -1,9 +1,18 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
 
-function Nav() {
+function AdminNav() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  const onLogout = async () => {
+  await logout()
+  navigate('/Login', { replace: true })
+  }
+
   return (
     <>
       <div className='admin-brand'>
@@ -20,6 +29,10 @@ function Nav() {
           <NavLink className={navClassName} to='/Dashboard'>
             <span className='admin-nav-dot' />
             Dashboard
+          </NavLink>
+          <NavLink className={navClassName} to='/Evidence_Upload'>
+            <span className='admin-nav-dot' />
+            Upload Evidence
           </NavLink>
           <NavLink className={navClassName} to='/Add_Organization'>
             <span className='admin-nav-dot' />
@@ -47,8 +60,12 @@ function Nav() {
           <div className='admin-user-role'>Organization control</div>
         </div>
       </div>
+
+      <button className='admin-btn admin-btn-ghost org-nav-logout' onClick={() => void onLogout()} type='button'>
+      Sign out
+      </button>
     </>
   )
 }
 
-export default Nav
+export default AdminNav

@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, APIRouter
+﻿from fastapi import HTTPException, status, APIRouter
 from models.organization import Organization
 import services.organizationServices as services
 
@@ -24,6 +24,10 @@ def addOrganization(data: Organization):
          detail = "Organization failed to be created"
        )
     
+# @router.get("/Organization_Info")
+# def get_information(name:str):
+#    return services.organization_info(name)
+    
 @router.patch("/disable_org")
 def disable(org_name: str):
    if services.disable_organization(org_name):
@@ -47,3 +51,4 @@ def delete_organization(name: str):
     
 
     
+

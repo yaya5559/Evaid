@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, APIRouter
+﻿from fastapi import HTTPException, status, APIRouter
 from models.register import RegisterRequest
 from services.registerUser import register_user
 
@@ -18,3 +18,4 @@ def register(data: RegisterRequest):
         )
         
     return {"message": "User created successfully"}
+

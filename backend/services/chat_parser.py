@@ -1,4 +1,4 @@
-# Author: Bria Tran
+﻿# Author: Bria Tran
 # Date: February 4th, 2026
 #
 # NOTE: This code is still in progress
@@ -35,7 +35,6 @@ def normalize_timestamp(ts_string):
 # returning errors separately instead of throwing exceptions so the
 # upload endpoint can show the user what went wrong without crashing
 def parse_chat_log(file_bytes, content_type):
-    # decode the bytes to a string first
     # errors='ignore' means if theres some weird character it just skips it
     decoded_file = file_bytes.decode('utf-8', errors='ignore')
 
@@ -44,19 +43,16 @@ def parse_chat_log(file_bytes, content_type):
 
     # JSON TYPE
     # check content_type first but also check if the file itself looks like json
-    # because sometimes the content type is wrong or missing
     if 'json' in content_type or decoded_file.strip().startswith(('{', '[')):
         try:
             data = json.loads(decoded_file)
 
             # some json exports are just a list of messages at the top level
             # others wrap them in {"messages": [...]}
-            # handle both cases
             raw_msgs = data if isinstance(data, list) else data.get("messages", [])
 
             for m in raw_msgs:
                 # try a few different key names since different apps export differently
-                # discord uses "username", others use "user", etc.
                 messages.append({
                     "username":  m.get("username") or m.get("user") or "Unknown",
                     "message":   m.get("message")  or m.get("text")  or "",
@@ -72,7 +68,7 @@ def parse_chat_log(file_bytes, content_type):
     # check content type, but if the first line has commas its probably csv
     elif 'csv' in content_type or (',' in decoded_file.splitlines()[0] if decoded_file.splitlines() else False):
         try:
-            # DictReader is great because it uses the header row as keys automatically
+            # DictReader uses the header row as keys automatically i believe
             f = StringIO(decoded_file)
             reader = csv.DictReader(f)
 
@@ -91,20 +87,16 @@ def parse_chat_log(file_bytes, content_type):
             errors.append(error_msg)
 
     # TXT TYPE IN PROGRESS
-    # this was the hardest one to figure out
-    # txt chat logs dont have a standard format so i have to use regex
     # trying to support these formats:
     #   [2024-01-01 12:00:00] Username: message here
     #   (2024-01-01 12:00) Username: message here
     #   Username: message here  <-- no timestamp at all
     elif 'plain' in content_type or 'text' in content_type:
         try:
-            # this regex looks scary but basically:
             # it optionally match a timestamp wrapped in [] or ()
             # then matches "Username:"
             # then matches the rest as the message
             # the ?P<name> syntax names the capture groups so i can reference them by name
-            # learned about named groups from the python docs
             pattern = re.compile(
                 r'^[\[\(]?(?P<timestamp>[^\]\)]+?)[\]\)]?\s+(?P<username>[^:]+?):\s+(?P<message>.+)$'
             )
@@ -146,3 +138,4 @@ def parse_chat_log(file_bytes, content_type):
 
     # return both the messages and any errors
     return messages, errors
+

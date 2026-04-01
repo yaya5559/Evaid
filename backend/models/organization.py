@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+﻿from pydantic import BaseModel, EmailStr
 
 class Organization(BaseModel):
     company_name: str
@@ -9,3 +9,4 @@ class Organization(BaseModel):
     owner_email: EmailStr
     owner_phone_number: str
     password: str
+

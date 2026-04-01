@@ -1,61 +1,87 @@
-import { Link } from 'react-router-dom'
-import Nav from './Nav'
-import '../../styles/Admin/AdminLayout.css'
-import '../../styles/Admin/Dashboard.css'
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import Nav from './Nav';
+import '../../styles/Admin/AdminLayout.css';
+import '../../styles/Admin/Dashboard.css';
+import { useAuth } from '../../context/AuthContext'; 
 
 type KpiCard = {
-  label: string
-  value: string
-  delta: string
-  tone: 'up' | 'down' | 'neutral'
-}
+  label: string;
+  value: string;
+  delta: string;
+  tone: 'up' | 'down' | 'neutral';
+};
 
 type OrganizationRow = {
-  name: string
-  region: string
-  users: string
-  cases: string
-  health: 'Healthy' | 'Needs attention' | 'Critical'
-}
+  name: string;
+  region: string;
+  users: string;
+  cases: string;
+  health: 'Healthy' | 'Needs attention' | 'Critical';
+};
 
 type PipelineStage = {
-  stage: string
-  total: number
-  ratio: number
-}
-
-const kpiCards: KpiCard[] = [
-  { label: 'Active organizations', value: '148', delta: '+12 this month', tone: 'up' },
-  { label: 'Pending onboarding', value: '09', delta: '3 blocked by verification', tone: 'neutral' },
-  { label: 'Seats in use', value: '3,842', delta: '+6.8% from last week', tone: 'up' },
-  { label: 'Compliance risk', value: '2.3%', delta: '-0.7% in 14 days', tone: 'down' },
-]
-
-const organizations: OrganizationRow[] = [
-  { name: 'Metro Intelligence Unit', region: 'US / East', users: '620 / 750', cases: '1,284', health: 'Healthy' },
-  { name: 'Westport Cyber Office', region: 'US / West', users: '438 / 500', cases: '986', health: 'Needs attention' },
-  { name: 'Northline Fraud Division', region: 'Canada', users: '211 / 250', cases: '604', health: 'Healthy' },
-  { name: 'Federal Evidence Bureau', region: 'US / Central', users: '794 / 900', cases: '1,907', health: 'Critical' },
-]
-
-const pipeline: PipelineStage[] = [
-  { stage: 'Verification', total: 6, ratio: 72 },
-  { stage: 'Legal review', total: 4, ratio: 52 },
-  { stage: 'Admin invite', total: 3, ratio: 40 },
-  { stage: 'Security setup', total: 2, ratio: 25 },
-]
-
-const activityLog = [
-  'Northline Fraud Division seat limit increased to 250',
-  'Metro Intelligence Unit rotated admin credentials',
-  'Federal Evidence Bureau failed nightly export policy',
-  'Westport Cyber Office completed SSO validation',
-]
+  stage: string;
+  total: number;
+  ratio: number;
+};
 
 function Dashboard() {
+  const { api } = useAuth();
+
+  const [kpiCards, setKpiCards] = useState<KpiCard[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
+  const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
+  const [activityLog, setActivityLog] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [orgResult, kpiResult, pipelineResult, activityResult] = await Promise.allSettled([
+          api.get('/Organization'),
+          api.get('/dashboard/kpis'),
+          api.get('/dashboard/pipeline'),
+          api.get('/dashboard/activity'),
+        ]);
+        if (orgResult.status === 'fulfilled') {
+          const data = orgResult.value.data;
+          const orgs = Array.isArray(data.organizations) ? data.organizations : [];
+          const mapped = orgs.map((o: any) => ({
+            name: o.name,
+            region: o.email ?? '',
+            users: 'N/A',
+            cases: '0',
+            health: 'Healthy',
+          }));
+          setOrganizations(mapped);
+        } else {
+          setOrganizations([]);
+        }
+
+        if (kpiResult.status === 'fulfilled') setKpiCards(kpiResult.value.data ?? []);
+        else setKpiCards([]);
+
+        if (pipelineResult.status === 'fulfilled') setPipeline(pipelineResult.value.data ?? []);
+        else setPipeline([]);
+
+        if (activityResult.status === 'fulfilled') setActivityLog(activityResult.value.data ?? []);
+        else setActivityLog([]);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [api]);
+
+  if (loading) return <div>Loading dashboard...</div>;
+
   return (
-    <div className ='admin-shell'>
-      <aside className ='admin-left'>
+    <div className='admin-shell'>
+      <aside className='admin-left'>
         <Nav />
       </aside>
 
@@ -72,7 +98,6 @@ function Dashboard() {
             <Link className='admin-btn admin-btn-primary' to='/Add_Organization'>
               Add Organization
             </Link>
-            
           </div>
         </header>
 
@@ -112,8 +137,8 @@ function Dashboard() {
                       organization.health === 'Healthy'
                         ? 'good'
                         : organization.health === 'Needs attention'
-                          ? 'warn'
-                          : 'critical'
+                        ? 'warn'
+                        : 'critical'
                     }`}
                   >
                     {organization.health}
@@ -149,7 +174,7 @@ function Dashboard() {
           <article className='admin-card dashboard-activity-card'>
             <div className='dashboard-card-header'>
               <h2>Recent Activity</h2>
-              <span className='admin-pill info'>4 events</span>
+              <span className='admin-pill info'>{activityLog.length} events</span>
             </div>
             <ul className='dashboard-activity-list'>
               {activityLog.map((item) => (
@@ -160,7 +185,7 @@ function Dashboard() {
         </section>
       </main>
     </div>
-  )
+  );
 }
 
-export default Dashboard
+export default Dashboard;

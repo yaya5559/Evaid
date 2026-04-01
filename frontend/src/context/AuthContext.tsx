@@ -1,10 +1,5 @@
-/*
-    a centralized way to manage user auth state
-    across React app.
-*/
-
 import React, { createContext, useCallback, useState, useRef, useEffect, useMemo, useContext } from "react";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import type { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 import axios from "axios";
 
@@ -62,14 +57,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const setAccessToken = useCallback((token: string | null) => {
         accessTokenRef.current = token;
         if (token) {
-            const decoded = jwtDecode<DecodedJwt>(token);
+            const decoded: DecodedJwt = jwtDecode(token);
             setState({
                 user: {
                     name: decoded.name || "",
                     email: decoded.email || "",
                     company: decoded.company,
-                    role: decoded.role || (Array.isArray(decoded.roles) ? decoded.roles[0] : (decoded.roles as any)) || "",
-                    org_id: decoded.org_id,
+                    role: decoded.role || (Array.isArray(decoded.roles) ? decoded.roles[0] : (decoded.roles as string)) || "",
+                    org_id: decoded.org_id ?? null,
                 },
                 loading: false,
             });
@@ -80,119 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const refresh = useCallback(async (): Promise<string> => {
         if (refreshPromiseRef.current) return refreshPromiseRef.current;
-        const p = api.post<{ accessToken: string }>("/auth/refresh", {}, { withCredentials: true }).then((res) => {
-            const token = res.data.accessToken;
-            setAccessToken(token);
-            return token;
-        });
-        refreshPromiseRef.current = p;
-        p.finally(() => (refreshPromiseRef.current = null));
-        return p;
-    }, [setAccessToken]);
 
-    useEffect(() => {
-        const reqId = api.interceptors.request.use(async (config) => {
-            if (!config.url) return config;
-            if (config.url.includes("/auth/login") || config.url.includes("/auth/refresh")) return config;
-            let token = accessTokenRef.current;
-            if (!token || isExpired(token)) {
-                try {
-                    token = await refresh();
-                } catch {
-                    token = null;
-                }
-            }
-            if (token && config.headers) {
-                (config.headers as any).Authorization = `Bearer ${token}`;
-            }
-            return config;
-        });
-
-        const resId = api.interceptors.response.use(
-            (r) => r,
-            async (error: AxiosError) => {
-                const original = error.config as AxiosRequestConfig & { _retry?: boolean };
-                if (error.response?.status === 401 && !original._retry) {
-                    original._retry = true;
-                    try {
-                        const newToken = await refresh();
-                        if (original.headers) (original.headers as any).Authorization = `Bearer ${newToken}`;
-                        return api(original);
-                    } catch (e) {
-                        return Promise.reject(e);
-                    }
-                }
-                return Promise.reject(error);
-            }
-        );
-
-        refresh().catch(() => setState((s) => ({ ...s, loading: false })));
-
-        return () => {
-            api.interceptors.request.eject(reqId);
-            api.interceptors.response.eject(resId);
-        };
-    }, [refresh]);
-
-    const login = useCallback(async (email: string, password: string) => {
-        const res = await api.post<{ accessToken: string }>("/auth/login", { email, password });
-        setAccessToken(res.data.accessToken);
-    }, [setAccessToken]);
-
-    const logout = useCallback(async () => {
-        try {
-            await api.post("/auth/logout");
-        } finally {
-            setAccessToken(null);
-        }
-    }, [setAccessToken]);
-
-    const value = useMemo(
-        () => ({ user: state.user, loading: state.loading, login, logout, getAccessToken: () => accessTokenRef.current, api }),
-        [state.user, state.loading, login, logout]
-    );
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) throw new Error("useAuth must be used within an AuthProvider");
-    return context;
-}
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [state, setState] = useState<{ user: User | null; loading: boolean }>({
-        user: null,
-        loading: true,
-    });
-
-    const accessTokenRef = useRef<string | null>(null);
-    const refreshPromiseRef = useRef<Promise<string> | null>(null);
-
-    const setAccessToken = useCallback((token: string | null) => {
-        accessTokenRef.current = token;
-        if (token) {
-            const decoded: DecodedJwt = jwtDecode(token);
-            setState({
-                user: {
-                    name: decoded.name || "",
-                    email: decoded.email || "",
-                    company: decoded.company || "", // Now this works because company is in DecodedJwt
-                    role: decoded.role || (Array.isArray(decoded.roles) ? decoded.roles[0] : decoded.roles) || "",
-                    org_id: decoded.org_id
-                },
-                loading: false
-            });
-        } else {
-            setState({ user: null, loading: false });
-        }
->>>>>>> Stashed changes
-    }, []);
-
-    const refresh = useCallback(async (): Promise<string> => {
-        if (refreshPromiseRef.current) return refreshPromiseRef.current;
-
-        // Specify the return type <{ accessToken: string }> to fix the Line 74 assignment error
         const promise = api.post<{ accessToken: string }>("/auth/refresh", {}, { withCredentials: true })
             .then(res => {
                 const token = res.data.accessToken;
@@ -202,105 +85,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         refreshPromiseRef.current = promise;
 
-        // Cleanup the ref when done
         promise.finally(() => {
             refreshPromiseRef.current = null;
         });
 
-<<<<<<< Updated upstream
-            }catch(err) { 
-                //logout the user if the refresh fail
-                setAccessToken(null);
-                return null;
-
-            } finally{
-                //after the refresh clear the in-progress => future refreshes can proceed
-                const lock = refreshingRef.current;
-                refreshingRef.current = null;
-                //retry teh request if refresh succeed
-                failedQueue.splice(0).forEach(({resolve, reject, config}) => {
-                    if(accessTokenRef.current){
-                        resolve(api(config));
-                    }else{
-                        reject(new Error("Unauthorized"));
-
-                    }
-                })
-                //Prevent danglinh promise chains on callers of refresh().
-                await lock?.catch(() => {});
-            }
-        })()
-        return refreshingRef.current;
-
-    }, [setAccessToken])
-
-    useEffect(() => {
-        (async () => {
-            try{
-                await refresh()
-
-            }finally{
-                //set loading to false
-                setState(s => ({ ...s, loading: false }));
-            }
-        })()
-    }, [refresh])
-
-    
-    api.interceptors.request.use(async (config) => {
-        const token = accessTokenRef.current;
-        if(token && isExpired(token)){
-            await refresh()
-        }
-        const nextToken = accessTokenRef.current;
-        if(nextToken){
-            //config.headers = {...(config.headers || {}), Authorization: `Bearer ${nextToken}`}
-            config.headers?.set?.("Authorization", `Bearer ${nextToken}`);
-
-        }
-        return config;
-    })
-    
-    /** Response: on 401, attempt one refresh and retry the original request. */
-    api.interceptors.response.use(
-        (res) => res,
-        async (error: AxiosError) => {
-        const original = error.config as AxiosRequestConfig & { _retry?: boolean };
-        const status = error.response?.status;
-
-        if (status === 401 && !original._retry) {
-            original._retry = true;
-
-            // Queue this request until refresh completes to avoid token races.
-            return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject, config: original });
-            refresh().catch(() => {
-                // If refresh fails, queue will reject below when lock releases.
-            });
-            });
-        }
-
-        // Any other error or already retried: bubble up.
-        return Promise.reject(error);
-        }
-    );
-
-    const login = useCallback(
-        async (email: string, password: string) => {
-        const res = await api.post<{ accessToken: string }>("/auth/login", { email, password });
-        setAccessToken(res.data.accessToken); // refresh cookie is set by server via Set-Cookie
-        },
-        [setAccessToken]
-    );
-=======
         return promise;
     }, [setAccessToken]);
 
     useEffect(() => {
         const requestId = api.interceptors.request.use(async (config) => {
-            if (config.url?.includes("/auth/login") || config.url?.includes("/auth/refresh")) {
-                return config;
-            }
+            if (!config.url) return config;
+            if (config.url.includes("/auth/login") || config.url.includes("/auth/refresh")) return config;
 
             let token = accessTokenRef.current;
             if (!token || isExpired(token)) {
@@ -312,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             if (token && config.headers) {
-                config.headers.Authorization = `Bearer ${token}`;
+                (config.headers as any).Authorization = `Bearer ${token}`;
             }
             return config;
         });
@@ -326,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     try {
                         const newToken = await refresh();
                         if (originalRequest.headers) {
-                            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                            (originalRequest.headers as any).Authorization = `Bearer ${newToken}`;
                         }
                         return api(originalRequest);
                     } catch (err) {
@@ -349,7 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const res = await api.post<{ accessToken: string }>("/auth/login", { email, password });
         setAccessToken(res.data.accessToken);
     }, [setAccessToken]);
->>>>>>> Stashed changes
 
     const logout = useCallback(async () => {
         try {
@@ -371,19 +165,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-<<<<<<< Updated upstream
-export function useAuth(): AuthProviderValue {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
-    return ctx;
-}
-
-
-   
-=======
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error("useAuth must be used within an AuthProvider");
     return context;
 }
->>>>>>> Stashed changes
