@@ -9,7 +9,6 @@ def get_pending_signals(evidence_id):
     cursor = conn.cursor()
 
     try:
-
         cursor.execute(
             """
                 SELECT Id, signal_type, raw_value, normalized_value,
