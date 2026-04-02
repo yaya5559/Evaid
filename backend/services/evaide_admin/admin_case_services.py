@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from database import get_db_connection
+from services.database import get_db_connection
 from datetime import datetime, timezone
 from models.cases import CreateCase, UpdateCase, CloseCase
 import pyodbc

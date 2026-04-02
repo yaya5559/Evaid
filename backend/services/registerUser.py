@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from database import get_db_connection  # imports the database logic
+from services.database import get_db_connection  # imports the database logic
 from passlib.context import CryptContext # for password hashing
 import pyodbc
 from models.register import RegisterRequest 
