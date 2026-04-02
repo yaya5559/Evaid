@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from fastapi import APIRouter
+=======
+from fastapi import APIRouter
+>>>>>>> origin/main
 import services.evaide_admin.admin_user_services as services
 
 router = APIRouter(prefix="/admin/users", tags=["Evaide Admin - Users"])
@@ -37,4 +41,7 @@ def change_user_role(user_id: int, new_role_id: int):
 @router.delete("/{user_id}")
 def delete_user(user_id: int):
     return services.delete_user(user_id)
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

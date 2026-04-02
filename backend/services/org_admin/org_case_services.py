@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from dotenv import load_dotenv
+=======
+from dotenv import load_dotenv
+>>>>>>> origin/main
 from services.database import get_db_connection
 from models.cases import Case
 import pyodbc
@@ -16,6 +20,7 @@ def list_org_cases(org_id: int):
         cursor.execute("""
             SELECT
                 c.case_id,
+<<<<<<< HEAD
                 c.CaseNumber as id,
                 c.title,
                 CONCAT(u.first_name, ' ', LEFT(u.last_name, 1), '.') as assignedAgent,
@@ -37,6 +42,22 @@ def list_org_cases(org_id: int):
                 FROM Evidence
                 GROUP BY case_id
             ) ev ON c.case_id = ev.case_id
+=======
+                c.CaseNumber,
+                c.title,
+                c.description,
+                c.status,
+                c.priority,
+                c.severity_level,
+                CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
+                CAST(c.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
+                u.first_name    AS created_by_first_name,
+                u.last_name     AS created_by_last_name,
+                u.email         AS created_by_email
+            FROM Cases c
+            JOIN users u ON c.created_by_user_id = u.user_id
+>>>>>>> origin/main
             WHERE c.org_id = ? AND c.deleted_at IS NULL
             ORDER BY c.created_at DESC
             """, (org_id,))
@@ -321,4 +342,7 @@ def delete_org_case(case_id: int, org_id: int):
     finally:
         cursor.close()
         conn.close()
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

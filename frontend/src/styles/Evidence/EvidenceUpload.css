@@ -1,3 +1,83 @@
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+﻿.evidence-card {
+    max-width: 600px;
+    margin: 20px auto;
+    border: 1px solid var(--border);
+}
+
+.upload-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.file-label {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--glass);
+    transition: border-color 0.2s;
+}
+
+    .file-label:hover {
+        border-color: var(--brand);
+    }
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.meta-item .label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.meta-item .value {
+    font-weight: 600;
+    color: #fff;
+}
+
+.extracted-content {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+    .extracted-content label {
+        font-size: 0.8rem;
+        color: var(--brand);
+        font-weight: bold;
+    }
+
+    .extracted-content pre {
+        white-space: pre-wrap;
+        font-size: 0.85rem;
+        color: #cfd6ff;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+.action-row {
+    display: flex;
+    gap: 12px;
+}
+
+.full-width {
+    width: 100%;
+}
+=======
+>>>>>>> origin/main
 ﻿/* Container and Layout */
 .evidence-container {
     padding: 40px;
@@ -320,8 +400,17 @@
     flex-wrap: wrap;
 }
 
+<<<<<<< HEAD
 .eu-done-actions .admin-btn {
     flex: 1;
     min-width: 160px;
     text-align: center;
 }
+=======
+    .eu-done-actions .admin-btn {
+        flex: 1;
+        min-width: 160px;
+        text-align: center;
+    }
+>>>>>>> Stashed changes
+>>>>>>> origin/main

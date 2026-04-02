@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from services.database import get_db_connection
+=======
+from services.database import get_db_connection
+>>>>>>> origin/main
 from fastapi import HTTPException
 from datetime import datetime, timezone
 
@@ -146,4 +150,9 @@ def run_analysis(analysis_run_id):
 
 
     
+<<<<<<< HEAD
     except Exception as e:
+=======
+    except Exception as e:
+
+>>>>>>> origin/main

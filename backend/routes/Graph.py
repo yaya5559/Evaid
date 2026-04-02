@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from fastapi import APIRouter, status, Depends
+=======
+from fastapi import APIRouter, status, Depends
+>>>>>>> origin/main
 from models.GraphShape import GraphEdge
 from services.graph_service import create_evidence_link
 from pydantic import BaseModel, Field
@@ -32,4 +36,7 @@ async def addEdge(case_id: UUID, body:CreatEdgeModel, user= Depends(get_current_
         created_by=user.get("user_id"),            
     )
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

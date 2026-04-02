@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 ﻿import os
 from typing import Optional
 from backend.models.evidenceShape import ExtractedSignal, ExtractorInput
+=======
+import os
+from typing import Optional
+from models.evidenceShape import ExtractedSignal, ExtractorInput
+>>>>>>> origin/main
 from azure.ai.vision.imageanalysis import ImageAnalysisClient
 from azure.ai.vision.imageanalysis.models import VisualFeatures
 from azure.core.credentials import AzureKeyCredential
@@ -44,5 +50,9 @@ class ImageExtractor:
         
 
 
+<<<<<<< HEAD
          
 
+=======
+         
+>>>>>>> origin/main

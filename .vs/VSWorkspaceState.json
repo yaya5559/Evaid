@@ -5,6 +5,10 @@
     "\\backend\\routes",
     "\\backend\\services"
   ],
+<<<<<<< HEAD
   "SelectedNode": "\\backend\\services\\bulk_link_service.py",
+=======
+  "SelectedNode": "\\backend\\services\\evidence_service.py",
+>>>>>>> origin/main
   "PreviewInSolutionExplorer": false
 }

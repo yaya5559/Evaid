@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 ﻿from dotenv import load_dotenv
 from ..database import get_db_connection
+=======
+from dotenv import load_dotenv
+from services.database import get_db_connection
+>>>>>>> origin/main
 import pyodbc
 
 load_dotenv()
@@ -64,4 +69,7 @@ def update_my_note(note_id: int, agent_id: int, content: str):
     finally:
         cursor.close()
         conn.close()
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

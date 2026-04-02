@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from dotenv import load_dotenv
+=======
+from dotenv import load_dotenv
+>>>>>>> origin/main
 from services.database import get_db_connection
 from models.register import UsersUpdate
 import pyodbc
@@ -237,4 +241,7 @@ def delete_user(user_id: int):
     finally:
         cursor.close()
         conn.close()
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

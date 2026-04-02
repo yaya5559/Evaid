@@ -53,6 +53,7 @@ def refresh_token(response: Response, refresh_token: str = Cookie(None)):
         user_id=user.user_id,
         email=user.email,
         role=user.role_name,
+        org_id=user.org_id,
         remember=True
     )
 
@@ -97,6 +98,7 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
         user_id=user.user_id,
         email=user.email,
         role=user.role_name,
+        org_id=user.org_id,
         remember=remember
     )
 

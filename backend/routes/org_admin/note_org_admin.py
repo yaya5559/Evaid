@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from fastapi import APIRouter
+=======
+from fastapi import APIRouter
+>>>>>>> origin/main
 from pydantic import BaseModel
 import services.org_admin.org_note_services as services
 
@@ -31,4 +35,7 @@ def update_note(note_id: int, org_id: int, data: NoteUpdate):
 @router.delete("/{note_id}")
 def delete_note(note_id: int, org_id: int):
     return services.delete_note(note_id, org_id)
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

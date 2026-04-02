@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 ﻿from dotenv import load_dotenv
 from ..database import get_db_connection
+=======
+from dotenv import load_dotenv
+from services.database import get_db_connection
+>>>>>>> origin/main
 import pyodbc
 
 load_dotenv()
@@ -223,4 +228,7 @@ def cancel_evidence(file_id: str, agent_id: int):
     finally:
         cursor.close()
         conn.close()
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from pydantic import BaseModel
+=======
+from pydantic import BaseModel
+>>>>>>> origin/main
 from datetime import datetime
 from typing import Optional
 
@@ -58,5 +62,9 @@ class AgentCreateCase(BaseModel):
     description: Optional[str] = None
     priority: Optional[str] = None
     severity_level: Optional[str] = None
+<<<<<<< HEAD
     due_date: Optional[str] = None
 
+=======
+    due_date: Optional[str] = None
+>>>>>>> origin/main

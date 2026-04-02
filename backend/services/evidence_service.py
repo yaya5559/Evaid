@@ -220,8 +220,12 @@ def get_evidence_file(file_id):
             return {"name": row[0], "type": row[1], "bytes": row[2]}
         return None
     finally:
+<<<<<<< HEAD
         conn.close()
 
 
 
 
+=======
+        conn.close()
+>>>>>>> origin/main

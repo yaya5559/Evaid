@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from pydantic import BaseModel
+=======
+from pydantic import BaseModel
+>>>>>>> origin/main
 from uuid import UUID
 import datetime
 from typing import Optional
@@ -43,4 +47,7 @@ class ExtractedSignal(BaseModel):
 
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from dotenv import load_dotenv
+=======
+from dotenv import load_dotenv
+>>>>>>> origin/main
 from services.database import get_db_connection
 from datetime import datetime, timezone
 from models.cases import CreateCase, UpdateCase, CloseCase
@@ -354,5 +358,9 @@ def assign_agent(case_id: int, user_id: int, assigned_by: int):
         return {"message": "Error", "error": str(e)}
     finally:
         cursor.close()
+<<<<<<< HEAD
         conn.close()
 
+=======
+        conn.close()
+>>>>>>> origin/main

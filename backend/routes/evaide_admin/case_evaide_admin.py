@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from fastapi import APIRouter
+=======
+from fastapi import APIRouter
+>>>>>>> origin/main
 from models.cases import CreateCase, UpdateCase, CloseCase
 import services.evaide_admin.admin_case_services as services
 
@@ -48,4 +52,7 @@ def delete_case(case_id: int, user_id: int):
 @router.post("/org/{org_id}/{case_id}/assign")
 def assign_agent(case_id: int, user_id: int, assigned_by: int):
     return services.assign_agent(case_id, user_id, assigned_by)
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

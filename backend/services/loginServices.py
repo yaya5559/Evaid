@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from fastapi import Request, HTTPException, status, Response, Cookie
+=======
+from fastapi import Request, HTTPException, status, Response, Cookie
+>>>>>>> origin/main
 from pydantic import BaseModel, EmailStr
 from datetime import timedelta, datetime, timezone
 from dotenv import load_dotenv
@@ -187,4 +191,7 @@ def getRoleName(role_id:int):
     finally:
         conn.close()
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

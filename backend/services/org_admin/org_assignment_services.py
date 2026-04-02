@@ -1,9 +1,44 @@
+<<<<<<< HEAD
 ﻿from dotenv import load_dotenv
+=======
+from dotenv import load_dotenv
+>>>>>>> origin/main
 from services.database import get_db_connection
 import pyodbc
 
 load_dotenv()
 
+<<<<<<< HEAD
+=======
+def list_org_agents(org_id: int):
+    """Returns all active agents in the org used to populate the assign-agent dropdown."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                u.user_id,
+                u.first_name,
+                u.last_name,
+                u.email
+            FROM users u
+            JOIN roles r ON u.role_id = r.role_id
+            WHERE u.org_id = ?
+              AND u.deleted_at IS NULL
+              AND u.is_enabled = 1
+              AND UPPER(r.role_name) = 'AGENT'
+            ORDER BY u.last_name, u.first_name
+        """, (org_id,))
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+        agents = [dict(zip(columns, row)) for row in rows]
+        return {"message": "Success", "agents": agents}
+    except pyodbc.Error as e:
+        return {"message": "Error", "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+>>>>>>> origin/main
 
 def list_case_assignments(case_id: int, org_id: int):
     conn = get_db_connection()
@@ -24,7 +59,11 @@ def list_case_assignments(case_id: int, org_id: int):
             JOIN Cases c        ON ca.case_id    = c.case_id
             JOIN users u        ON ca.user_id    = u.user_id
             JOIN users assigner ON ca.assigned_by = assigner.user_id
+<<<<<<< HEAD
             WHERE ca.case_id = ? AND c.org_id = ? AND c.deleted_at IS NULL
+=======
+            WHERE ca.case_id = ? AND c.org_id = ? AND c.deleted_at IS NULL AND u.deleted_at IS NULL
+>>>>>>> origin/main
             ORDER BY ca.assigned_at ASC
         """, (case_id, org_id))
 
@@ -66,6 +105,16 @@ def assign_agent_to_case(case_id: int, user_id: int, assigned_by: int, org_id: i
         if not cursor.fetchone():
             return {"message": "Agent not found or not in this organization"}
 
+<<<<<<< HEAD
+=======
+        # Prevent duplicate assignments
+        cursor.execute("""
+            SELECT 1 FROM case_assignments WHERE case_id = ? AND user_id = ?
+        """, (case_id, user_id))
+        if cursor.fetchone():
+            return {"message": "Agent is already assigned to this case"}
+
+>>>>>>> origin/main
         cursor.execute("""
             INSERT INTO case_assignments (case_id, user_id, assigned_by)
             VALUES (?, ?, ?)
@@ -92,13 +141,25 @@ def remove_agent_from_case(case_id: int, user_id: int, org_id: int):
 
     try:
         cursor.execute("""
+<<<<<<< HEAD
             SELECT 1 FROM Cases WHERE case_id = ? AND org_id = ? AND deleted_at IS NULL
         """, (case_id, org_id))
+=======
+            SELECT 1 FROM Cases 
+            WHERE case_id = ? AND org_id = ? AND deleted_at IS NULL
+        """, (case_id, org_id))
+
+>>>>>>> origin/main
         if not cursor.fetchone():
             return {"message": "Case not found or access denied"}
 
         cursor.execute("""
+<<<<<<< HEAD
             DELETE FROM case_assignments WHERE case_id = ? AND user_id = ?
+=======
+            DELETE FROM case_assignments 
+            WHERE case_id = ? AND user_id = ?
+>>>>>>> origin/main
         """, (case_id, user_id))
 
         if cursor.rowcount == 0:
@@ -109,6 +170,7 @@ def remove_agent_from_case(case_id: int, user_id: int, org_id: int):
 
     except pyodbc.Error as e:
         conn.rollback()
+<<<<<<< HEAD
         return {
             "message": "Error",
               "error": str(e)
@@ -118,3 +180,9 @@ def remove_agent_from_case(case_id: int, user_id: int, org_id: int):
         cursor.close()
         conn.close()
 
+=======
+        return {"message": "Error", "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+>>>>>>> origin/main
