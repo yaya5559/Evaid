@@ -1,31 +1,13 @@
-<<<<<<< HEAD
-﻿from fastapi import APIRouter, Depends
-from models.cases import OrgCreateCase, CloseCase
-import services.org_admin.org_case_services as services
-from dependencies.auth import require_roles, get_user_org_id
-=======
 from fastapi import APIRouter, Depends, HTTPException
 from models.cases import OrgCreateCase, CloseCase
 from dependencies.auth import get_current_user, verify_dynamic_access, require_roles
 import services.org_admin.org_case_services as services
 import services.org_admin.org_assignment_services as assignment_services
->>>>>>> origin/main
 
 router = APIRouter(prefix="/org/cases", tags=["Org Admin - Cases"])
 
 
 @router.get("/")
-<<<<<<< HEAD
-def list_org_cases(user: dict = Depends(require_roles("org_admin"))):
-    org_id = get_user_org_id(user["user_id"])
-    if not org_id:
-        return {"message": "User not associated with an organization"}
-    return services.list_org_cases(org_id)
-
-
-@router.get("/{case_id}")
-def get_org_case(case_id: int, org_id: int):
-=======
 def list_org_cases(current_user=Depends(get_current_user)):
     org_id = current_user.get("claims", {}).get("org_id")
     return services.list_org_cases(org_id)
@@ -44,42 +26,23 @@ def get_org_case(case_id: int, current_user=Depends(get_current_user)):
             detail="Access denied: No organizational or AI link found"
         )
     org_id = current_user.get("claims", {}).get("org_id")
->>>>>>> origin/main
     return services.get_org_case(case_id, org_id)
 
 
 @router.post("/")
-<<<<<<< HEAD
-def create_case(org_id: int, data: OrgCreateCase):
-=======
 def create_case(data: OrgCreateCase, current_user=Depends(get_current_user)):
     org_id = current_user.get("claims", {}).get("org_id")
->>>>>>> origin/main
     return services.create_case(org_id, data)
 
 
 @router.patch("/close/{case_id}")
-<<<<<<< HEAD
-def close_org_case(case_id: int, org_id: int, closed_by_user_id: int, resolution: str):
-=======
 def close_org_case(case_id: int, resolution: str, current_user=Depends(get_current_user)):
     org_id = current_user.get("claims", {}).get("org_id")
     closed_by_user_id = current_user.get("user_id")
->>>>>>> origin/main
     return services.close_org_case(case_id, org_id, closed_by_user_id, resolution)
 
 
 @router.patch("/{case_id}")
-<<<<<<< HEAD
-def update_org_case(case_id: int, org_id: int, description: str = None, priority: str = None, severity_level: str = None, due_date: str = None):
-    return services.update_org_case(case_id, org_id, description, priority, severity_level, due_date)
-
-
-@router.delete("/{case_id}")
-def delete_org_case(case_id: int, org_id: int):
-    return services.delete_org_case(case_id, org_id)
-
-=======
 def update_org_case(
     case_id: int,
     description: str = None,
@@ -119,4 +82,3 @@ def unassign_agent(case_id: int, user_id: int, current_user=Depends(get_current_
     """Removes an agent from a case."""
     org_id = current_user.get("claims", {}).get("org_id")
     return assignment_services.remove_agent_from_case(case_id, user_id, org_id)
->>>>>>> origin/main

@@ -11,11 +11,7 @@ import { uploadEvidence, getCases, type CaseListItem } from '../../helpers/api-c
 const statusTone = (status: string) => {
     switch (status?.toLowerCase()) {
         case 'solved': return 'good';
-<<<<<<< HEAD
-        case 'open': return 'warn';
-=======
         case 'pending': return 'warn';
->>>>>>> origin/main
         case 'discarded': return 'critical';
         default: return 'neutral';
     }
@@ -319,11 +315,7 @@ const EvidenceUpload: React.FC = () => {
     const [selectedCase, setSelectedCase] = useState<CaseListItem | null>({
         id: 1,
         description: "Default Testing Case",
-<<<<<<< HEAD
-        status: "open",
-=======
         status: "pending",
->>>>>>> origin/main
         created_at: new Date().toISOString(),
     });
 

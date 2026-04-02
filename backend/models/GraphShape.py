@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from enum import Enum
-=======
 from enum import Enum
->>>>>>> origin/main
 from dataclasses import dataclass
 from pydantic import BaseModel
 from uuid import UUID
@@ -47,7 +43,3 @@ class GraphResponse:
 
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

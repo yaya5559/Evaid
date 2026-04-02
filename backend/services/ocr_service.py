@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-﻿
-=======
-
->>>>>>> origin/main
 
 import fitz  # fitz is the import name for pymupdf, kind of confusing naming but thats just how it is
 import docx

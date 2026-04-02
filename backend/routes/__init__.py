@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from fastapi import APIRouter
-=======
 from fastapi import APIRouter
->>>>>>> origin/main
 from .auth import router as login_router
 from .Organization import router as organization_router
 from .register import router as register_router
@@ -20,10 +16,6 @@ from .org_admin.user_org_admin import router as org_user_router
 from .org_admin.evidence_org_admin import router as org_evidence_router
 from .org_admin.note_org_admin import router as org_note_router
 from .org_admin.assignment_org_admin import router as org_assignment_router
-<<<<<<< HEAD
-from .org_admin.dashboard_org_admin import router as org_dashboard_router
-=======
->>>>>>> origin/main
 
 # Evaide Admin routes
 from .evaide_admin.case_evaide_admin import router as admin_case_router
@@ -54,17 +46,9 @@ router.include_router(org_user_router)
 router.include_router(org_evidence_router)
 router.include_router(org_note_router)
 router.include_router(org_assignment_router)
-<<<<<<< HEAD
-router.include_router(org_dashboard_router)
-=======
->>>>>>> origin/main
 
 # Evaide Admin
 router.include_router(admin_case_router)
 router.include_router(admin_user_router)
 router.include_router(admin_evidence_router)
 router.include_router(admin_note_router)
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

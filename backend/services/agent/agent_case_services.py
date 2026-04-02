@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-﻿from dotenv import load_dotenv
-from ..database import get_db_connection
-=======
 from dotenv import load_dotenv
 from services.database import get_db_connection
->>>>>>> origin/main
 import pyodbc
 import time
 
@@ -12,8 +7,6 @@ load_dotenv()
 
 
 def list_my_cases(agent_id: int, org_id: int):
-<<<<<<< HEAD
-=======
     """
     Returns all cases the agent can see:
     1. Cases they created or are directly assigned to
@@ -22,15 +15,11 @@ def list_my_cases(agent_id: int, org_id: int):
     Each case includes an 'ai_linked' flag and 'linked_from_case_id'
     so the frontend can show which case triggered the link.
     """
->>>>>>> origin/main
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-<<<<<<< HEAD
-=======
         # Direct cases: created by or assigned to the agent
->>>>>>> origin/main
         cursor.execute("""
             SELECT DISTINCT
                 c.case_id,
@@ -42,29 +31,15 @@ def list_my_cases(agent_id: int, org_id: int):
                 c.severity_level,
                 CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
                 CAST(c.created_at AS NVARCHAR(50)) AS created_at,
-<<<<<<< HEAD
-                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at
-=======
                 CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
                 0 AS ai_linked,
                 NULL AS linked_from_case_id,
                 NULL AS linked_from_title
->>>>>>> origin/main
             FROM Cases c
             LEFT JOIN case_assignments ca ON c.case_id = ca.case_id
             WHERE c.deleted_at IS NULL
               AND c.org_id = ?
               AND (c.created_by_user_id = ? OR ca.user_id = ?)
-<<<<<<< HEAD
-            ORDER BY created_at DESC
-        """, (org_id, agent_id, agent_id))
-
-        rows = cursor.fetchall()
-        columns = [col[0] for col in cursor.description]
-        cases = [dict(zip(columns, row)) for row in rows]
-
-        return {"message": "Success", "cases": cases}
-=======
 
         """, (org_id, agent_id, agent_id))
 
@@ -120,7 +95,6 @@ def list_my_cases(agent_id: int, org_id: int):
         all_cases.sort(key=lambda c: c["created_at"] or "", reverse=True)
 
         return {"message": "Success", "cases": all_cases}
->>>>>>> origin/main
 
     except pyodbc.Error as e:
         return {"message": "Error", "error": str(e)}
@@ -162,9 +136,6 @@ def get_my_case(case_id: int, agent_id: int, org_id: int):
 
         row = cursor.fetchone()
         if not row:
-<<<<<<< HEAD
-            return {"message": "Case not found or access denied"}
-=======
             # Check AI bridge access
             cursor.execute("""
                 SELECT 1
@@ -205,7 +176,6 @@ def get_my_case(case_id: int, agent_id: int, org_id: int):
             row = cursor.fetchone()
             if not row:
                 return {"message": "Case not found or access denied"}
->>>>>>> origin/main
 
         case_cols = [col[0] for col in cursor.description]
         case_data = dict(zip(case_cols, row))
@@ -332,7 +302,3 @@ def create_case(org_id: int, agent_id: int, title: str, description: str = None,
     finally:
         cursor.close()
         conn.close()
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

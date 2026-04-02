@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from fastapi import APIRouter
-=======
 from fastapi import APIRouter
->>>>>>> origin/main
 from pydantic import BaseModel
 import services.agent.agent_note_services as services
 
@@ -30,7 +26,3 @@ def create_case_note(case_id: int, agent_id: int, data: NoteCreate):
 @router.patch("/{note_id}")
 def update_my_note(note_id: int, agent_id: int, data: NoteUpdate):
     return services.update_my_note(note_id, agent_id, data.content)
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from fastapi import APIRouter
-=======
 from fastapi import APIRouter
->>>>>>> origin/main
 import services.org_admin.org_evidence_services as services
 
 router = APIRouter(prefix="/org/evidence", tags=["Org Admin - Evidence"])
@@ -26,7 +22,3 @@ def get_evidence_file(file_id: str, org_id: int):
 @router.delete("/{file_id}")
 def delete_evidence(file_id: str, org_id: int):
     return services.delete_evidence(file_id, org_id)
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

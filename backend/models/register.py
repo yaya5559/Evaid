@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from pydantic import BaseModel, EmailStr
-=======
 from pydantic import BaseModel, EmailStr
->>>>>>> origin/main
 from typing import Optional
 
 class RegisterRequest(BaseModel):
@@ -22,7 +18,3 @@ class UsersUpdate(BaseModel):
     phone_number: Optional[str] = None
     role_id: Optional[int] = None
     org_id: Optional[int] = None
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

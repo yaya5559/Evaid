@@ -1,9 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-<<<<<<< HEAD
-=======
 import { NotificationBell } from '../shared/NotificationBell'
->>>>>>> origin/main
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
@@ -24,18 +21,11 @@ function AgentNav() {
     <>
       <div className='admin-brand'>
         <div className='admin-brand-mark' />
-<<<<<<< HEAD
-        <div>
-          <div className='admin-brand-title'>Evaid</div>
-          <div className='admin-brand-sub'>Agent console</div>
-        </div>
-=======
         <div style={{ flex: 1 }}>
           <div className='admin-brand-title'>Evaid</div>
           <div className='admin-brand-sub'>Agent console</div>
         </div>
         <NotificationBell />
->>>>>>> origin/main
       </div>
 
       <nav className='admin-nav'>

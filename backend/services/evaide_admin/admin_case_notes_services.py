@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from dotenv import load_dotenv
-=======
 from dotenv import load_dotenv
->>>>>>> origin/main
 from services.database import get_db_connection
 import pyodbc
 
@@ -118,7 +114,3 @@ def delete_note(note_id: int):
     finally:
         cursor.close()
         conn.close()
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

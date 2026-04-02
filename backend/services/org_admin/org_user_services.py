@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from dotenv import load_dotenv
-=======
 from dotenv import load_dotenv
->>>>>>> origin/main
 from services.database import get_db_connection
 import pyodbc
 
@@ -148,7 +144,3 @@ def disable_org_agent(user_id: int, org_id: int):
     finally:
         cursor.close()
         conn.close()
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

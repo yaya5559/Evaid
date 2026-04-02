@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿from fastapi import APIRouter
-=======
 from fastapi import APIRouter
->>>>>>> origin/main
 import services.org_admin.org_user_services as services
 
 router = APIRouter(prefix="/org/agents", tags=["Org Admin - Agents"])
@@ -26,7 +22,3 @@ def enable_org_agent(user_id: int, org_id: int):
 @router.patch("/disable/{user_id}")
 def disable_org_agent(user_id: int, org_id: int):
     return services.disable_org_agent(user_id, org_id)
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main

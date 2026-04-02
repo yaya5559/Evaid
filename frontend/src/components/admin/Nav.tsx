@@ -1,9 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-<<<<<<< HEAD
-=======
 import { NotificationBell } from '../shared/NotificationBell'
->>>>>>> origin/main
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
