@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from database import get_db_connection
+from services.database import get_db_connection
 from models.cases import Case
 import pyodbc
 

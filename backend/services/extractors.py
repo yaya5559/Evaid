@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from backend.models.evidenceShape import ExtractedSignal, ExtractorInput
+from models.evidenceShape import ExtractedSignal, ExtractorInput
 from azure.ai.vision.imageanalysis import ImageAnalysisClient
 from azure.ai.vision.imageanalysis.models import VisualFeatures
 from azure.core.credentials import AzureKeyCredential

@@ -79,6 +79,23 @@ export type OrgAgent = {
   email: string
 }
 
+export type Actor = {
+  id: string
+  primaryName: string
+  aliases: string[]
+  role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
+  confidenceScore: number | null
+  source: 'AI' | 'User'
+  createdAt: string
+  evidenceCount: number
+  casesCount: number
+}
+
+// Stub — connect to /cases/{case_id}/actors when backend is available
+export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
+  return []
+}
+
 export type OrgCreateCasePayload = {
   case_number?: string
   title: string
