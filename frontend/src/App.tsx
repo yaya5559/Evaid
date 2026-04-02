@@ -20,26 +20,9 @@ import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
 
-type ProtectedRouteProps = {
-  allowedRoles: string[]
-  children: React.ReactNode
-}
-
-function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth()
-  if (loading) return null
-  if (!user) return <Navigate to="/Login" replace />
-  const role = (user as any).role as string
-  if (!allowedRoles.includes(role)) {
-    if (role === 'evaide_admin') return <Navigate to="/Dashboard" replace />
-    if (role === 'org_admin') return <Navigate to="/Org_Dashboard" replace />
-    if (role === 'agent') return <Navigate to="/AgentCases" replace />
-    return <Navigate to="/" replace />
-  }
-  return <>{children}</>
-}
-
 function App() {
+
+
   return (
     <SignalProvider>
       <SignalToast />

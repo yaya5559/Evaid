@@ -25,11 +25,11 @@ type CaseRecord = {
 }
 
 function normalizeStatus(status: string | undefined): CaseStatus {
-  const s = status?.trim().toLowerCase()
-  if (s === 'solved') return 'Solved'
-  if (s === 'closed') return 'Closed'
-  if (s === 'discarded') return 'Discarded'
-  return 'Open'
+    const s = status?.trim().toLowerCase()
+    if (s === 'solved') return 'Solved'
+    if (s === 'closed') return 'Closed'
+    if (s === 'discarded') return 'Discarded'
+    return 'Open'
 }
 
 const statusTone: Record<CaseStatus, string> = { Solved: 'good', Closed: 'good', Open: 'good', Discarded: 'critical' }
@@ -41,10 +41,10 @@ function roleColor(role: string): string {
 }
 
 function formatDate(date: string | undefined | null) {
-  if (!date) return '—'
-  const d = new Date(date.slice(0, 10) + 'T00:00:00')
-  if (isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    if (!date) return '—'
+    const d = new Date(date.slice(0, 10) + 'T00:00:00')
+    if (isNaN(d.getTime())) return '—'
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 function toCaseRecord(item: OrgCaseListItem): CaseRecord {

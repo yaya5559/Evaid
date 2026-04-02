@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router as api_router
 from routes import evidence
+from routes.org_admin import assignment_org_admin
 from uuid import UUID
 
 app = FastAPI()
