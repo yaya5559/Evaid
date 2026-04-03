@@ -1,9 +1,12 @@
 import os
 from azure.ai.documentintelligence import DocumentIntelligenceClient
+<<<<<<< HEAD
 from typing import Optional
 from models.evidenceShape import ExtractedSignal, ExtractorInput
 from azure.ai.vision.imageanalysis import ImageAnalysisClient
 from azure.ai.vision.imageanalysis.models import VisualFeatures
+=======
+>>>>>>> aa5b9fab (AI done until graph)
 from azure.core.credentials import AzureKeyCredential
 
 #converts any supported files

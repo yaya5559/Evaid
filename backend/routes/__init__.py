@@ -24,7 +24,6 @@ from .evaide_admin.evidence_evaide_admin import router as admin_evidence_router
 from .evaide_admin.note_evaide_admin import router as admin_note_router
 
 
-
 router = APIRouter(prefix="/Evaide")
 
 # Shared / auth

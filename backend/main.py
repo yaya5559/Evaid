@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router as api_router
-
 from routes.org_admin import assignment_org_admin
 from contextlib import asynccontextmanager
 import threading, time
