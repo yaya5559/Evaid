@@ -20,9 +20,26 @@ import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
 
+type ProtectedRouteProps = {
+  allowedRoles: string[]
+  children: React.ReactNode
+}
+
+function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/Login" replace />
+  const role = (user as any).role as string
+  if (!allowedRoles.includes(role)) {
+    if (role === 'evaide_admin') return <Navigate to="/Dashboard" replace />
+    if (role === 'org_admin') return <Navigate to="/Org_Dashboard" replace />
+    if (role === 'agent') return <Navigate to="/AgentCases" replace />
+    return <Navigate to="/" replace />
+  }
+  return <>{children}</>
+}
+
 function App() {
-
-
   return (
     <SignalProvider>
       <SignalToast />
@@ -32,18 +49,6 @@ function App() {
       <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />
-<<<<<<< HEAD
-=======
-      <Route element={<AuthGate roles={["evaide_admin","org_admin" ]} />}>
-        <Route path='/Add_Organization' element = {<AddOrganization/>}/>
-        <Route path='/Edit_Organization' element = {<EditOrganization/>}/>
-        <Route path='/Org_Dashboard' element={<OrgDashboard />} />
-        <Route path='/Evidence_Upload' element={<EvidenceUpload />} />
-        <Route path='/OrgCaseProgress' element={<OrgCaseProgress/>} />
-        <Route path='/Register_Agent' element = {<AddAgent/>}/>
-        <Route path='/Cases' element = {<Cases/>} />
-      </Route>
->>>>>>> f6d532b5 (remove node_modules from repo + graph and access system backend)
 
       {/* Evaide Admin only */}
       <Route path="/Dashboard" element={<ProtectedRoute allowedRoles={['evaide_admin']}><Dashboard /></ProtectedRoute>} />

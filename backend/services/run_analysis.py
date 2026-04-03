@@ -1,7 +1,7 @@
 from services.database import get_db_connection
 from fastapi import HTTPException, status
 from datetime import datetime, timezone
-from services.evidence.extractors import DocumentExtractor
+from services.extractors import DocumentExtractor
 from services.evidence.signal_pipline import run_llm_extraction, run_universal_extraction, detect_platform
 from models.evidenceShape import ExtractedSignal
 import json
@@ -63,11 +63,9 @@ def claim_next_analysis_run():
     except:
         conn.rollback()
         # Don’t leak internal exception strings to clients
-        raise HTTPException(status_code=500, detail="Internal server error.")
+        raise 
     finally:
         conn.close()
-
-
 
 def load_run_attachment(analysis_run_id):
     conn = get_db_connection()
@@ -112,7 +110,9 @@ def load_run_attachment(analysis_run_id):
 
 #choose extractor by MIME type
 def select_extractor(attachment_kind):
-    kind = (attachment_kind or "").lower()
+    if attachment_kind in DocumentExtractor.SUPPORTED_TYPES:
+        return DocumentExtractor()
+    return None
 
 def run_analysis(analysis_run_id):
     conn = get_db_connection()
@@ -142,6 +142,9 @@ def run_analysis(analysis_run_id):
         
         extractor = select_extractor(attachement[0])
 
+        if extractor is None:
+            raise ValueError(f"Unsupported attachment type: {attachement[0]}")
+
         markdown  = extractor.extract_to_markdown(attachement[1], attachement[2])
 
         cursor.execute(
@@ -153,9 +156,9 @@ def run_analysis(analysis_run_id):
 
         case_id = cursor.fetchone()[0]
         
-        regex_signals = run_universal_extraction(markdown, attachement_id)
+        regex_signals = run_universal_extraction(markdown, attachement_id, cursor)
         platform, confidence, reasoning = detect_platform(markdown)
-        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id)
+        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id, cursor)
 
         total_signals = regex_signals + extctractedSignals
 
@@ -209,4 +212,5 @@ def run_analysis(analysis_run_id):
         )
     finally:
         conn.close()
+
 

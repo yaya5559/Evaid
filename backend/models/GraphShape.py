@@ -1,10 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass
-<<<<<<< HEAD
-=======
-from pydantic import BaseModel
 from uuid import UUID
->>>>>>> e40537b6 (upload evidence done)
 
 class NodeType(str, Enum):
     PERSON = 'person'

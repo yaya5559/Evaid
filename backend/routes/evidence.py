@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from fastapi import Depends, status, APIRouter, UploadFile, File, Form, Response, HTTPException
+from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals
 from services.evidence_service import (
     analyze_and_stage_evidence,
     confirm_evidence,
@@ -13,12 +14,12 @@ from services.evidence_service import (
 )
 from services.evidence.triage_service import get_pending_signals
 from dependencies.auth import get_current_user, get_user_org_id, case_belong_to_org
-from services.graph_service import get_evidence_network
 from models.evidenceShape import AttachmentUploadResponse, EvidenceItemCreate, EvidenceItemResponse
 from services.database import get_db_connection
 from uuid import UUID
 import hashlib
 from typing import Final
+
 
 router = APIRouter(
     prefix="/evidence",
@@ -154,12 +155,17 @@ async def upload_attachement(
 
 
 @router.get("/{evidence_id}/pending-signals")
-async def get_pending_signals(
+async def list_pending_signals(
     evidence_id: UUID
 ):
     signals = get_pending_signals(evidence_id)
     return signals
 
+@router.patch("/pending-signals/{pending_signal_id}/confirm")
+async def confirmSignals(pending_signal_id:UUID):
+    return confirm_pending_signal(pending_signal_id)
 
 
-    
+@router.delete("/pending-signals/{pending_signal_id}/reject")
+async def rejectSignals(pending_signal_id:UUID):
+    reject_pending_signals(pending_signal_id)
