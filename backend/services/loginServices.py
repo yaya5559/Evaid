@@ -187,3 +187,20 @@ def getRoleName(role_id:int):
     finally:
         conn.close()
 
+def get_current_user(request:Request):
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid auth header")
+    
+    token = auth_header.replace("Bearer", "")
+
+    try:
+        payload = decode_access_token(token)
+    except:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    return payload
