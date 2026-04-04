@@ -1,13 +1,4 @@
-# Author: Bria Tran
-# Date: Feburary 15th, 2026
-#
-# NOTE: This code is still in progress
-# These files/logic are for how the system COULD work once fully implemented
-# 
-# Core service for evidence file operations
-# This does the actual work of saving files to the database, retrieving them,
-# extracting metadata (like image dimensions), and searching through evidence
-# Basically all the heavy lifting for file management happens here
+
 from uuid import UUID
 import hashlib
 import pyodbc
@@ -16,7 +7,7 @@ import json
 import logging
 import base64
 from services.database import get_db_connection
-from services.chat_parser import parse_chat_log
+
 from datetime import datetime, timezone
 from fastapi import Depends, status, APIRouter, UploadFile, File, Form, Response, HTTPException
 from typing import Final
@@ -221,3 +212,6 @@ def get_evidence_file(file_id):
         return None
     finally:
         conn.close()
+
+
+

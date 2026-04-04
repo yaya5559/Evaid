@@ -1,13 +1,25 @@
-from fastapi import HTTPException, status, APIRouter
-from models.organization import Organization
+from fastapi import Depends, HTTPException, status, APIRouter
+from models.organization import Organization, editedOrg
 import services.organizationServices as services
+from dependencies.auth import require_roles
+import pyodbc
 
-router = APIRouter(prefix="/Organization", tags=["Organization"])
 
+router = APIRouter(
+   prefix="/Organization",
+   tags=["Organization"],
+   dependencies=[Depends(require_roles("evaide_admin"))],
+)
 
 @router.get("")
 def list_organizations():
-   return services.list_active_organization()
+   try:
+      return services.list_active_organization()
+   except pyodbc.Error:
+      raise HTTPException(
+         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+         detail="Failed to load organizations",
+      )
 
 @router.post("/Add")
 def addOrganization(data: Organization):  
@@ -49,4 +61,27 @@ def delete_organization(name: str):
       return "Failed"
     
 
-    
+@router.put("/{organization_id}")
+def Edit_organization(organization_id: int, organization: editedOrg):
+   try:
+      updated = services.edit_organization(organization_id, organization)
+   except pyodbc.IntegrityError:
+      raise HTTPException(
+         status_code=status.HTTP_409_CONFLICT,
+         detail="Organization name or email already exists",
+      )
+   except pyodbc.Error:
+      raise HTTPException(
+         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+         detail="Failed to update organization",
+      )
+   
+   if not updated:
+      raise HTTPException(
+         status_code=status.HTTP_404_NOT_FOUND,
+         detail="Organization not found",
+      )
+   
+   return {"message":"Organization updated successfully"}
+
+
