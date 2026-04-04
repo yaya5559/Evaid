@@ -21,7 +21,7 @@ def get_organization_id(name:str):
     result = cursor.fetchone()
 
     if result:
-            return result[0]  # Extract the org_id value
+      return result[0]  # Extract the org_id value
     return None
   
   finally:

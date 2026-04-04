@@ -1,13 +1,9 @@
 import os
-import io
 from azure.ai.documentintelligence import DocumentIntelligenceClient
-<<<<<<< HEAD
 from typing import Optional
 from models.evidenceShape import ExtractedSignal, ExtractorInput
 from azure.ai.vision.imageanalysis import ImageAnalysisClient
 from azure.ai.vision.imageanalysis.models import VisualFeatures
-=======
->>>>>>> aa5b9fab (AI done until graph)
 from azure.core.credentials import AzureKeyCredential
 
 #converts any supported files
@@ -28,7 +24,7 @@ class DocumentExtractor:
     def extract_to_markdown(self, file_bytes: bytes, content_type: str)->str:
         poller = self.client.begin_analyze_document(
             "prebuilt-layout",
-            body=io.BytesIO(file_bytes),
+            body=file_bytes,
             content_type=content_type,
             output_content_format="markdown",
         )
