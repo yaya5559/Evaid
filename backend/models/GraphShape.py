@@ -1,13 +1,5 @@
 from enum import Enum
 from dataclasses import dataclass
-
-from pydantic import BaseModel
-
-from uuid import UUID
-
-
-
-from pydantic import BaseModel
 from uuid import UUID
 
 
@@ -34,10 +26,8 @@ class GraphEdge:
     id: str
     From: str #node id
     to: str #node id
-    type : str 
-    source: str 
-    type : str 
-    source: str 
+    type : str
+    source: str
     confidence: float | None = None
 
 

@@ -1,19 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router as api_router
-from routes.org_admin import assignment_org_admin
 from contextlib import asynccontextmanager
 import threading, time
 from services.run_analysis import claim_next_analysis_run, run_analysis
-<<<<<<< HEAD
-
-from routes import evidence
-from routes.org_admin import assignment_org_admin
-
-=======
 from services.database import init_db
->>>>>>> 2f4b8714 (graph)
-from uuid import UUID
 
 
 
