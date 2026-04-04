@@ -1,4 +1,5 @@
 import os
+import io
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 <<<<<<< HEAD
 from typing import Optional
@@ -27,7 +28,7 @@ class DocumentExtractor:
     def extract_to_markdown(self, file_bytes: bytes, content_type: str)->str:
         poller = self.client.begin_analyze_document(
             "prebuilt-layout",
-            analyze_request=file_bytes,
+            body=io.BytesIO(file_bytes),
             content_type=content_type,
             output_content_format="markdown",
         )

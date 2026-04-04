@@ -17,7 +17,7 @@ import json
 # if an exception occurs, mark run failed and store the error message
 
 
-STATUS_QUEUED = "queued"
+STATUS_QUEUED = "INITIAL_PROCESSING"
 STATUS_RUNNING = "running"
 
 
@@ -26,6 +26,7 @@ def claim_next_analysis_run():
     cursor = conn.cursor()
 
     try:
+        
         cursor.execute(
             """
                 SELECT TOP 1 Id, evidence_id, attachment_id, run_type
@@ -35,6 +36,7 @@ def claim_next_analysis_run():
             """, (STATUS_QUEUED,))
         
         row = cursor.fetchone()
+        
 
         if row is None:
             return None
@@ -145,7 +147,7 @@ def run_analysis(analysis_run_id):
         if extractor is None:
             raise ValueError(f"Unsupported attachment type: {attachement[0]}")
 
-        markdown  = extractor.extract_to_markdown(attachement[1], attachement[2])
+        markdown = extractor.extract_to_markdown(attachement[1], attachement[0])
 
         cursor.execute(
             """

@@ -130,6 +130,16 @@ export const getCases = async () => {
     }
 };
 
+export const getGraph =  async (case_id:string) => {
+    try{
+        const res = await api.get(`/graph/cases/${case_id}`)
+        return res
+
+    }catch(err: any){
+        throw new Error(err.response?.data?.detail || "Could not load cases");
+    }
+}
+
 type OrganizationUpdatePayload = {
   org_id: number;
   companyName: string;
@@ -164,22 +174,22 @@ export const editOrganization = async(
     }
 };
 
-// accept caseId + File separately and build FormData here
-export const uploadEvidence = async (caseId: number, file: File, description:string, title:string, evidence_type:string) => {
+export const uploadEvidence = async (caseId: number, file: File, description: string, title: string) => {
     try {
-        const formData = new FormData();
-        // case_id must match the Form(...) field name in evidence.py
-        formData.append("case_id", String(caseId));
-        formData.append("description", description)
-        formData.append("title", title)
-        formData.append("evidence_type", evidence_type)
-        // file must match the File(...) field name in evidence.py
-        formData.append("file", file);
+        // Step 1 — create the EvidenceItem record, get back its id
+        console.log("ajja")
+        const itemRes = await api.post("/evidence/EvidenceItem", {
+            case_id: String(caseId),
+            title,
+            description,
+        });
+        const evidenceItemId: string = itemRes.data.evidenceItem_id;
 
-        // let the browser set the content-type automatically
-        // so the multipart boundary is included correctly in the header.
-        const res = await api.post("/evidence/upload", formData);
-        return res.data;
+        // Step 2 — upload the file as an attachment to that item
+        const formData = new FormData();
+        formData.append("attachement", file);
+        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData);
+        return attachRes.data;
     } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Upload failed");
     }

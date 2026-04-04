@@ -47,7 +47,7 @@ async def Create_EvidenceItem(
         item: EvidenceItemCreate,
         user: dict = Depends(get_current_user)
     ):
-    
+        print("jaj")
         case_id = item.case_id
         org_id = get_user_org_id(user["user_id"])
         if org_id is None or not case_belong_to_org(case_id, org_id):
@@ -58,6 +58,8 @@ async def Create_EvidenceItem(
         cursor = conn.cursor()
         try:
             created_at = datetime.now(timezone.utc)
+
+            print("yahy")
 
             cursor.execute(
                 """

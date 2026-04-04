@@ -5,10 +5,14 @@ from routes.org_admin import assignment_org_admin
 from contextlib import asynccontextmanager
 import threading, time
 from services.run_analysis import claim_next_analysis_run, run_analysis
+<<<<<<< HEAD
 
 from routes import evidence
 from routes.org_admin import assignment_org_admin
 
+=======
+from services.database import init_db
+>>>>>>> 2f4b8714 (graph)
 from uuid import UUID
 
 
@@ -22,15 +26,20 @@ origins = [
 
 def worker_loop():
     while True:
-        run = claim_next_analysis_run()
-        if run:
-            run_analysis(run["analysis_run_id"])
-        else:
-            time.sleep(5)  # nothing queued, wait and poll again
+        try:
+            run = claim_next_analysis_run()
+            if run:
+                run_analysis(run["analysis_run_id"])
+            else:
+                time.sleep(5)
+        except Exception as e:
+            print(f"[Worker] Error: {e}")
+            time.sleep(5)  # wait before retrying so we don't spam on repeated failures
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    thread =  threading.Thread(target=worker_loop, daemon=True)
+    init_db(pool_size=5)
+    thread = threading.Thread(target=worker_loop, daemon=True)
     thread.start()
     yield
 
