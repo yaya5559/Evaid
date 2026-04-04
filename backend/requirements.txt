@@ -43,3 +43,11 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzdata==2025.1
 uvicorn==0.40.0
+Pillow
+python-multipart
+pymupdf
+python-dateutil
+python-docx
+azure-ai-documentintelligence==1.0.2
+azure-ai-vision-imageanalysis==1.0.0
+azure-core==1.39.0

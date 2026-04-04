@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import Depends, status, APIRouter, UploadFile, File, Form, Response, HTTPException
-from services.evidence.evidence_service import (
+from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals
+from services.evidence_service import (
     analyze_and_stage_evidence,
     confirm_evidence,
     get_evidence_file,
@@ -11,13 +12,14 @@ from services.evidence.evidence_service import (
     _get_evidence_case_id
 
 )
+from services.evidence.triage_service import get_pending_signals
 from dependencies.auth import get_current_user, get_user_org_id, case_belong_to_org
-from services.evidence.graph_service import get_evidence_network
 from models.evidenceShape import AttachmentUploadResponse, EvidenceItemCreate, EvidenceItemResponse
 from services.database import get_db_connection
 from uuid import UUID
 import hashlib
 from typing import Final
+
 
 router = APIRouter(
     prefix="/evidence",
@@ -45,7 +47,7 @@ async def Create_EvidenceItem(
         item: EvidenceItemCreate,
         user: dict = Depends(get_current_user)
     ):
-    
+        print("jaj")
         case_id = item.case_id
         org_id = get_user_org_id(user["user_id"])
         if org_id is None or not case_belong_to_org(case_id, org_id):
@@ -56,6 +58,8 @@ async def Create_EvidenceItem(
         cursor = conn.cursor()
         try:
             created_at = datetime.now(timezone.utc)
+
+            print("yahy")
 
             cursor.execute(
                 """
@@ -152,4 +156,18 @@ async def upload_attachement(
         conn.close()
 
 
+@router.get("/{evidence_id}/pending-signals")
+async def list_pending_signals(
+    evidence_id: UUID
+):
+    signals = get_pending_signals(evidence_id)
+    return signals
 
+@router.patch("/pending-signals/{pending_signal_id}/confirm")
+async def confirmSignals(pending_signal_id:UUID):
+    return confirm_pending_signal(pending_signal_id)
+
+
+@router.delete("/pending-signals/{pending_signal_id}/reject")
+async def rejectSignals(pending_signal_id:UUID):
+    reject_pending_signals(pending_signal_id)

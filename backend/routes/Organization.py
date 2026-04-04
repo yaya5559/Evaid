@@ -22,8 +22,7 @@ def list_organizations():
       )
 
 @router.post("/Add")
-def addOrganization(data: Organization): 
-    
+def addOrganization(data: Organization):  
     if not services.check_organization(data.company_name):
       raise HTTPException(
          status_code = status.HTTP_409_CONFLICT,
@@ -84,5 +83,6 @@ def Edit_organization(organization_id: int, organization: editedOrg):
       )
    
    return {"message":"Organization updated successfully"}
+
 
 

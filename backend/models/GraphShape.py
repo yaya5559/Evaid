@@ -1,14 +1,13 @@
 from enum import Enum
 from dataclasses import dataclass
-from pydantic import BaseModel
 from uuid import UUID
+
 
 class NodeType(str, Enum):
     PERSON = 'person'
     LOCATION = "location"
     EVENT = "event"
     EVIDENCE = "evidence"
-
 
 class EdgeSource(str, Enum):
     AI = "AI"
@@ -27,8 +26,8 @@ class GraphEdge:
     id: str
     From: str #node id
     to: str #node id
-    reason : str 
-    source: EdgeSource 
+    type : str
+    source: str
     confidence: float | None = None
 
 

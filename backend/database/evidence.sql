@@ -5,7 +5,7 @@ CREATE TABLE SignalTypeDefinition (
     platform_key NVARCHAR(100) NOT NULL, -- NULL if universal/custom
     regex_pattern NVARCHAR(500), --used for LLM optional
     llm_hint NVARCHAR(500) NOT NULL, --sent to LLM as desc
-    case_id UNIQUEIDENTIFIER, --NULL = global, set = case-specific
+    case_id  UNIQUEIDENTIFIER, --NULL = global, set = case-specific
     created_by INT NOT NULL,
     FOREIGN KEY (case_id) REFERENCES cases(case_id),
     FOREIGN KEY (created_by) REFERENCES users(user_id)
@@ -108,5 +108,5 @@ CREATE TABLE Signal(
     raw_value NVARCHAR(900) NOT NULL, --exactly what etractor saw
     normalized_value NVARCHAR(200) NOT NULL, --cleaned version
     confidence FLOAT NOT NULL,
-    dource_loactor NVARCHAR(200) NOT NULL 
+    source_locator NVARCHAR(200) NOT NULL 
 )

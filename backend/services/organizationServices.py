@@ -1,8 +1,10 @@
 from dotenv import load_dotenv
 from services.database import get_db_connection 
-from models.organization import Organization, editedOrg
+from models.organization import Organization
 from passlib.context import CryptContext # for password hashing
 import pyodbc
+from services.database import get_db_connection 
+from models.organization import Organization, editedOrg
 
 load_dotenv()
 

@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { NotificationBell } from '../shared/NotificationBell'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
@@ -24,10 +25,11 @@ function OrgNav() {
     <>
       <div className='admin-brand'>
         <div className='admin-brand-mark' />
-        <div>
+        <div style={{ flex: 1 }}>
           <div className='admin-brand-title'>Evaid</div>
           <div className='admin-brand-sub'>Organization console</div>
         </div>
+        <NotificationBell />
       </div>
 
       <nav className='admin-nav'>
@@ -37,21 +39,17 @@ function OrgNav() {
             <span className='admin-nav-dot' />
             Overview
           </NavLink>
-          <NavLink className={navClassName} to='/Evidence_Upload'>
-            <span className='admin-nav-dot' />
-            Upload Evidence
-          </NavLink>
           <NavLink className={navClassName} to='/OrgCaseProgress'>
             <span className='admin-nav-dot' />
-            Case Progress
+            View Cases
           </NavLink>
           <a className='admin-nav-item' href='#org-workload'>
             <span className='admin-nav-dot' />
-            Workload
+            View Agents
           </a>
           <a className='admin-nav-item' href='#org-case-register'>
             <span className='admin-nav-dot' />
-            Case Register
+            Start Case 
           </a>
         </div>
       </nav>
