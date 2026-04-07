@@ -39,13 +39,23 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
   return <>{children}</>
 }
 
-function App() {
+function AuthenticatedSignals() {
+  const { user, loading } = useAuth()
+  if (loading || !user) return null
   return (
-    <SignalProvider>
+    <>
       <SignalToast />
       <SignalModal />
       <SignalPanel />
       <FloatingSignalButton />
+    </>
+  )
+}
+
+function App() {
+  return (
+    <SignalProvider>
+      <AuthenticatedSignals />
       <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />

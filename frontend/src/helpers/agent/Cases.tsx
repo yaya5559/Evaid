@@ -57,18 +57,6 @@ export type AgentCaseDetailResponse = {
     evidence: AgentEvidence[]
 }
 
-export type Actor = {
-  id: string
-  primaryName: string
-  aliases: string[]
-  role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
-  confidenceScore: number | null
-  source: 'AI' | 'User'
-  createdAt: string
-  evidenceCount: number
-  casesCount: number
-}
-
 // Stub — connect to /cases/{case_id}/actors when backend is available
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
   return []
@@ -86,10 +74,6 @@ export type Actor = {
   casesCount: number
 }
 
-// Stub — connect to /cases/{case_id}/actors when backend is available
-export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
-}
 
 export const agentGetCases = async (agentId: number, orgId: number): Promise<AgentCaseListItem[]> => {
     try {

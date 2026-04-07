@@ -1,4 +1,3 @@
-import type { UUID } from 'crypto'
 import { api } from '../../context/AuthContext'
 
 export type OrgCaseListItem = {
@@ -99,22 +98,7 @@ export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
   return []
 }
 
-export type Actor = {
-  id: string
-  primaryName: string
-  aliases: string[]
-  role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
-  confidenceScore: number | null
-  source: 'AI' | 'User'
-  createdAt: string
-  evidenceCount: number
-  casesCount: number
-}
 
-// Stub â€” connect to /cases/{case_id}/actors when backend is available
-export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
-}
 
 export type OrgCreateCasePayload = {
     case_number?: string
@@ -208,7 +192,7 @@ export const orgDeleteCase = async (caseId: string, orgId: string) => {
 
 export const orgGetAgents = async (orgId: string): Promise<OrgAgent[]> => {
     try {
-        // FIXED: was /org/agents/ — correct route is /org/cases/agents/ (case_org_admin.py)
+        // FIXED: was /org/agents/ ï¿½ correct route is /org/cases/agents/ (case_org_admin.py)
         // org_id is read from the JWT token on the backend, no query param needed
         const res = await api.get('/org/cases/agents/', {
             withCredentials: true,
@@ -297,7 +281,7 @@ export const orgDeleteEvidence = async (fileId: string, orgId: string) => {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete evidence')
     }
 }
-export const orgCreateEvidenceItem = async (case_id: UUID, title: string, description: string) => {
+export const orgCreateEvidenceItem = async (case_id: string, title: string, description: string) => {
   try{
     const formData = new FormData()
 

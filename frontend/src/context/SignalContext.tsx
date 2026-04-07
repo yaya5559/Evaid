@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { useAuth } from './AuthContext'
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -143,12 +144,13 @@ const TEST_SIGNALS: Signal[] = [
 // ── Provider ───────────────────────────────────────────────
 
 export function SignalProvider({ children }: { children: React.ReactNode }) {
-  const [signals, setSignals] = useState<Signal[]>(TEST_SIGNALS)
+  const { user } = useAuth()
+  const [signals, setSignals] = useState<Signal[]>([])
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set())
-  const [toastQueue, setToastQueue] = useState<Signal[]>([TEST_SIGNALS[0]])
+  const [toastQueue, setToastQueue] = useState<Signal[]>([])
   const [openSignal, setOpenSignal] = useState<Signal | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
-  const knownIds = useRef<Set<string>>(new Set(TEST_SIGNALS.map((s) => s.id)))
+  const knownIds = useRef<Set<string>>(new Set())
 
   const processIncoming = useCallback((incoming: Signal[]) => {
     if (incoming.length === 0) return
@@ -169,8 +171,21 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Poll every 30 seconds
+  // Load test signals and start polling only when authenticated
   useEffect(() => {
+    if (!user) {
+      setSignals([])
+      setSeenIds(new Set())
+      setToastQueue([])
+      setOpenSignal(null)
+      setIsPanelOpen(false)
+      knownIds.current = new Set()
+      return
+    }
+
+    // TODO: remove once backend is wired up
+    processIncoming(TEST_SIGNALS)
+
     const poll = async () => {
       try {
         const data = await fetchAllSignals()
@@ -180,7 +195,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     void poll()
     const interval = setInterval(() => void poll(), 30_000)
     return () => clearInterval(interval)
-  }, [processIncoming])
+  }, [user, processIncoming])
 
   const checkSignalsAfterUpload = useCallback(async (caseId: string) => {
     try {
