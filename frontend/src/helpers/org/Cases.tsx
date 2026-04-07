@@ -291,14 +291,24 @@ export const orgCreateEvidenceItem = async (case_id: string, title: string, desc
 }
 
 
-export const orgUploadEvidence = async (caseId: string, file: File, userId: number) => {
+
+
+export const orgUploadEvidence = async (caseId: string, file: File, _userId: number) => {
     try {
+        // Step 1 — create the EvidenceItem record
+        const itemRes = await api.post('/evidence/EvidenceItem', {
+            case_id: caseId,
+            title: file.name,
+            description: '',
+        })
+        console.log(itemRes)
+        const evidenceItemId: string = itemRes.data.evidenceItem_id
+
+        // Step 2 — upload the file as an attachment
         const formData = new FormData()
-        formData.append('case_id', caseId)
-        formData.append('file', file)
-        formData.append('user_id', String(userId))
-        const res = await api.post('/evidence/upload', formData, { withCredentials: true })
-        return res.data as { file_id: string; filename: string; metadata: any; message: string }
+        formData.append('attachement', file)
+        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
+        return attachRes.data as { attachment_id: string; analysis_run_id: string }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Upload failed')
     }

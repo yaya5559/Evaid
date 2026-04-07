@@ -1,7 +1,7 @@
 from services.database import get_db_connection
 from fastapi import HTTPException, status
 from datetime import datetime, timezone
-from services.extractors import DocumentExtractor
+from services.evidence.extractors import DocumentExtractor
 from services.evidence.signal_pipline import run_llm_extraction, run_universal_extraction, detect_platform
 from models.evidenceShape import ExtractedSignal
 import json
@@ -17,7 +17,7 @@ import json
 # if an exception occurs, mark run failed and store the error message
 
 
-STATUS_QUEUED = "INITIAL_PROCESSING"
+STATUS_QUEUED = "queued"
 STATUS_RUNNING = "running"
 
 
@@ -26,7 +26,6 @@ def claim_next_analysis_run():
     cursor = conn.cursor()
 
     try:
-        
         cursor.execute(
             """
                 SELECT TOP 1 Id, evidence_id, attachment_id, run_type
@@ -36,7 +35,6 @@ def claim_next_analysis_run():
             """, (STATUS_QUEUED,))
         
         row = cursor.fetchone()
-        
 
         if row is None:
             return None
@@ -65,7 +63,7 @@ def claim_next_analysis_run():
     except:
         conn.rollback()
         # Don’t leak internal exception strings to clients
-        raise 
+        raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
         conn.close()
 
@@ -111,7 +109,7 @@ def load_run_attachment(analysis_run_id):
         conn.close()
 
 #choose extractor by MIME type
-def select_extractor(attachment_kind):
+def select_extractor(attachment_kind: str):
     if attachment_kind in DocumentExtractor.SUPPORTED_TYPES:
         return DocumentExtractor()
     return None
@@ -144,10 +142,7 @@ def run_analysis(analysis_run_id):
         
         extractor = select_extractor(attachement[0])
 
-        if extractor is None:
-            raise ValueError(f"Unsupported attachment type: {attachement[0]}")
-
-        markdown = extractor.extract_to_markdown(attachement[1], attachement[0])
+        markdown  = extractor.extract_to_markdown(attachement[1], attachement[2])
 
         cursor.execute(
             """
@@ -158,9 +153,9 @@ def run_analysis(analysis_run_id):
 
         case_id = cursor.fetchone()[0]
         
-        regex_signals = run_universal_extraction(markdown, attachement_id, cursor)
+        regex_signals = run_universal_extraction(markdown, attachement_id)
         platform, confidence, reasoning = detect_platform(markdown)
-        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id, cursor)
+        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id)
 
         total_signals = regex_signals + extctractedSignals
 
@@ -214,5 +209,4 @@ def run_analysis(analysis_run_id):
         )
     finally:
         conn.close()
-
 
