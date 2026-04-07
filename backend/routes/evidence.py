@@ -71,6 +71,10 @@ async def Create_EvidenceItem(
             )
 
             evidence_item_id = cursor.fetchone()[0]
+
+            if not evidence_item_id:
+                raise HTTPException(status_code=403, detail="no evidence_item_id found")
+
             conn.commit()
 
 
