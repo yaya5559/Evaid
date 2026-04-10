@@ -209,7 +209,7 @@ def get_current_user(request:Request):
     if not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid auth header")
     
-    token = auth_header.split(" ", 1)[1]
+    token = auth_header.replace("Bearer", "")
 
     try:
         payload = decode_access_token(token)
