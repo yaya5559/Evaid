@@ -48,3 +48,5 @@ python-multipart
 pymupdf
 python-dateutil
 python-docx
+isodate
+openai
