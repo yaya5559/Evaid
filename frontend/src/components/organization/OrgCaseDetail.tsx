@@ -183,8 +183,7 @@ function OrgCaseDetail() {
     if (!evidenceFile || !detail) return
     setLoading(true); setError(null)
     try {
-      const result = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
-      await orgConfirmEvidence(result.file_id)
+      await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
       setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }
