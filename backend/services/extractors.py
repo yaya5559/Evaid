@@ -1,47 +1,41 @@
 import os
-from typing import Optional
-from backend.models.evidenceShape import ExtractedSignal, ExtractorInput
-from azure.ai.vision.imageanalysis import ImageAnalysisClient
-from azure.ai.vision.imageanalysis.models import VisualFeatures
+from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
 
-class ImageExtractor:
-    type = "ImageExtractor"
+#converts any supported files
+#into markdown
+class DocumentExtractor:
+    SUPPORTED_TYPES = {
+        "image/jpeg", "image/png", "image/tiff", "image/bmp",
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    }
 
-    def __init__(
-            self,
-            vision_endpoint: Optional[str] = None,
-            vision_key: Optional[str] = None,
-            text_extractor=None,
-            language: str = "en",
 
-    ) ->  None:
-        endpoint = vision_endpoint or os.environ["VISION_ENDPOINT"]
-        key = vision_key or os.environ["VISION_KEY"]
+    def __init__(self):
+        endpoint = os.environ["DOCUMENT_INTELLIGENCE_ENDPOINT"]
+        key = os.environ["DOCUMENT_INTELLIGENCE_KEY"]
+        self.client = DocumentIntelligenceClient(endpoint, AzureKeyCredential(key))
 
-        self.client = ImageAnalysisClient(
-            endpoint=endpoint,
-            credential=AzureKeyCredential(key),
+    def extract_to_markdown(self, file_bytes: bytes, content_type: str)->str:
+        poller = self.client.begin_analyze_document(
+            "prebuilt-layout",
+            analyze_request=file_bytes,
+            content_type=content_type,
+            output_content_format="markdown",
         )
-        self.text_extractor = text_extractor
-        self.language = language
+        result = poller.result()#analyzed doc data(text, layout, tables etc)
+        markdown = result.content
+
+        #append hints so LLM knows what was visually emphasized
+        style_tags = set()# store uniques style tags
+        if result.styles:
+            for style in result.styles:
+                if getattr(style, "is_handwritten", False):#if attr is handwritten
+                    style_tags.add("<style:handwritten>")
+                if getattr(style, "font_weight", None) == "bold":#is the text bold
+                    style_tags.add("<style:bold>")
+        if style_tags:
+            markdown += "\n\n<!-- Visual styles detected: " + ", ".join(style_tags) + " -->"
         
-
-    def extract(self, extractor_input:ExtractorInput):
-        if not extractor_input.attachment_kind.startswith("image/"):
-            raise ValueError(
-                f"ImageExtractor cannot handle '{extractor_input.attachment_kind}'"
-            )
-        
-        result = self.client.analyze(
-            image_data=extractor_input.file_bytes,
-            visual_features=[VisualFeatures.READ],
-            language=self.language,
-            model_version="latest",
-        )
-
-        return result
-        
-
-
-         
+        return markdown
