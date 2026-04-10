@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class EvidenceItemCreate(BaseModel):
-    case_id: int
+    case_id: UUID
     title: str
     description:str
 
