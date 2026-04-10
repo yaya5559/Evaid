@@ -17,7 +17,7 @@ class CreatEdgeModel(BaseModel):
     confidence: float |None =  Field(default=None, ge=0, le=1)
 
 @router.get('/cases/{case_id}')
-async def getGraph(case_id: UUID, user = Depends(get_current_user)):
+async def getGraph(case_id: int, user = Depends(get_current_user)):
     return get_case_graph(case_id)
 
 

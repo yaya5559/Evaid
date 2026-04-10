@@ -22,6 +22,7 @@ class DocumentExtractor:
         self.client = DocumentIntelligenceClient(endpoint, AzureKeyCredential(key))
 
     def extract_to_markdown(self, file_bytes: bytes, content_type: str)->str:
+
         poller = self.client.begin_analyze_document(
             "prebuilt-layout",
             body=file_bytes,

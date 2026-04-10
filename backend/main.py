@@ -25,7 +25,10 @@ def worker_loop():
                 time.sleep(5)
         except Exception as e:
             print(f"[Worker] Error: {e}")
-            time.sleep(5)  # wait before retrying so we don't spam on repeated failures
+            time.sleep(5)
+        else:
+            if run:
+                time.sleep(0.5)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
