@@ -1,23 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from dependencies.auth import require_roles
-from services.registerUser import register_user
-from models.register import RegisterRequest
+from fastapi import APIRouter
 import services.org_admin.org_user_services as services
 
 router = APIRouter(prefix="/org/agents", tags=["Org Admin - Agents"])
-
-
-@router.post("/register")
-def register_org_agent(data: RegisterRequest, user: dict = Depends(require_roles("org_admin"))):
-    org_id = user.get("claims", {}).get("org_id")
-    if not org_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization not found")
-    data.org_id = org_id
-    data.role_id = 3  # always AGENT
-    success = register_user(data)
-    if not success:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-    return {"message": "Agent registered successfully"}
 
 
 @router.get("/")

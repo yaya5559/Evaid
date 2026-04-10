@@ -12,44 +12,29 @@ type OrganizationPayload = {
 };
 
 type OrganizationUpdatePayload = {
-    org_id: string | number;
-    companyName: string;
-    companyEmail: string;
-    companyPhoneNumber: string;
-    ownerFirstName: string;
-    ownerLastName: string;
-    ownerEmail: string;
-    ownerPhoneNumber: string;
+    name: string;
+    email: string;
+    phone_number: string;
+    region: string;
     status: string;
-    description: string;
+    seat_limit: number;
+    primary_contact: string;
+    notes: string;
 };
 
 
 export type OrganizationListItem = {
-    org_id: string | number;
-    companyName?: string;
-    companyEmail?: string;
-    companyPhoneNumber?: string;
-    ownerFirstName?: string;
-    ownerLastName?: string;
-    ownerEmail?: string;
-    ownerPhoneNumber?: string;
+    id: string;
+    name: string;
+    email?: string;
+    phone_number?: string;
     status?: string;
-    description?: string;
-    updatedAt?: string;
+    region?: string;
+    seat_limit?: number;
+    primary_contact?: string;
+    notes?: string;
     updated_at?: string;
-    user_count?: number;
-    case_count?: number;
-    // legacy aliases kept for compatibility
-    id?: string;
-    name?: string;
-    company_name?: string;
-    company_email?: string;
-    company_phone_number?: string;
-    owner_first_name?: string;
-    owner_last_name?: string;
-    owner_email?: string;
-    owner_phone_number?: string;
+    open_cases?: number;
 };
 
 export const addOrganization = async (organization: OrganizationPayload) => {
@@ -121,7 +106,7 @@ export const deleteOrganization = async (orgName: string) => {
 };
 
 export const editOrganization = async (
-    organizationId: string | number,
+    organizationId: string,
     organization: OrganizationUpdatePayload
 ) => {
     try {

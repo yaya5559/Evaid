@@ -78,23 +78,6 @@ export type CaseNotes = {
     author_last_name: string
 }
 
-export type Actor = {
-  id: string
-  primaryName: string
-  aliases: string[]
-  role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
-  confidenceScore: number | null
-  source: 'AI' | 'User'
-  createdAt: string
-  evidenceCount: number
-  casesCount: number
-}
-
-// Stub — connect to /cases/{case_id}/actors when backend is available
-export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
-}
-
 export const adminGetOrgCases = async (orgId: string) => {
     try {
         const res = await api.get(`/admin/cases/org/${orgId}`, {
@@ -278,7 +261,7 @@ export const assignAgent = async (orgId: string, caseId: string, userId: number,
 
 // unassignAgent(selectedOrgId, selectedCaseId, agent.user_id)
 // --- DELETE /org/assignments/case/{case_id}/agent/{user_id}
-export const unassignAgent = async (_orgId: string, caseId: string, userId: number) => {
+export const unassignAgent = async (orgId: string, caseId: string, userId: number) => {
     try {
         const res = await api.delete(`/org/assignments/case/${caseId}/agent/${userId}`, {
             withCredentials: true,
@@ -295,19 +278,14 @@ export const unassignAgent = async (_orgId: string, caseId: string, userId: numb
     }
 };
 
-export const uploadEvidence = async (caseId: string, file: File, _userId: number) => {
+export const uploadEvidence = async (caseId: string, file: File, userId: number) => {
     try {
-        const itemRes = await api.post('/evidence/EvidenceItem', {
-            case_id: caseId,
-            title: file.name,
-            description: '',
-        })
-        const evidenceItemId: string = itemRes.data.evidenceItem_id
-
         const formData = new FormData()
-        formData.append('attachement', file)
-        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
-        return { ...(attachRes.data as { attachment_id: string; analysis_run_id: string }), evidenceItemId }
+        formData.append('case_id', caseId)
+        formData.append('file', file)
+        formData.append('user_id', String(userId))
+        const res = await api.post('/evidence/upload', formData, { withCredentials: true })
+        return res.data as { file_id: string; filename: string; metadata: any; message: string }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Upload failed')
     }
