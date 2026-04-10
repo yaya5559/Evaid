@@ -51,7 +51,7 @@ function formatDate(date: string | undefined | null) {
 }
 
 function toRecordOrganizations(item: OrganizationListItem): Organization {
-  return { id: String(item.org_id), name: (item.companyName ?? item.name ?? '').trim() }
+  return { id: String(item.id), name: item.name.trim() }
 }
 
 function toCaseRecord(item: CaseListItem): CaseRecord {
