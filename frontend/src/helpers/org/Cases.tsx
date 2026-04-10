@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto'
 import { api } from '../../context/AuthContext'
 
 export type OrgCaseListItem = {
@@ -79,6 +80,23 @@ export type OrgAgent = {
     first_name: string
     last_name: string
     email: string
+}
+
+export type Actor = {
+  id: string
+  primaryName: string
+  aliases: string[]
+  role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
+  confidenceScore: number | null
+  source: 'AI' | 'User'
+  createdAt: string
+  evidenceCount: number
+  casesCount: number
+}
+
+// Stub — connect to /cases/{case_id}/actors when backend is available
+export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
+  return []
 }
 
 export type OrgCreateCasePayload = {
@@ -262,6 +280,15 @@ export const orgDeleteEvidence = async (fileId: string, orgId: string) => {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete evidence')
     }
 }
+export const orgCreateEvidenceItem = async (case_id: UUID, title: string, description: string) => {
+  try{
+    const formData = new FormData()
+
+  }catch(err:any){
+
+  }
+}
+
 
 export const orgUploadEvidence = async (caseId: string, file: File, userId: number) => {
     try {
