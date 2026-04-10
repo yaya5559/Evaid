@@ -8,16 +8,131 @@
 # This does the actual work of saving files to the database, retrieving them,
 # extracting metadata (like image dimensions), and searching through evidence
 # Basically all the heavy lifting for file management happens here
-
+from uuid import UUID
+import hashlib
 import pyodbc
 import hashlib
 import json
 import logging
 import base64
-from database import get_db_connection
+from services.database import get_db_connection
 from services.chat_parser import parse_chat_log
+from datetime import datetime, timezone
+from fastapi import Depends, status, APIRouter, UploadFile, File, Form, Response, HTTPException
+from typing import Final
+
 
 logger = logging.getLogger(__name__)
+
+CHUNK_SIZE: Final[int] = 8192
+MAX_UPLOAD_BYTES: Final[int] =  50 * 1024 *1024 
+ALLOWED_CONTENT_TYPES: Final[set[str]] = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "text/plain"
+}
+ATTACHMENT_STATUS_SAVED: Final[str] = "Saved"
+ANALYSISRUN_STATUS_INITIAL: Final[str] = "INITIAL_PROCESSING"
+ANALYSISRUN_TYPE_STORAGE: Final[str] = "storage"
+
+#compute SHA256 and total bytes read.
+#Resets the file cursor to start before returning.
+def _hash_uploadfile_sha256(file:UploadFile):
+    sha256 = hashlib.sha256()
+    total = 0
+    file_bytes = b""
+
+    while True:
+        chunk = file.file.read(CHUNK_SIZE)
+        if not chunk:
+            break
+        total += len(chunk)
+        file_bytes +=chunk
+        if total > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code= 413,
+                detail=f"File too large. Max is {MAX_UPLOAD_BYTES} bytes.",
+            )
+        sha256.update(chunk)
+
+    file.file.seek(0)
+    return sha256.hexdigest(), total, file_bytes
+
+
+def _ensure_evidence_exists(cursor, evidence_item_id: UUID) -> None:
+    cursor.execute("SELECT 1 FROM EvidenceItem WHERE Id = ?", (evidence_item_id,))
+    if cursor.fetchone() is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Evidence item doesn't exist.",
+        ) 
+
+
+def _insert_attachment(
+    cursor,
+    evidence_item_id: UUID,
+    attachment_kind: str,
+    file_bytes: bytes,
+    checksum_sha256: str,
+    captured_at_utc: datetime,
+) -> UUID:
+    cursor.execute(
+        """
+            INSERT INTO Attachment
+            (evidence_id, attachment_kind, file_bytes, checksum_sha256, attachment_status, captured_at)
+            OUTPUT INSERTED.Id
+            VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            evidence_item_id,
+            attachment_kind,
+            file_bytes,
+            checksum_sha256,
+            ATTACHMENT_STATUS_SAVED,
+            captured_at_utc,
+        ),
+    )
+    row = cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=500, detail="Failed to create attachment.")
+    return UUID(row[0])
+
+def _insert_analysis_run(
+    cursor,
+    evidence_item_id: UUID,
+    attachment_id: UUID,
+) -> UUID:
+    cursor.execute(
+        """
+        INSERT INTO AnalysisRun
+            (evidence_id, attachment_id, run_type, analysisrun_status)
+        OUTPUT INSERTED.Id
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            evidence_item_id,
+            attachment_id,
+            ANALYSISRUN_TYPE_STORAGE,
+            ANALYSISRUN_STATUS_INITIAL,
+        ),
+    )
+    row = cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=500, detail="Failed to create analysis run.")
+    return UUID(row[0])
+
+def _get_evidence_case_id(cursor, evidence_item_id: UUID) -> UUID:
+    cursor.execute(
+        "SELECT case_id FROM EvidenceItem WHERE Id = ?",
+        (evidence_item_id,),
+    )
+    row = cursor.fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Evidence item doesn't exist.")
+    return row[0]
+
+
 
 def analyze_and_stage_evidence(case_id, filename, content_type, file_bytes, user_id="System"):
     conn = get_db_connection()
@@ -106,3 +221,6 @@ def get_evidence_file(file_id):
         return None
     finally:
         conn.close()
+
+
+
