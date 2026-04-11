@@ -165,10 +165,16 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
                 await refresh()
             }
             const nextToken = accessTokenRef.current;
-            if(nextToken){
-                //config.headers = {...(config.headers || {}), Authorization: `Bearer ${nextToken}`}
-                config.headers?.set?.("Authorization", `Bearer ${nextToken}`);
-
+            if (nextToken) {
+                if (config.headers instanceof Headers) {
+                    config.headers.set("Authorization", `Bearer ${nextToken}`);
+                } else {
+                    const headers = config.headers || {};
+                    (config.headers as any) = {
+                        ...(headers as Record<string, string>),
+                        Authorization: `Bearer ${nextToken}`,
+                    };
+                }
             }
             return config;
         });

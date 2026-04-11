@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import OrgNav from './OrgNav'
 import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/OrgDashboard.css'
+
 
 type CaseStatus = 'Solved' | 'Pending' | 'Discarded'
 
@@ -17,63 +18,6 @@ type CaseRecord = {
   lastUpdate: string
 }
 
-const createdOn = '2024-03-12'
-const totalAgents = 142
-const totalEmployees = 188
-
-const caseRecords: CaseRecord[] = [
-  {
-    id: 'CASE-2041',
-    title: 'Financial Fraud Cluster',
-    assignedAgent: 'M. Carter',
-    evidenceCount: 48,
-    status: 'Pending',
-    progress: 72,
-    openedOn: '2025-11-08',
-    lastUpdate: '2026-02-25',
-  },
-  {
-    id: 'CASE-1983',
-    title: 'Data Exfiltration Attempt',
-    assignedAgent: 'R. Nasser',
-    evidenceCount: 61,
-    status: 'Solved',
-    progress: 100,
-    openedOn: '2025-09-14',
-    lastUpdate: '2026-02-14',
-  },
-  {
-    id: 'CASE-2105',
-    title: 'Evidence Tampering Alert',
-    assignedAgent: 'A. Jensen',
-    evidenceCount: 29,
-    status: 'Pending',
-    progress: 45,
-    openedOn: '2026-01-17',
-    lastUpdate: '2026-02-24',
-  },
-  {
-    id: 'CASE-1958',
-    title: 'Synthetic Identity Ring',
-    assignedAgent: 'F. Hassan',
-    evidenceCount: 54,
-    status: 'Discarded',
-    progress: 28,
-    openedOn: '2025-08-09',
-    lastUpdate: '2025-12-22',
-  },
-  {
-    id: 'CASE-2130',
-    title: 'Unauthorized Access Chain',
-    assignedAgent: 'L. Duarte',
-    evidenceCount: 37,
-    status: 'Pending',
-    progress: 63,
-    openedOn: '2026-02-03',
-    lastUpdate: '2026-02-26',
-  },
-]
-
 const statusTone: Record<CaseStatus, 'good' | 'warn' | 'critical'> = {
   Solved: 'good',
   Pending: 'warn',
@@ -85,18 +29,62 @@ function formatDate(value: string) {
 }
 
 function OrgDashboard() {
-  const { user } = useAuth()
+  const { user, api } = useAuth()
+  const [orgSummary, setOrgSummary] = useState<any>(null)
+  const [caseRecords, setCaseRecords] = useState<CaseRecord[]>([])
+  const [loading, setLoading] = useState(true)
+
   const organizationName = user?.company?.trim() || 'Metro Intelligence Unit'
   const organizationEmail = user?.email?.trim() || 'ops@metrointel.gov'
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [summaryRes, casesRes] = await Promise.allSettled([
+          api.get('/org/dashboard/summary'),
+          api.get('/org/cases')
+        ])
+
+        if (summaryRes.status === 'fulfilled') {
+          setOrgSummary(summaryRes.value.data.organization)
+        }
+
+        if (casesRes.status === 'fulfilled') {
+          const cases = casesRes.value.data.cases || []
+          const mappedCases = cases.map((c: any) => ({
+            id: c.id || c.CaseNumber,
+            title: c.title,
+            assignedAgent: c.assignedAgent || 'Unassigned',
+            evidenceCount: c.evidenceCount || 0,
+            status: c.status === 'Closed' ? 'Solved' : c.status === 'Open' ? 'Pending' : 'Discarded',
+            progress: c.progress || 0,
+            openedOn: c.openedOn || c.created_at,
+            lastUpdate: c.lastUpdate || c.created_at
+          }))
+          setCaseRecords(mappedCases)
+        }
+      } catch (err) {
+        console.error('Failed to fetch dashboard data', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (user?.org_id) {
+      fetchDashboardData()
+    }
+  }, [api, user?.org_id])
+
   const accountAge = useMemo(() => {
-    const created = new Date(createdOn)
+    if (!orgSummary?.created_at) return { created: new Date(), diffDays: 0, diffMonths: 0 }
+    
+    const created = new Date(orgSummary.created_at)
     const today = new Date()
     const diffMs = Math.max(0, today.getTime() - created.getTime())
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
     const diffMonths = Math.floor(diffDays / 30)
     return { created, diffDays, diffMonths }
-  }, [])
+  }, [orgSummary?.created_at])
 
   const metrics = useMemo(() => {
     return caseRecords.reduce(
@@ -109,7 +97,9 @@ function OrgDashboard() {
       },
       { solved: 0, pending: 0, discarded: 0, totalEvidence: 0 }
     )
-  }, [])
+  }, [caseRecords])
+
+  if (loading) return <div>Loading dashboard...</div>
 
   return (
     <div className='admin-shell'>
@@ -153,11 +143,11 @@ function OrgDashboard() {
             <div className='orgdash-kpi-grid'>
               <div className='orgdash-kpi'>
                 <span>Employees</span>
-                <strong>{totalEmployees}</strong>
+                <strong>{orgSummary?.total_employees || 0}</strong>
               </div>
               <div className='orgdash-kpi'>
                 <span>Agents</span>
-                <strong>{totalAgents}</strong>
+                <strong>{orgSummary?.total_agents || 0}</strong>
               </div>
               <div className='orgdash-kpi'>
                 <span>Solved Cases</span>

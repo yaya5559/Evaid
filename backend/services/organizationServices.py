@@ -184,7 +184,9 @@ def list_active_organization():
         COALESCE(u.phone_number, ''),
         CASE WHEN o.is_active = 0 THEN 'suspended' ELSE 'active' END,
         COALESCE(o.description, ''),
-        COALESCE(CONVERT(VARCHAR(33), o.updated_at, 127), '')
+        COALESCE(CONVERT(VARCHAR(33), o.updated_at, 127), ''),
+        (SELECT COUNT(*) FROM users u2 WHERE u2.org_id = o.org_id AND u2.deleted_at IS NULL) AS user_count,
+        (SELECT COUNT(*) FROM Cases c WHERE c.org_id = o.org_id AND c.deleted_at IS NULL) AS case_count
       FROM organizations AS o
       LEFT JOIN users AS u
         ON u.user_id = o.owner_id
@@ -207,6 +209,8 @@ def list_active_organization():
         "status": row[8],
         "description": row[9],
         "updatedAt": row[10],
+        "user_count": row[11],
+        "case_count": row[12],
       }
       for row in rows
     ]
@@ -401,3 +405,4 @@ def edit_organization(org_id: int, data: editedOrg):
 
 
 # def change_name(new_name: str, org_id: int)
+

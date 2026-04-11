@@ -1,4 +1,4 @@
-# Author: Bria Tran
+﻿# Author: Bria Tran
 # Date: November 30th, 2025
 # Handles database connection to Azure SQL Database 
 # using pyodbc and environment variables
