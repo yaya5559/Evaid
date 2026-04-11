@@ -1,4 +1,5 @@
 const { defineConfig } = require("cypress");
+<<<<<<< HEAD
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
@@ -114,6 +115,14 @@ module.exports = defineConfig({
     devServer: {
       framework: "react",
       bundler: "vite",
+=======
+
+module.exports = defineConfig({
+  projectId: "62qqf2",
+  e2e: {
+    setupNodeEvents(on, config) {
+      // implement node event listeners here
+>>>>>>> a3d8991 (Add files via upload)
     },
   },
 });
