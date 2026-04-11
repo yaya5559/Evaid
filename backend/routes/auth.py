@@ -12,32 +12,6 @@ class LoginRequest(BaseModel):
     email: EmailStr # pydantic's built in email validator
     password: str
 
-# Abenezer: get function verifies jwt and returns the info from token
-# @router.get("/me")
-# def me(authorization: str = Header(None)):
-#     if not authorization:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Missing authorization header"
-#         )
-    
-#     try:
-#         scheme, token = authorization.split(" ")
-#         if scheme.lower() != "bearer":
-#             raise ValueError()
-#     except ValueError:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid Authorization header format"
-#         )
-    
-#     payload = decode_access_token(token)
-
-#     return{
-#         "user_id": payload["user_id"],
-#         "email": payload["email"],
-#         "role": payload["role"]
-#     }
 
 @router.post("/refresh")
 def refresh_token(response: Response, refresh_token: str = Cookie(None)):

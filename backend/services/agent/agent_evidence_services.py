@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from database import get_db_connection
+from services.database import get_db_connection
 import pyodbc
 
 load_dotenv()

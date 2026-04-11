@@ -56,3 +56,6 @@ uvicorn main:app --reload
 ```
 
 Stop: `Ctrl + C`
+
+
+secure=False on refresh token cookie — auth.py sets secure=False, so the cookie is sent over plain HTTP. Fine for localhost, must be True in production.

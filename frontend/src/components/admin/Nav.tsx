@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { NotificationBell } from '../shared/NotificationBell'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
@@ -9,18 +10,19 @@ function AdminNav() {
   const navigate = useNavigate()
 
   const onLogout = async () => {
-  await logout()
-  navigate('/Login', { replace: true })
+    await logout()
+    navigate('/Login', { replace: true })
   }
 
   return (
     <>
       <div className='admin-brand'>
         <div className='admin-brand-mark' />
-        <div>
+        <div style={{ flex: 1 }}>
           <div className='admin-brand-title'>Evaid</div>
           <div className='admin-brand-sub'>Admin console</div>
         </div>
+        <NotificationBell />
       </div>
 
       <nav className='admin-nav'>
@@ -30,25 +32,21 @@ function AdminNav() {
             <span className='admin-nav-dot' />
             Dashboard
           </NavLink>
-          <NavLink className={navClassName} to='/Evidence_Upload'>
-            <span className='admin-nav-dot' />
-            Upload Evidence
-          </NavLink>
           <NavLink className={navClassName} to='/Add_Organization'>
             <span className='admin-nav-dot' />
             Add Organization
+          </NavLink>
+          <NavLink className={navClassName} to='/Register_Agent'>
+            <span className='admin-nav-dot' />
+            Add Agent
           </NavLink>
           <NavLink className={navClassName} to='/Edit_Organization'>
             <span className='admin-nav-dot' />
             Edit Organization
           </NavLink>
-          <NavLink className={navClassName} to='/Register_Agent'>
-            <span className='admin-nav-dot' />
-            Register Agent
-          </NavLink>
           <NavLink className={navClassName} to='/Cases'>
             <span className='admin-nav-dot' />
-            Cases
+            View Organization Cases
           </NavLink>
         </div>
       </nav>

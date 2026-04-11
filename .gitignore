@@ -12,5 +12,9 @@ backend/venv/
 frontend/.env
 
 # Node
+frontend/node_modules/
 node_modules/
 frontend/node_modules/
+
+.vs/
+.db
