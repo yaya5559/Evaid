@@ -18,11 +18,11 @@ def list_all_users():
             u.phone_number,
             r.role_name,
             o.org_id,
-            o.name AS organization_name,
+            o.name AS organization_name
             FROM users u
-            JOIN roles r WHERE u.role_id = r.role_id
-            JOIN organizations o WHERE u.org_id = o.org_id
-            WHERE is_enabled = 1 AND deleted_at = NULL
+            JOIN roles r ON u.role_id = r.role_id
+            JOIN organizations o ON u.org_id = o.org_id
+            WHERE u.is_enabled = 1 AND u.deleted_at IS NULL
                        """)
         rows = cursor.fetchall()
         columns = [column[0] for column in cursor.description]
@@ -56,11 +56,11 @@ def list_all_disabled_users():
             u.phone_number,
             r.role_name,
             o.org_id,
-            o.name AS organization_name,
+            o.name AS organization_name
             FROM users u
-            JOIN roles r WHERE u.role_id = r.role_id
-            JOIN organizations o WHERE u.org_id = o.org_id
-            WHERE is_enabled = 0 AND deleted_at = NULL
+            JOIN roles r ON u.role_id = r.role_id
+            JOIN organizations o ON u.org_id = o.org_id
+            WHERE u.is_enabled = 0 AND u.deleted_at IS NULL
                        """)
         rows = cursor.fetchall()
         columns = [column[0] for column in cursor.description]
@@ -81,27 +81,70 @@ def list_all_disabled_users():
         conn.close()
 
 
+def list_all_agents():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+            u.user_id,
+            u.first_name,
+            u.last_name,
+            u.email, 
+            u.phone_number,
+            o.org_id,
+            o.name AS organization_name
+            FROM users u
+            JOIN roles r ON u.role_id = r.role_id
+            JOIN organizations o ON u.org_id = o.org_id
+            WHERE u.is_enabled = 1 AND u.deleted_at IS NULL AND r.role_name = 'Agent'
+            ORDER BY u.first_name, u.last_name
+                       """)
+        rows = cursor.fetchall()
+        columns = [column[0] for column in cursor.description]
+        agents = [dict(zip(columns, row)) for row in rows]
+
+        return{
+            "message": "success",
+            "agents": agents
+        }
+        
+    except pyodbc.Error as e:
+        return {
+            "message": "Error", 
+            "error": str(e)
+            }
+    finally:
+        cursor.close()
+        conn.close()
+
+
 def get_user(user_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("""
             SELECT 
+            u.user_id,
             u.first_name,
             u.last_name,
             u.email, 
             u.phone_number,
             r.role_name,
             o.org_id,
-            o.name AS organization_name,
+            o.name AS organization_name
             FROM users u
-            JOIN roles r WHERE u.role_id = r.role_id
-            JOIN organizations o WHERE u.org_id = o.org_id
-            WHERE is_enabled = 1 AND deleted_at = NULL AND user_id = ?
-                       """, user_id)
-        rows = cursor.fetchone()
+            JOIN roles r ON u.role_id = r.role_id
+            JOIN organizations o ON u.org_id = o.org_id
+            WHERE u.is_enabled = 1 AND u.deleted_at IS NULL AND u.user_id = ?
+                       """, (user_id,))
+        row = cursor.fetchone()
+
+        if row is None:
+            return {"message": "Error", "error": "User not found"}
+
         columns = [column[0] for column in cursor.description]
-        user = [dict(zip(columns, row)) for row in rows]
+        user = dict(zip(columns, row))
 
         return {
             "message": "success",
@@ -158,7 +201,7 @@ def enable_user(user_id: int):
             UPDATE users
             SET is_enabled = 1 
             WHERE user_id = ?  
-            """, user_id)
+            """, (user_id,))
         
         conn.commit()
         return { "message": "User enabled successful"}
@@ -181,10 +224,10 @@ def disable_user(user_id: int):
             UPDATE users
             SET is_enabled = 0 
             WHERE user_id = ?  
-            """, user_id)
+            """, (user_id,))
         
         conn.commit()
-        return { "message": "User enabled successful"}
+        return { "message": "User disabled successful"}
     except pyodbc.Error as e:
         return {
             "message": "Error", 
@@ -206,7 +249,7 @@ def change_user_role(user_id: int, new_role_id: int):
             """, (new_role_id, user_id,))
         
         conn.commit()
-        return { "message": "User enabled successful"}
+        return { "message": "User role updated successfully"}
     except pyodbc.Error as e:
         return {
             "message": "Error", 
@@ -225,10 +268,10 @@ def delete_user(user_id: int):
             UPDATE users
             SET is_enabled = 0, deleted_at = SYSDATETIMEOFFSET() 
             WHERE user_id = ?  
-            """, user_id)
+            """, (user_id,))
         
         conn.commit()
-        return { "message": "User enabled successful"}
+        return { "message": "User deleted successfully"}
     except pyodbc.Error as e:
         return {
             "message": "Error", 
