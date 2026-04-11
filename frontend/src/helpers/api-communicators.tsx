@@ -64,18 +64,18 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const addAgent = async (agent: AgentPayload) => {
-    try {
-        const res = await api.post(`/Register`, agent)
-        return res.data
-    } catch (err: any) {
-        const msg =
-            err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.response?.data?.detail ||
-            err?.message ||
-            "Unable to register agent";
-        throw new Error(msg);
-    }
+  try {
+    const res = await api.post(`/RegisterAgent`, agent)
+    return res.data
+  } catch (err: any) {
+    const msg = 
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      err?.response?.data?.detail ||
+      err?.message ||
+      "Unable to register agent";
+    throw new Error(msg);
+  }
 }
 
 export const addOrganization = async (organization: OrganizationPayload) => {
@@ -89,7 +89,6 @@ export const addOrganization = async (organization: OrganizationPayload) => {
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to add organization";
         throw new Error(msg);
@@ -134,21 +133,24 @@ export const getCases = async () => {
 };
 
 type OrganizationUpdatePayload = {
-    name: string;
-    email: string;
-    phone_number: string;
-    region: string;
-    status: string;
-    seat_limit: number;
-    primary_contact: string;
-    notes: string;
+  org_id: number;
+  companyName: string;
+  companyEmail: string;
+  companyPhoneNumber: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhoneNumber: string;
+  status: string;
+  description?: string;
 };
 
-export const editOrganization = async (
-    organizationId: string,
+export const editOrganization = async(    
     organization: OrganizationUpdatePayload
+
 ) => {
     try {
+        const organizationId = organization.org_id
         const res = await api.put(`/Organization/${organizationId}`, organization, {
             headers: { "Content-Type": "application/json" },
             withCredentials: true,
@@ -158,7 +160,6 @@ export const editOrganization = async (
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to edit organization";
         throw new Error(msg);
@@ -166,11 +167,14 @@ export const editOrganization = async (
 };
 
 // accept caseId + File separately and build FormData here
-export const uploadEvidence = async (caseId: number, file: File) => {
+export const uploadEvidence = async (caseId: number, file: File, description:string, title:string, evidence_type:string) => {
     try {
         const formData = new FormData();
         // case_id must match the Form(...) field name in evidence.py
         formData.append("case_id", String(caseId));
+        formData.append("description", description)
+        formData.append("title", title)
+        formData.append("evidence_type", evidence_type)
         // file must match the File(...) field name in evidence.py
         formData.append("file", file);
 

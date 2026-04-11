@@ -1,9 +1,8 @@
 from fastapi import APIRouter
 from .auth import router as login_router
 from .Organization import router as organization_router
-from .register import router as register_router
 from .evidence import router as evidence_router
-from .Graph import router as Graph_router
+
 
 # Agent routes
 from .agent.case_agent import router as agent_case_router
@@ -29,9 +28,8 @@ router = APIRouter(prefix="/Evaide")
 # Shared / auth
 router.include_router(login_router)
 router.include_router(organization_router)
-router.include_router(register_router)
 router.include_router(evidence_router)
-router.include_router(Graph_router)
+
 
 
 

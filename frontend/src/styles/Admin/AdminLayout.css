@@ -156,7 +156,8 @@
   border-radius: 14px;
   background: var(--admin-panel);
   box-shadow: var(--admin-shadow);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
 }
@@ -172,15 +173,46 @@
   background: linear-gradient(145deg, #67e8f9, #22c55e);
 }
 
+.admin-user-meta {
+  min-width: 0;
+}
+
 .admin-user-name {
   font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-user-role {
   margin-top: 2px;
   font-size: 12px;
   color: var(--admin-muted-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-logout-btn {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 2px;
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fecaca;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.08));
+}
+
+.admin-logout-btn:hover {
+  border-color: rgba(239, 68, 68, 0.58);
+  color: #ffe4e6;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.14));
+}
+
+.admin-logout-btn:disabled {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.22);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .admin-main {
