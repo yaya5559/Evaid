@@ -48,10 +48,10 @@ function Dashboard() {
           const data = orgResult.value.data;
           const orgs = Array.isArray(data.organizations) ? data.organizations : [];
           const mapped = orgs.map((o: any) => ({
-            name: o.name,
-            region: o.email ?? '',
-            users: 'N/A',
-            cases: '0',
+            name: o.companyName,
+            region: o.companyEmail ?? '',
+            users: String(o.user_count || 0),
+            cases: String(o.case_count || 0),
             health: 'Healthy',
           }));
           setOrganizations(mapped);
@@ -59,14 +59,26 @@ function Dashboard() {
           setOrganizations([]);
         }
 
-        if (kpiResult.status === 'fulfilled') setKpiCards(kpiResult.value.data ?? []);
-        else setKpiCards([]);
+        if (kpiResult.status === 'fulfilled' && Array.isArray(kpiResult.value.data)) {
+          setKpiCards(kpiResult.value.data);
+        } else {
+          console.warn('Unexpected KPI data', kpiResult);
+          setKpiCards([]);
+        }
 
-        if (pipelineResult.status === 'fulfilled') setPipeline(pipelineResult.value.data ?? []);
-        else setPipeline([]);
+        if (pipelineResult.status === 'fulfilled' && Array.isArray(pipelineResult.value.data)) {
+          setPipeline(pipelineResult.value.data);
+        } else {
+          console.warn('Unexpected pipeline data', pipelineResult);
+          setPipeline([]);
+        }
 
-        if (activityResult.status === 'fulfilled') setActivityLog(activityResult.value.data ?? []);
-        else setActivityLog([]);
+        if (activityResult.status === 'fulfilled' && Array.isArray(activityResult.value.data)) {
+          setActivityLog(activityResult.value.data);
+        } else {
+          console.warn('Unexpected activity data', activityResult);
+          setActivityLog([]);
+        }
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
       } finally {
@@ -102,6 +114,11 @@ function Dashboard() {
         </header>
 
         <section className='dashboard-kpi-grid' aria-label='Key performance indicators'>
+          <article className='admin-card dashboard-kpi' key='Organizations'>
+            <div className='dashboard-kpi-label'>Organizations</div>
+            <div className='dashboard-kpi-value'>{organizations.length}</div>
+            <div className='dashboard-kpi-delta neutral'>Current</div>
+          </article>
           {kpiCards.map((card) => (
             <article className='admin-card dashboard-kpi' key={card.label}>
               <div className='dashboard-kpi-label'>{card.label}</div>

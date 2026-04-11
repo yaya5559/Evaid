@@ -19,7 +19,6 @@ import OrgCaseDetail from './components/organization/OrgCaseDetail'
 import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
-import ProtectedRoute from './components/ProtectedRoute'
 
 type ProtectedRouteProps = {
   allowedRoles: string[]
@@ -70,6 +69,7 @@ function App() {
 
       {/* Any authenticated user */}
       <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </SignalProvider>
   )
