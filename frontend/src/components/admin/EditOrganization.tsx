@@ -234,7 +234,8 @@ function EditOrganization() {
     setFieldErrors({})
     setError(null)
     setSuccess(null)
-  }, [selectedOrganization])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId])
 
   const filteredOrganizations = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()

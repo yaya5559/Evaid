@@ -186,7 +186,12 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
                 const original = error.config as AxiosRequestConfig & { _retry?: boolean };
                 const status = error.response?.status;
 
-                if (status === 401 && !original._retry) {
+                // Never intercept auth endpoints — a 401 from login/refresh/logout
+                // is the server's definitive answer, not a token expiry signal.
+                const url = original.url ?? "";
+                const isAuthEndpoint = url.includes("/auth/");
+
+                if (status === 401 && !original._retry && !isAuthEndpoint) {
                     original._retry = true;
 
                     // Queue this request until refresh completes to avoid token races.
