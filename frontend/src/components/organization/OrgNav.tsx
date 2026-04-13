@@ -47,6 +47,10 @@ function OrgNav() {
             <span className='admin-nav-dot' />
             View Agents
           </NavLink>
+          <NavLink className={navClassName} to='/OrgRegisterAgent'>
+            <span className='admin-nav-dot' />
+            Register Agent
+          </NavLink>
           <NavLink className={navClassName} to='/OrgStartCase'>
             <span className='admin-nav-dot' />
             Start Case

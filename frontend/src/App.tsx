@@ -18,6 +18,7 @@ import AdminCaseDetail from './components/admin/CaseDetail'
 import OrgCaseDetail from './components/organization/OrgCaseDetail'
 import OrgAgents from './components/organization/OrgAgents'
 import OrgStartCase from './components/organization/OrgStartCase'
+import OrgRegisterAgent from './components/organization/OrgRegisterAgent'
 import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
@@ -76,6 +77,7 @@ function App() {
       <Route path="/OrgCase/:caseId" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgCaseDetail /></ProtectedRoute>} />
       <Route path="/OrgAgents" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgAgents /></ProtectedRoute>} />
       <Route path="/OrgStartCase" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgStartCase /></ProtectedRoute>} />
+      <Route path="/OrgRegisterAgent" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgRegisterAgent /></ProtectedRoute>} />
 
       {/* Agent only */}
       <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
