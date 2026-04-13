@@ -308,7 +308,7 @@ export const orgUploadEvidence = async (caseId: string, file: File, _userId: num
         const formData = new FormData()
         formData.append('attachement', file)
         const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
-        return attachRes.data as { attachment_id: string; analysis_run_id: string }
+        return { ...(attachRes.data as { attachment_id: string; analysis_run_id: string }), evidenceItemId }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Upload failed')
     }

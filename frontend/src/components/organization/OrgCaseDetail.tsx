@@ -11,6 +11,7 @@ import {
   type OrgCaseDetailResponse, type OrgAgent, type Actor,
 } from '../../helpers/org/Cases'
 import { useAuth } from '../../context/AuthContext'
+import { useSignals } from '../../context/SignalContext'
 import OrgLayout from './OrgLayout'
 import '../../styles/Admin/AdminLayout.css'
 import Graph from './graph'
@@ -45,6 +46,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
+  const { fetchSignalsForEvidence } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -183,7 +185,8 @@ function OrgCaseDetail() {
     if (!evidenceFile || !detail) return
     setLoading(true); setError(null)
     try {
-      await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
+      const uploadResult = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
+      void fetchSignalsForEvidence(uploadResult.evidenceItemId)
       setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }

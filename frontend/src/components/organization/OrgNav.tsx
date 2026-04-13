@@ -43,14 +43,14 @@ function OrgNav() {
             <span className='admin-nav-dot' />
             View Cases
           </NavLink>
-          <a className='admin-nav-item' href='#org-workload'>
+          <NavLink className={navClassName} to='/OrgAgents'>
             <span className='admin-nav-dot' />
             View Agents
-          </a>
-          <a className='admin-nav-item' href='#org-case-register'>
+          </NavLink>
+          <NavLink className={navClassName} to='/OrgStartCase'>
             <span className='admin-nav-dot' />
-            Start Case 
-          </a>
+            Start Case
+          </NavLink>
         </div>
       </nav>
 

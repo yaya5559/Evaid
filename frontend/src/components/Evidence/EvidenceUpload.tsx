@@ -5,6 +5,7 @@ import OrgNav from '../organization/OrgNav';
 import '../../styles/Admin/AdminLayout.css';
 import '../../styles/Evidence/EvidenceUpload.css';
 import { useAuth } from '../../context/AuthContext';
+import { useSignals } from '../../context/SignalContext';
 import { uploadEvidence, getCases, type CaseListItem } from '../../helpers/api-communicators';
 
 // maps case status to the existing admin-pill colour classes
@@ -143,9 +144,10 @@ interface FileUploadPanelProps {
     selectedCase: CaseListItem;
     onBack: () => void;
     onDone: () => void;
+    onSignalsFetch: (evidenceItemId: string) => void;
 }
 
-function FileUploadPanel({ selectedCase, onBack, onDone }: FileUploadPanelProps) {
+function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileUploadPanelProps) {
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -172,7 +174,8 @@ function FileUploadPanel({ selectedCase, onBack, onDone }: FileUploadPanelProps)
 
         try {
             // can build a proper FormData with the correct multipart boundary.
-            await uploadEvidence(selectedCase.id, file);
+            const result = await uploadEvidence(selectedCase.id, file);
+            onSignalsFetch(result.evidenceItemId)
             setUploadProgress(100);
             setIsComplete(true);
         } catch (err) {
@@ -303,6 +306,7 @@ const EvidenceUpload: React.FC = () => {
     const { caseId } = useParams<{ caseId?: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { fetchSignalsForEvidence } = useSignals();
 
     const isAdmin = user?.role === 'evaide_admin';
     const NavComponent = isAdmin ? Nav : OrgNav;
@@ -353,6 +357,7 @@ const EvidenceUpload: React.FC = () => {
                             selectedCase={selectedCase}
                             onBack={() => setSelectedCase(null)}
                             onDone={handleDone}
+                            onSignalsFetch={fetchSignalsForEvidence}
                         />
                     )}
                 </section>

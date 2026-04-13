@@ -176,10 +176,8 @@ export const editOrganization = async(
     }
 };
 
-export const uploadEvidence = async (caseId: number, file: File, description: string, title: string) => {
+export const uploadEvidence = async (caseId: number, file: File, description = '', title = file.name) => {
     try {
-        // Step 1 — create the EvidenceItem record, get back its id
-        console.log("ajja")
         const itemRes = await api.post("/evidence/EvidenceItem", {
             case_id: String(caseId),
             title,
@@ -191,7 +189,7 @@ export const uploadEvidence = async (caseId: number, file: File, description: st
         const formData = new FormData();
         formData.append("attachement", file);
         const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData);
-        return attachRes.data;
+        return { ...attachRes.data, evidenceItemId };
     } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Upload failed");
     }

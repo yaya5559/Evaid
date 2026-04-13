@@ -19,16 +19,19 @@ function confidenceColor(score: number): string {
   return '#dc2626'
 }
 
+function formatSignalType(type: string): string {
+  return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 export function SignalPanel() {
   const { signals, isPanelOpen, closePanel, setOpenSignal } = useSignals()
 
   if (!isPanelOpen) return null
 
-  // Pending first, then sorted by confidence descending
   const sorted = [...signals].sort((a, b) => {
     if (a.status === 'pending' && b.status !== 'pending') return -1
     if (b.status === 'pending' && a.status !== 'pending') return 1
-    return b.confidenceScore - a.confidenceScore
+    return b.confidence - a.confidence
   })
 
   const handleSignalClick = (signal: Signal) => {
@@ -38,10 +41,8 @@ export function SignalPanel() {
 
   return (
     <>
-      {/* Backdrop */}
       <div className="signal-panel-backdrop" onClick={closePanel} />
 
-      {/* Panel */}
       <div className="signal-panel">
         <div className="signal-panel-header">
           <h3>Signals</h3>
@@ -70,42 +71,37 @@ export function SignalPanel() {
                 onClick={() => handleSignalClick(signal)}
               >
                 <div className="signal-panel-item-top">
-                  <span
-                    className={`signal-type-badge small ${
-                      signal.type === 'evidence_analysis' ? 'evidence' : 'connection'
-                    }`}
-                  >
-                    {signal.type === 'evidence_analysis' ? 'Evidence' : 'Case Link'}
+                  <span className="signal-type-badge small evidence">
+                    {formatSignalType(signal.signal_type)}
                   </span>
                   {signal.status !== 'pending' && (
                     <span className={`signal-status-badge ${signal.status}`}>
                       {signal.status}
                     </span>
                   )}
-                  <span className="signal-panel-time">{formatDate(signal.createdAt)}</span>
                 </div>
 
-                <div className="signal-panel-case">{signal.caseTitle}</div>
+                <div className="signal-panel-case">{signal.raw_value}</div>
 
                 <div className="signal-panel-conf">
                   <div className="signal-conf-bar-bg">
                     <div
                       className="signal-conf-bar-fill"
                       style={{
-                        width: `${Math.round(signal.confidenceScore * 100)}%`,
-                        background: confidenceColor(signal.confidenceScore),
+                        width: `${Math.round(signal.confidence * 100)}%`,
+                        background: confidenceColor(signal.confidence),
                       }}
                     />
                   </div>
                   <span
                     style={{
-                      color: confidenceColor(signal.confidenceScore),
+                      color: confidenceColor(signal.confidence),
                       fontSize: '0.75rem',
                       minWidth: '32px',
                       fontWeight: 600,
                     }}
                   >
-                    {Math.round(signal.confidenceScore * 100)}%
+                    {Math.round(signal.confidence * 100)}%
                   </span>
                 </div>
               </button>

@@ -222,6 +222,16 @@
   font-size: 13px;
 }
 
+.orgdash-case-link {
+  text-decoration: none;
+  display: block;
+}
+
+.orgdash-case-link:hover .orgdash-case-cell strong {
+  color: var(--admin-accent, #2563eb);
+  text-decoration: underline;
+}
+
 .orgdash-case-cell {
   display: grid;
   gap: 2px;

@@ -12,7 +12,7 @@ def get_org_dashboard_summary(org_id: int):
     try:
         # Get organization creation date
         cursor.execute("""
-            SELECT created_at, name, email
+            SELECT CONVERT(NVARCHAR(50), created_at, 127), name, email
             FROM organizations
             WHERE org_id = ? AND deleted_at IS NULL
         """, (org_id,))
@@ -21,11 +21,13 @@ def get_org_dashboard_summary(org_id: int):
         if not org_row:
             return {"message": "Organization not found"}
 
-        # Count total agents (role_id = 3)
+        # Count total active agents (role_id = 3)
         cursor.execute("""
             SELECT COUNT(*) as agent_count
-            FROM users
-            WHERE org_id = ? AND role_id = 3 AND deleted_at IS NULL
+            FROM users u
+            JOIN roles r ON u.role_id = r.role_id
+            WHERE u.org_id = ? AND UPPER(r.role_name) = 'AGENT'
+              AND u.deleted_at IS NULL AND u.is_enabled = 1
         """, (org_id,))
         agent_row = cursor.fetchone()
         agent_count = agent_row[0] if agent_row else 0
@@ -44,7 +46,7 @@ def get_org_dashboard_summary(org_id: int):
             "organization": {
                 "name": org_row[1],
                 "email": org_row[2],
-                "created_at": org_row[0].isoformat() if org_row[0] else None,
+                "created_at": str(org_row[0]) if org_row[0] else None,
                 "total_agents": agent_count,
                 "total_employees": employee_count
             }
