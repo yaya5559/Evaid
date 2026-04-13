@@ -43,7 +43,6 @@ type SignalContextValue = {
   confirmSignal: (id: string) => Promise<void>
   denySignal: (id: string) => Promise<void>
   fetchSignalsForEvidence: (evidenceId: string) => Promise<void>
-  fetchSignalsForCase: (caseId: string) => Promise<void>
 }
 
 const SignalContext = createContext<SignalContextValue | null>(null)
@@ -58,11 +57,6 @@ export function useSignals() {
 
 async function getPendingSignals(evidenceId: string): Promise<BackendSignal[]> {
   const res = await api.get<BackendSignal[]>(`/evidence/${evidenceId}/pending-signals`)
-  return Array.isArray(res.data) ? res.data : []
-}
-
-async function getPendingSignalsForCase(caseId: string): Promise<(BackendSignal & { evidence_id: string })[]> {
-  const res = await api.get<(BackendSignal & { evidence_id: string })[]>(`/evidence/pending-signals/case/${caseId}`)
   return Array.isArray(res.data) ? res.data : []
 }
 
@@ -146,23 +140,14 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
   const closePanel = useCallback(() => setIsPanelOpen(false), [])
 
   const confirmSignal = useCallback(async (id: string) => {
-    await api.patch(`/evidence/pending-signals/${id}/confirm`)
-    setSignals((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: 'confirmed' as const } : s))
-    )
-    setOpenSignal(null)
-  }, [])
-
-  const fetchSignalsForCase = useCallback(async (caseId: string) => {
     try {
-      const raw = await getPendingSignalsForCase(caseId)
-      const mapped: Signal[] = raw.map((s) => ({
-        ...s,
-        status: 'pending' as const,
-      }))
-      processIncoming(mapped)
+      await api.patch(`/evidence/pending-signals/${id}/confirm`)
+      setSignals((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: 'confirmed' as const } : s))
+      )
+      setOpenSignal(null)
     } catch { /* silent */ }
-  }, [processIncoming])
+  }, [])
 
   const denySignal = useCallback(async (id: string) => {
     try {
@@ -193,7 +178,6 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         confirmSignal,
         denySignal,
         fetchSignalsForEvidence,
-        fetchSignalsForCase,
       }}
     >
       {children}

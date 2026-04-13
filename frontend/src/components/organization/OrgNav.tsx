@@ -26,7 +26,7 @@ function OrgNav() {
       <div className='admin-brand'>
         <div className='admin-brand-mark' />
         <div style={{ flex: 1 }}>
-          <div className='admin-brand-title'>Evaide</div>
+          <div className='admin-brand-title'>Evaid</div>
           <div className='admin-brand-sub'>Organization console</div>
         </div>
         <NotificationBell />
@@ -34,29 +34,22 @@ function OrgNav() {
 
       <nav className='admin-nav'>
         <div className='admin-nav-section'>
-          <div className='admin-nav-label'>My Work</div>
-          <NavLink className={navClassName} to='/OrgCaseProgress'>
-            <span className='admin-nav-dot' />
-            My Cases
-          </NavLink>
-          <NavLink className={navClassName} to='/OrgStartCase'>
-            <span className='admin-nav-dot' />
-            Start Case
-          </NavLink>
-        </div>
-        <div className='admin-nav-section'>
-          <div className='admin-nav-label'>Organization</div>
+          <div className='admin-nav-label'>Workspace</div>
           <NavLink className={navClassName} to='/Org_Dashboard'>
             <span className='admin-nav-dot' />
             Overview
+          </NavLink>
+          <NavLink className={navClassName} to='/OrgCaseProgress'>
+            <span className='admin-nav-dot' />
+            View Cases
           </NavLink>
           <NavLink className={navClassName} to='/OrgAgents'>
             <span className='admin-nav-dot' />
             View Agents
           </NavLink>
-          <NavLink className={navClassName} to='/OrgRegisterAgent'>
+          <NavLink className={navClassName} to='/OrgStartCase'>
             <span className='admin-nav-dot' />
-            Register Agent
+            Start Case
           </NavLink>
         </div>
       </nav>

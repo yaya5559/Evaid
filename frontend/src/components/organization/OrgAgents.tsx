@@ -25,13 +25,12 @@ function OrgAgents() {
   const [success, setSuccess] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
-  const [showDisabled, setShowDisabled] = useState(false)
 
   const loadAgents = async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await api.get('/org/agents/', { params: { org_id: orgId } })
+      const res = await api.get('/org/cases/agents/')
       const data = res.data
       if (data?.message === 'Error') throw new Error(data?.error ?? 'Backend error')
       const list: Agent[] = Array.isArray(data)
@@ -80,7 +79,6 @@ function OrgAgents() {
   }, [success, error])
 
   const filtered = agents.filter((a) => {
-    if (!showDisabled && a.is_enabled === false) return false
     const q = search.toLowerCase()
     return (
       formatName(a).toLowerCase().includes(q) ||
@@ -112,14 +110,11 @@ function OrgAgents() {
       <section className="admin-card">
         <div className="orgdash-card-head">
           <h2>All Agents</h2>
-          <span className="admin-pill neutral">{agents.filter(a => a.is_enabled !== false).length} active</span>
-          {agents.some(a => a.is_enabled === false) && (
-            <span className="admin-pill critical" style={{ marginLeft: '6px' }}>{agents.filter(a => a.is_enabled === false).length} disabled</span>
-          )}
+          <span className="admin-pill neutral">{agents.length} total</span>
         </div>
 
-        <div className="edit-org-controls" style={{ marginBottom: '16px', display: 'flex', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
-          <label className="edit-org-control" style={{ flex: 1 }}>
+        <div className="edit-org-controls" style={{ marginBottom: '16px' }}>
+          <label className="edit-org-control">
             <span>Search</span>
             <input
               className="edit-org-input"
@@ -129,48 +124,13 @@ function OrgAgents() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Show disabled agents</span>
-            <span
-              role="switch"
-              aria-checked={showDisabled}
-              onClick={() => setShowDisabled((v) => !v)}
-              style={{
-                display: 'inline-flex',
-                width: '40px',
-                height: '22px',
-                borderRadius: '11px',
-                background: showDisabled ? '#2563eb' : '#d1d5db',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-                flexShrink: 0,
-              }}
-            >
-              <span style={{
-                position: 'absolute',
-                top: '3px',
-                left: showDisabled ? '21px' : '3px',
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                background: '#fff',
-                transition: 'left 0.2s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-              }} />
-            </span>
-          </label>
         </div>
 
         {loading && <p style={{ opacity: 0.6 }}>Loading agents...</p>}
 
         {!loading && filtered.length === 0 && (
           <p style={{ opacity: 0.7 }}>
-            {search
-              ? 'No agents match your search.'
-              : !showDisabled && agents.some(a => a.is_enabled === false)
-              ? 'No active agents. Enable "Show disabled agents" to see all.'
-              : 'No agents found in your organization.'}
+            {search ? 'No agents match your search.' : 'No agents found in your organization.'}
           </p>
         )}
 
