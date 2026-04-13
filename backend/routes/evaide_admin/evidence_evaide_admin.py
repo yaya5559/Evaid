@@ -16,7 +16,7 @@ def list_case_evidence(case_id: int):
 
 @router.get("/file/{file_id}")
 def get_evidence_file(file_id: str):
-    return services.get_evidence_file(file_id)
+    return services.get_evidence(file_id)  
 
 
 @router.delete("/{file_id}")

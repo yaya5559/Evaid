@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@xyflow/react": "^12.10.2",
     "axios": "^1.13.2",
     "jwt-decode": "^4.0.0",
     "node": "^25.8.1",

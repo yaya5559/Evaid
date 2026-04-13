@@ -1,5 +1,4 @@
 import { useSignals } from '../../context/SignalContext'
-import type { EvidenceAnalysisSignal, CaseConnectionSignal } from '../../context/SignalContext'
 import '../../styles/Signals.css'
 
 function confidenceColor(score: number): string {
@@ -25,120 +24,29 @@ function ConfidenceBar({ score }: { score: number }) {
   )
 }
 
-function roleClass(role: string): string {
-  if (role === 'Suspect') return 'suspect'
-  if (role === 'Person of Interest') return 'person-of-interest'
-  if (role === 'Witness') return 'witness'
-  return 'victim'
+function formatSignalType(type: string): string {
+  return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function EvidenceAnalysisDetail({ signal }: { signal: EvidenceAnalysisSignal }) {
-  return (
-    <>
-      <div className="signal-modal-section">
-        <div className="signal-modal-label">Case</div>
-        <div className="signal-modal-value">{signal.caseTitle}</div>
-      </div>
-
-      <div className="signal-modal-section">
-        <div className="signal-modal-label">Evidence File</div>
-        <div className="signal-modal-value">{signal.evidenceFileName}</div>
-      </div>
-
-      <div className="signal-modal-section">
-        <div className="signal-modal-label">AI Confidence</div>
-        <ConfidenceBar score={signal.confidenceScore} />
-      </div>
-
-      {signal.actors.length > 0 && (
-        <div className="signal-modal-section">
-          <div className="signal-modal-label">Actors Identified</div>
-          {signal.actors.map((a) => (
-            <div key={a.id} className="signal-modal-actor">
-              <strong style={{ fontSize: '0.9rem' }}>{a.primaryName}</strong>
-              <span className={`signal-role-badge ${roleClass(a.role)}`}>{a.role}</span>
-              {a.aliases.length > 0 && (
-                <span style={{ fontSize: '0.78rem', opacity: 0.65 }}>
-                  aka: {a.aliases.join(', ')}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {signal.aiNotes && (
-        <div className="signal-modal-section">
-          <div className="signal-modal-label">AI Notes</div>
-          <div className="signal-modal-notes">{signal.aiNotes}</div>
-        </div>
-      )}
-    </>
-  )
+type ParsedLocator = {
+  method?: string
+  platform?: string
+  reasoning?: string
+  char_start?: number
+  char_end?: number
+  attachment_id?: string
 }
 
-function CaseConnectionDetail({ signal }: { signal: CaseConnectionSignal }) {
-  return (
-    <>
-      <div className="signal-modal-section">
-        <div className="signal-modal-label">Cases Being Linked</div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span className="signal-case-chip">{signal.caseTitle}</span>
-          <span style={{ opacity: 0.45, fontSize: '1.1rem' }}>↔</span>
-          <span className="signal-case-chip">{signal.connectedCaseTitle}</span>
-        </div>
-      </div>
-
-      <div className="signal-modal-section">
-        <div className="signal-modal-label">AI Confidence</div>
-        <ConfidenceBar score={signal.confidenceScore} />
-      </div>
-
-      {signal.connectionReason && (
-        <div className="signal-modal-section">
-          <div className="signal-modal-label">Connection Reason</div>
-          <div className="signal-modal-notes">{signal.connectionReason}</div>
-        </div>
-      )}
-
-      {signal.connectingActors.length > 0 && (
-        <div className="signal-modal-section">
-          <div className="signal-modal-label">Connecting Actors</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {signal.connectingActors.map((a) => (
-              <span key={a.id} className="signal-case-chip">{a.primaryName}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {signal.connectingEvidence.length > 0 && (
-        <div className="signal-modal-section">
-          <div className="signal-modal-label">Connecting Evidence</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {signal.connectingEvidence.map((e) => (
-              <span key={e.id} className="signal-case-chip">{e.fileName}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {signal.suggestedAgentName && (
-        <div className="signal-modal-section">
-          <div className="signal-modal-label">Suggested Agent Addition</div>
-          <div className="signal-modal-value">{signal.suggestedAgentName}</div>
-          <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '3px' }}>
-            Confirming will request this agent be added to {signal.connectedCaseTitle}.
-          </div>
-        </div>
-      )}
-    </>
-  )
+function parseLocator(raw: string | null): ParsedLocator | null {
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
 }
 
 export function SignalModal() {
   const { openSignal, setOpenSignal, confirmSignal, denySignal } = useSignals()
   if (!openSignal) return null
+
+  const locator = parseLocator(openSignal.source_locator)
 
   return (
     <div
@@ -148,15 +56,12 @@ export function SignalModal() {
       aria-modal="true"
     >
       <div className="signal-modal-card" onClick={(e) => e.stopPropagation()}>
+
         {/* Header */}
         <div className="signal-modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span
-              className={`signal-type-badge large ${
-                openSignal.type === 'evidence_analysis' ? 'evidence' : 'connection'
-              }`}
-            >
-              {openSignal.type === 'evidence_analysis' ? 'Evidence Analysis' : 'Case Connection'}
+            <span className="signal-type-badge large evidence">
+              {formatSignalType(openSignal.signal_type)}
             </span>
             {openSignal.status !== 'pending' && (
               <span className={`signal-status-badge ${openSignal.status}`}>
@@ -176,11 +81,60 @@ export function SignalModal() {
 
         {/* Body */}
         <div className="signal-modal-body">
-          {openSignal.type === 'evidence_analysis' ? (
-            <EvidenceAnalysisDetail signal={openSignal} />
-          ) : (
-            <CaseConnectionDetail signal={openSignal} />
+
+          <div className="signal-modal-section">
+            <div className="signal-modal-label">Extracted Value</div>
+            <div className="signal-modal-value" style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+              {openSignal.raw_value}
+            </div>
+          </div>
+
+          {openSignal.normalized_value && openSignal.normalized_value !== openSignal.raw_value && (
+            <div className="signal-modal-section">
+              <div className="signal-modal-label">Normalized</div>
+              <div className="signal-modal-value" style={{ fontFamily: 'monospace', opacity: 0.75 }}>
+                {openSignal.normalized_value}
+              </div>
+            </div>
           )}
+
+          <div className="signal-modal-section">
+            <div className="signal-modal-label">Confidence</div>
+            <ConfidenceBar score={openSignal.confidence} />
+          </div>
+
+          {locator?.platform && (
+            <div className="signal-modal-section">
+              <div className="signal-modal-label">Detected Platform</div>
+              <div className="signal-modal-value">{locator.platform}</div>
+            </div>
+          )}
+
+          {locator?.reasoning && (
+            <div className="signal-modal-section">
+              <div className="signal-modal-label">AI Reasoning</div>
+              <div className="signal-modal-notes">{locator.reasoning}</div>
+            </div>
+          )}
+
+          {(locator?.char_start != null && locator?.char_end != null) && (
+            <div className="signal-modal-section">
+              <div className="signal-modal-label">Location in Document</div>
+              <div className="signal-modal-value" style={{ fontSize: '0.82rem', opacity: 0.75 }}>
+                Characters {locator.char_start} – {locator.char_end}
+              </div>
+            </div>
+          )}
+
+          {openSignal.triage_reason && (
+            <div className="signal-modal-section">
+              <div className="signal-modal-label">Source</div>
+              <div className="signal-modal-value" style={{ textTransform: 'capitalize' }}>
+                {openSignal.triage_reason.replace(/_/g, ' ')}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Footer */}
@@ -190,14 +144,14 @@ export function SignalModal() {
               <button
                 type="button"
                 className="signal-btn confirm"
-                onClick={() => confirmSignal(openSignal.id)}
+                onClick={() => void confirmSignal(openSignal.id)}
               >
                 Confirm Signal
               </button>
               <button
                 type="button"
                 className="signal-btn deny"
-                onClick={() => denySignal(openSignal.id)}
+                onClick={() => void denySignal(openSignal.id)}
               >
                 Deny Signal
               </button>
@@ -213,6 +167,7 @@ export function SignalModal() {
             </button>
           )}
         </div>
+
       </div>
     </div>
   )

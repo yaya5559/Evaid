@@ -8,5 +8,8 @@
   "devDependencies": {
     "concurrently": "^9.2.1",
     "cypress": "^15.9.0"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.10.2"
   }
 }

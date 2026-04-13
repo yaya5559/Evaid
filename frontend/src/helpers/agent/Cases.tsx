@@ -57,6 +57,11 @@ export type AgentCaseDetailResponse = {
     evidence: AgentEvidence[]
 }
 
+// Stub — connect to /cases/{case_id}/actors when backend is available
+export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
+  return []
+}
+
 export type Actor = {
   id: string
   primaryName: string
@@ -69,10 +74,6 @@ export type Actor = {
   casesCount: number
 }
 
-// Stub — connect to /cases/{case_id}/actors when backend is available
-export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
-}
 
 export const agentGetCases = async (agentId: number, orgId: number): Promise<AgentCaseListItem[]> => {
     try {
@@ -165,15 +166,19 @@ export const agentCreateCase = async (agentId: number, orgId: number, data: Agen
     }
 }
 
-export const agentUploadEvidence = async (caseId: string, file: File, agentId: number) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('case_id', caseId)
-    formData.append('uploaded_by', String(agentId))
+export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number) => {
     try {
-        const res = await api.post('/evidence/upload', formData, { withCredentials: true })
-        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Upload failed')
-        return res.data
+        const itemRes = await api.post('/evidence/EvidenceItem', {
+            case_id: caseId,
+            title: file.name,
+            description: '',
+        })
+        const evidenceItemId: string = itemRes.data.evidenceItem_id
+
+        const formData = new FormData()
+        formData.append('attachement', file)
+        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
+        return { ...(attachRes.data as { attachment_id: string; analysis_run_id: string }), evidenceItemId }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to upload evidence')
     }

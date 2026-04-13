@@ -10,8 +10,8 @@ function AdminNav() {
   const navigate = useNavigate()
 
   const onLogout = async () => {
-  await logout()
-  navigate('/Login', { replace: true })
+    await logout()
+    navigate('/Login', { replace: true })
   }
 
   return (
@@ -32,25 +32,21 @@ function AdminNav() {
             <span className='admin-nav-dot' />
             Dashboard
           </NavLink>
-          <NavLink className={navClassName} to='/Evidence_Upload'>
-            <span className='admin-nav-dot' />
-            Upload Evidence
-          </NavLink>
           <NavLink className={navClassName} to='/Add_Organization'>
             <span className='admin-nav-dot' />
             Add Organization
+          </NavLink>
+          <NavLink className={navClassName} to='/Register_Agent'>
+            <span className='admin-nav-dot' />
+            Add Agent
           </NavLink>
           <NavLink className={navClassName} to='/Edit_Organization'>
             <span className='admin-nav-dot' />
             Edit Organization
           </NavLink>
-          <NavLink className={navClassName} to='/Register_Agent'>
-            <span className='admin-nav-dot' />
-            Register Agent
-          </NavLink>
           <NavLink className={navClassName} to='/Cases'>
             <span className='admin-nav-dot' />
-            Cases
+            View Organization Cases
           </NavLink>
         </div>
       </nav>
