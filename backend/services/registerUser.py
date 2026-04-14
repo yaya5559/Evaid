@@ -31,3 +31,4 @@ def register_user(data: RegisterRequest):
         return False
     finally:
         conn.close()
+

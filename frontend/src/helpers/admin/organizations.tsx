@@ -24,17 +24,18 @@ type OrganizationUpdatePayload = {
 
 
 export type OrganizationListItem = {
-    id: string;
-    name: string;
-    email?: string;
-    phone_number?: string;
+    org_id: string | number;
+    companyName: string;
+    companyEmail?: string;
+    companyPhoneNumber?: string;
     status?: string;
-    region?: string;
-    seat_limit?: number;
-    primary_contact?: string;
-    notes?: string;
-    updated_at?: string;
-    open_cases?: number;
+    description?: string;
+    updatedAt?: string;
+    user_count?: number;
+    case_count?: number;
+    // legacy aliases kept for compatibility
+    id?: string;
+    name?: string;
 };
 
 export const addOrganization = async (organization: OrganizationPayload) => {

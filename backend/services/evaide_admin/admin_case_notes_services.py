@@ -13,8 +13,8 @@ def list_case_notes(case_id: int):
             SELECT
                 cn.note_id,
                 cn.content,
-                cn.created_at,
-                cn.updated_at,
+                CAST(cn.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(cn.updated_at AS NVARCHAR(50)) AS updated_at,
                 u.user_id       AS author_id,
                 u.first_name    AS author_first_name,
                 u.last_name     AS author_last_name

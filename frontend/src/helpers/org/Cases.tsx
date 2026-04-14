@@ -1,4 +1,3 @@
-import type { UUID } from 'crypto'
 import { api } from '../../context/AuthContext'
 
 export type OrgCaseListItem = {
@@ -98,6 +97,8 @@ export type Actor = {
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
   return []
 }
+
+
 
 export type OrgCreateCasePayload = {
     case_number?: string
@@ -280,6 +281,15 @@ export const orgDeleteEvidence = async (fileId: string, orgId: string) => {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete evidence')
     }
 }
+export const orgCreateEvidenceItem = async (case_id: string, title: string, description: string) => {
+  try{
+    const formData = new FormData()
+
+  }catch(err:any){
+
+  }
+}
+
 
 
 
@@ -298,7 +308,7 @@ export const orgUploadEvidence = async (caseId: string, file: File, _userId: num
         const formData = new FormData()
         formData.append('attachement', file)
         const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
-        return attachRes.data as { attachment_id: string; analysis_run_id: string }
+        return { ...(attachRes.data as { attachment_id: string; analysis_run_id: string }), evidenceItemId }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Upload failed')
     }

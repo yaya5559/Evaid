@@ -53,22 +53,24 @@ def add_Organization(data: Organization):
 
   try:
     org_query = "" \
-    "INSERT INTO organizations (name, email, phone_number, description, is_active)" \
+    "INSERT INTO organizations (name, email, phone_number, description, is_active) " \
+    "OUTPUT INSERTED.org_id " \
     "VALUES (?, ?, ?, ?, 1)"
 
     cursor.execute(org_query, (data.company_name, data.company_email, data.company_phone_number, f"Organization for {data.company_name}"))
 
-    cursor.execute("SELECT CAST(SCOPE_IDENTITY() AS INT)")
-    org_id = cursor.fetchone()[0]
+    org_id_row = cursor.fetchone()
+    org_id = org_id_row[0] if org_id_row else None
     
     user_query = "" \
-    "INSERT INTO users (first_name, last_name, email, phone_number, password_hash, role_id, org_id, is_enabled)" \
+    "INSERT INTO users (first_name, last_name, email, phone_number, password_hash, role_id, org_id, is_enabled) " \
+    "OUTPUT INSERTED.user_id " \
     "VALUES (?, ?, ?, ?, ?, 2, ?, 1)"
 
     cursor.execute(user_query, (data.owner_first_name, data.owner_last_name, data.owner_email, data.owner_phone_number, hashed_password, org_id))
-    
-    cursor.execute("SELECT CAST(SCOPE_IDENTITY() AS INT)")
-    user_id = cursor.fetchone()[0]
+
+    user_id_row = cursor.fetchone()
+    user_id = user_id_row[0] if user_id_row else None
 
 
     update_query = "UPDATE organizations SET owner_id = ? WHERE org_id = ?"
@@ -123,25 +125,41 @@ def enable_organization(name: str):
   finally:
     conn.close()
 
-# Hard deletes an organization
+# Soft deletes an organization (sets deleted_at + is_active=0) to avoid FK constraint failures
 def delete_organization(name: str):
   conn = get_db_connection()
   cursor = conn.cursor()
 
   try:
-    delete_query = "DELETE FROM organizations WHERE name = ?"
-    cursor.execute(delete_query, (name))
+    cursor.execute(
+      "SELECT org_id FROM organizations WHERE name = ? AND deleted_at IS NULL",
+      (name,)
+    )
+    row = cursor.fetchone()
+    if not row:
+      return False
+    org_id = row[0]
+
+    # Break the circular FK (organizations.owner_id → users) then soft-delete the org
+    cursor.execute(
+      "UPDATE organizations SET owner_id = NULL, is_active = 0, deleted_at = SYSDATETIMEOFFSET() WHERE org_id = ?",
+      (org_id,)
+    )
+
+    # Soft-delete all users in this org
+    cursor.execute(
+      "UPDATE users SET is_enabled = 0, deleted_at = SYSDATETIMEOFFSET() WHERE org_id = ? AND deleted_at IS NULL",
+      (org_id,)
+    )
+
     conn.commit()
-  
-    if cursor.rowcount == 0:
-      return False  # No rows deleted (not found)
-    
     return True
 
-  except pyodbc.Error:
+  except pyodbc.Error as e:
+    print(f"[delete_organization] DB error: {e}")
     conn.rollback()
     return False
-  
+
   finally:
     conn.close()
 
@@ -184,7 +202,9 @@ def list_active_organization():
         COALESCE(u.phone_number, ''),
         CASE WHEN o.is_active = 0 THEN 'suspended' ELSE 'active' END,
         COALESCE(o.description, ''),
-        COALESCE(CONVERT(VARCHAR(33), o.updated_at, 127), '')
+        COALESCE(CONVERT(VARCHAR(33), o.updated_at, 127), ''),
+        (SELECT COUNT(*) FROM users u2 WHERE u2.org_id = o.org_id AND u2.deleted_at IS NULL) AS user_count,
+        (SELECT COUNT(*) FROM Cases c WHERE c.org_id = o.org_id AND c.deleted_at IS NULL) AS case_count
       FROM organizations AS o
       LEFT JOIN users AS u
         ON u.user_id = o.owner_id
@@ -207,6 +227,8 @@ def list_active_organization():
         "status": row[8],
         "description": row[9],
         "updatedAt": row[10],
+        "user_count": row[11],
+        "case_count": row[12],
       }
       for row in rows
     ]
@@ -401,3 +423,4 @@ def edit_organization(org_id: int, data: editedOrg):
 
 
 # def change_name(new_name: str, org_id: int)
+
