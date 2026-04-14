@@ -11,8 +11,11 @@ import {
   type OrgCaseDetailResponse, type OrgAgent, type Actor,
 } from '../../helpers/org/Cases'
 import { useAuth } from '../../context/AuthContext'
+import { useSignals } from '../../context/SignalContext'
 import OrgLayout from './OrgLayout'
 import '../../styles/Admin/AdminLayout.css'
+import Graph from './graph'
+
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
 
@@ -43,11 +46,12 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
+  const { fetchSignalsForEvidence } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
   const [detail, setDetail] = useState<OrgCaseDetailResponse | null>(null)
-
+  const [showGraph, setShowGraph] = useState(false)
   // edit case
   const [showEditForm, setShowEditForm] = useState(false)
   const [editDescription, setEditDescription] = useState('')
@@ -181,8 +185,8 @@ function OrgCaseDetail() {
     if (!evidenceFile || !detail) return
     setLoading(true); setError(null)
     try {
-      const result = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
-      await orgConfirmEvidence(result.file_id)
+      const uploadResult = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
+      void fetchSignalsForEvidence(uploadResult.evidenceItemId)
       setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }
@@ -214,6 +218,31 @@ function OrgCaseDetail() {
 
   return (
     <OrgLayout>
+      {showGraph && (
+        <div style = {{
+          position: 'fixed', inset: 0,
+          background: 1000,
+          zIndex: 1000,
+          display: 'flex', alignItems:'center', justifyContent: 'center'
+        }}>
+          <div style= {{
+            background:'#fff', borderRadius: 12,
+            width:'90vw', height:'85vh',
+            display:'flex', flexDirection:'column',
+            overflow:'hidden'
+          }}>
+            <div style={{display: 'flex', justifyContent: 'space-between',
+                          alignItems: 'center', padding: '12px 16px',
+                          borderBottom: '1px solid #e2e8f0'}}>
+              <h2 style={{margin:0}}>Signal Graph</h2>
+              <button className="admin-btn" onClick={()=>setShowGraph(false)}>Close</button>
+            </div>
+            <div style={{flex:1}}>
+              <Graph case_id={caseId}/>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" className="admin-btn" onClick={() => navigate('/OrgCaseProgress')}>← Back</button>
@@ -245,6 +274,7 @@ function OrgCaseDetail() {
                 setShowDeleteConfirm((p) => !p)
                 setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Delete</button>
+              <button type="button" className="admin-btn" onClick={() =>setShowGraph(true)}>Signal Graph</button>
             </div>
 
             {showEditForm && (

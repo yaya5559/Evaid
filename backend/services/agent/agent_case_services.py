@@ -48,48 +48,53 @@ def list_my_cases(agent_id: int, org_id: int):
         direct_cases = [dict(zip(columns, row)) for row in direct_rows]
         direct_ids = {c["case_id"] for c in direct_cases}
 
-        # AI-bridged cases: linked via EvidenceLink graph edges
-        cursor.execute("""
-            SELECT DISTINCT
-                c_target.case_id,
-                c_target.CaseNumber,
-                c_target.title,
-                c_target.description,
-                c_target.status,
-                c_target.priority,
-                c_target.severity_level,
-                CAST(c_target.due_date   AS NVARCHAR(50)) AS due_date,
-                CAST(c_target.created_at AS NVARCHAR(50)) AS created_at,
-                CAST(c_target.closed_at  AS NVARCHAR(50)) AS closed_at,
-                1 AS ai_linked,
-                c_source.case_id   AS linked_from_case_id,
-                c_source.title     AS linked_from_title
-            FROM Evidence         AS e_source
-            JOIN case_assignments AS ca
-                ON ca.case_id = e_source.case_id AND ca.user_id = ?
-            JOIN Cases            AS c_source
-                ON e_source.case_id = c_source.case_id
-            JOIN EvidenceLink     AS el
-                ON el.$from_id = e_source.$node_id
-                OR el.$to_id   = e_source.$node_id
-            JOIN Evidence         AS e_target
-                ON (
-                      (el.$to_id   = e_target.$node_id AND el.$from_id = e_source.$node_id)
-                   OR (el.$from_id = e_target.$node_id AND el.$to_id   = e_source.$node_id)
-                   )
-            JOIN Cases            AS c_target
-                ON e_target.case_id = c_target.case_id
-            WHERE c_target.deleted_at IS NULL
-              AND c_source.deleted_at IS NULL
-        """, (agent_id,))
+        # AI-bridged cases: linked via EvidenceLink graph edges (optional feature)
+        bridge_cases = []
+        try:
+            cursor.execute("""
+                SELECT DISTINCT
+                    c_target.case_id,
+                    c_target.CaseNumber,
+                    c_target.title,
+                    c_target.description,
+                    c_target.status,
+                    c_target.priority,
+                    c_target.severity_level,
+                    CAST(c_target.due_date   AS NVARCHAR(50)) AS due_date,
+                    CAST(c_target.created_at AS NVARCHAR(50)) AS created_at,
+                    CAST(c_target.closed_at  AS NVARCHAR(50)) AS closed_at,
+                    1 AS ai_linked,
+                    c_source.case_id   AS linked_from_case_id,
+                    c_source.title     AS linked_from_title
+                FROM Evidence         AS e_source
+                JOIN case_assignments AS ca
+                    ON ca.case_id = e_source.case_id AND ca.user_id = ?
+                JOIN Cases            AS c_source
+                    ON e_source.case_id = c_source.case_id
+                JOIN EvidenceLink     AS el
+                    ON el.$from_id = e_source.$node_id
+                    OR el.$to_id   = e_source.$node_id
+                JOIN Evidence         AS e_target
+                    ON (
+                          (el.$to_id   = e_target.$node_id AND el.$from_id = e_source.$node_id)
+                       OR (el.$from_id = e_target.$node_id AND el.$to_id   = e_source.$node_id)
+                       )
+                JOIN Cases            AS c_target
+                    ON e_target.case_id = c_target.case_id
+                WHERE c_target.deleted_at IS NULL
+                  AND c_source.deleted_at IS NULL
+            """, (agent_id,))
 
-        bridge_rows = cursor.fetchall()
-        bridge_cols = [col[0] for col in cursor.description]
-        bridge_cases = [
-            dict(zip(bridge_cols, row))
-            for row in bridge_rows
-            if row[0] not in direct_ids  # skip if agent already has direct access
-        ]
+            bridge_rows = cursor.fetchall()
+            bridge_cols = [col[0] for col in cursor.description]
+            bridge_cases = [
+                dict(zip(bridge_cols, row))
+                for row in bridge_rows
+                if row[0] not in direct_ids  # skip if agent already has direct access
+            ]
+        except pyodbc.Error:
+            # EvidenceLink table not yet created — AI bridging unavailable
+            pass
 
         all_cases = direct_cases + bridge_cases
         all_cases.sort(key=lambda c: c["created_at"] or "", reverse=True)
@@ -136,26 +141,32 @@ def get_my_case(case_id: int, agent_id: int, org_id: int):
 
         row = cursor.fetchone()
         if not row:
-            # Check AI bridge access
-            cursor.execute("""
-                SELECT 1
-                FROM Evidence AS e_target
-                JOIN EvidenceLink AS el
-                    ON el.$from_id = e_target.$node_id
-                    OR el.$to_id   = e_target.$node_id
-                JOIN Evidence AS e_linked
-                    ON (
-                          (el.$to_id   = e_linked.$node_id AND el.$from_id = e_target.$node_id)
-                       OR (el.$from_id = e_linked.$node_id AND el.$to_id   = e_target.$node_id)
-                       )
-                JOIN Cases AS c_linked
-                    ON e_linked.case_id = c_linked.case_id
-                JOIN case_assignments AS ca2
-                    ON ca2.case_id = c_linked.case_id AND ca2.user_id = ?
-                WHERE e_target.case_id = ?
-                  AND c_linked.deleted_at IS NULL
-            """, (agent_id, case_id))
-            if not cursor.fetchone():
+            # Check AI bridge access (requires EvidenceLink graph table)
+            has_bridge_access = False
+            try:
+                cursor.execute("""
+                    SELECT 1
+                    FROM Evidence AS e_target
+                    JOIN EvidenceLink AS el
+                        ON el.$from_id = e_target.$node_id
+                        OR el.$to_id   = e_target.$node_id
+                    JOIN Evidence AS e_linked
+                        ON (
+                              (el.$to_id   = e_linked.$node_id AND el.$from_id = e_target.$node_id)
+                           OR (el.$from_id = e_linked.$node_id AND el.$to_id   = e_target.$node_id)
+                           )
+                    JOIN Cases AS c_linked
+                        ON e_linked.case_id = c_linked.case_id
+                    JOIN case_assignments AS ca2
+                        ON ca2.case_id = c_linked.case_id AND ca2.user_id = ?
+                    WHERE e_target.case_id = ?
+                      AND c_linked.deleted_at IS NULL
+                """, (agent_id, case_id))
+                has_bridge_access = cursor.fetchone() is not None
+            except pyodbc.Error:
+                # EvidenceLink table not yet created — AI bridging unavailable
+                pass
+            if not has_bridge_access:
                 return {"message": "Case not found or access denied"}
             # Fetch case without assignment restriction
             cursor.execute("""

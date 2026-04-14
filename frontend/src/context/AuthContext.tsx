@@ -165,10 +165,16 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
                 await refresh()
             }
             const nextToken = accessTokenRef.current;
-            if(nextToken){
-                //config.headers = {...(config.headers || {}), Authorization: `Bearer ${nextToken}`}
-                config.headers?.set?.("Authorization", `Bearer ${nextToken}`);
-
+            if (nextToken) {
+                if (config.headers instanceof Headers) {
+                    config.headers.set("Authorization", `Bearer ${nextToken}`);
+                } else {
+                    const headers = config.headers || {};
+                    (config.headers as any) = {
+                        ...(headers as Record<string, string>),
+                        Authorization: `Bearer ${nextToken}`,
+                    };
+                }
             }
             return config;
         });
@@ -180,7 +186,12 @@ export const AuthProvider : React.FC<{children: React.ReactNode}> = ({children})
                 const original = error.config as AxiosRequestConfig & { _retry?: boolean };
                 const status = error.response?.status;
 
-                if (status === 401 && !original._retry) {
+                // Never intercept auth endpoints — a 401 from login/refresh/logout
+                // is the server's definitive answer, not a token expiry signal.
+                const url = original.url ?? "";
+                const isAuthEndpoint = url.includes("/auth/");
+
+                if (status === 401 && !original._retry && !isAuthEndpoint) {
                     original._retry = true;
 
                     // Queue this request until refresh completes to avoid token races.

@@ -74,6 +74,7 @@ function Login() {
   };
 
   useEffect(() => {
+    console.log(loading)
     if (!loading && user) {
       if (user.role === "evaide_admin") {
         navigate("/Dashboard");

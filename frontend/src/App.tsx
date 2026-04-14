@@ -16,6 +16,9 @@ import AddAgent from './components/admin/AddAgents'
 import Cases from './components/admin/Cases'
 import AdminCaseDetail from './components/admin/CaseDetail'
 import OrgCaseDetail from './components/organization/OrgCaseDetail'
+import OrgAgents from './components/organization/OrgAgents'
+import OrgStartCase from './components/organization/OrgStartCase'
+import OrgRegisterAgent from './components/organization/OrgRegisterAgent'
 import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
@@ -39,13 +42,23 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
   return <>{children}</>
 }
 
-function App() {
+function AuthenticatedSignals() {
+  const { user, loading } = useAuth()
+  if (loading || !user) return null
   return (
-    <SignalProvider>
+    <>
       <SignalToast />
       <SignalModal />
       <SignalPanel />
       <FloatingSignalButton />
+    </>
+  )
+}
+
+function App() {
+  return (
+    <SignalProvider>
+      <AuthenticatedSignals />
       <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />
@@ -62,6 +75,9 @@ function App() {
       <Route path="/Org_Dashboard" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgDashboard /></ProtectedRoute>} />
       <Route path="/OrgCaseProgress" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgCaseProgress /></ProtectedRoute>} />
       <Route path="/OrgCase/:caseId" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgCaseDetail /></ProtectedRoute>} />
+      <Route path="/OrgAgents" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgAgents /></ProtectedRoute>} />
+      <Route path="/OrgStartCase" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgStartCase /></ProtectedRoute>} />
+      <Route path="/OrgRegisterAgent" element={<ProtectedRoute allowedRoles={['org_admin']}><OrgRegisterAgent /></ProtectedRoute>} />
 
       {/* Agent only */}
       <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
@@ -69,6 +85,7 @@ function App() {
 
       {/* Any authenticated user */}
       <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </SignalProvider>
   )
