@@ -11,7 +11,9 @@ import {
   type CaseDetailResponse, type OrgAgent, type Actor,
 } from '../../helpers/admin/Cases'
 import { useAuth } from '../../context/AuthContext'
+import { useSignals } from '../../context/SignalContext'
 import Nav from './Nav'
+import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import '../../styles/Admin/AdminLayout.css'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded'
@@ -42,6 +44,7 @@ function formatDate(d: string | undefined | null) {
 function AdminCaseDetail() {
   const { orgId = '', caseId = '' } = useParams<{ orgId: string; caseId: string }>()
   const { user } = useAuth()
+  const { fetchSignalsForCase } = useSignals()
   const navigate = useNavigate()
 
   const [detail, setDetail] = useState<CaseDetailResponse | null>(null)
@@ -195,6 +198,7 @@ function AdminCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [orgId, caseId])
+  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
 
   useEffect(() => {
     if (!caseId) return
@@ -427,6 +431,8 @@ function AdminCaseDetail() {
                 <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
               </div>
             </section>
+
+            <PendingSignalsSection />
 
             {/* Evidence */}
             <section className="admin-card">

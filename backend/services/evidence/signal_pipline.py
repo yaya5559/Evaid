@@ -40,6 +40,7 @@ def detect_platform(markdown: str) ->  tuple[str, float, str]:
         api_key= os.environ["openAi_keys"],
         api_version= os.environ["openai_api_version"],
         azure_endpoint=os.environ["openAi_endpoint"],
+        timeout=30.0,
     )
 
     #Example Open Extraction Pass 
@@ -83,6 +84,7 @@ def run_llm_extraction(
         api_key= os.environ["openAi_keys"],
         api_version= os.environ["openai_api_version"],
         azure_endpoint=os.environ["openAi_endpoint"],
+        timeout=30.0,
     )
 
     try:
