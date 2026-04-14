@@ -1,21 +1,39 @@
-# Python
-__pycache__/
-*.pyc
+# IDE
+.vs/
+.vscode/
 
-# Virtual environments
-venv/
-backend/venv/
+# Vite
+dist/
+build/
+frontend/.vite/
 
-# Env files
+# Environment
 .env
 .env.*
+.env*.local
 frontend/.env
 backend/.env
 
-# Node
-frontend/node_modules/
-node_modules/
-frontend/node_modules/
+# Python
+__pycache__/
+*.pyc
+*.pyo
 
-.vs/
-.db
+# Virtual environments
+venv/
+backend/venv
+
+# Node
+node_modules/
+package-lock.json
+
+# Editors
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Temporary test files
+YusufTest.txt
+test.tsx
+backend/tmp*.py

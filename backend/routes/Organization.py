@@ -28,12 +28,19 @@ def addOrganization(data: Organization):
          status_code = status.HTTP_409_CONFLICT,
          detail = "Organization already exists"
       )
-    
-    if not services.add_Organization(data):
-       raise HTTPException(
-         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-         detail = "Organization failed to be created"
-       )
+    try:
+      if services.add_Organization(data):
+         return {"message": "Organization created successfully"}
+    except ValueError as e:
+      raise HTTPException(
+         status_code=status.HTTP_400_BAD_REQUEST,
+         detail=str(e)
+      )
+
+    raise HTTPException(
+      status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="Organization failed to be created"
+    )
     
 # @router.get("/Organization_Info")
 # def get_information(name:str):

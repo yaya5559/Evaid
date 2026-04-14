@@ -45,7 +45,22 @@ def check_organization(name: str):
     conn.close()
 
 # Adds an organization to the database 
+def check_owner_email(email: str):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  try:
+    query = "SELECT 1 FROM users WHERE email = ? AND deleted_at IS NULL"
+    cursor.execute(query, (email,))
+    return cursor.fetchone() is None
+  finally:
+    conn.close()
+
+# Adds an organization to the database 
 def add_Organization(data: Organization):
+  if not check_owner_email(data.owner_email):
+    raise ValueError("Owner email already exists.")
+
   conn = get_db_connection()
   cursor = conn.cursor()
 

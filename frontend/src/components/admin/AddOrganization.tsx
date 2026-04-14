@@ -34,7 +34,8 @@ const initialForm: OrganizationForm = {
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const phoneRegex = /^[+]?[\d()\s-]{7,20}$/
+const phoneRegex = /^[+]?\d[\d()\s-]{6,19}$/
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
 function validate(values: OrganizationForm): FormErrors {
   const errors: FormErrors = {}
@@ -42,11 +43,11 @@ function validate(values: OrganizationForm): FormErrors {
   if (!values.companyName.trim()) errors.companyName = 'Company name is required.'
   if (!emailRegex.test(values.companyEmail)) errors.companyEmail = 'Enter a valid email address.'
   if (!phoneRegex.test(values.companyPhoneNumber)) errors.companyPhoneNumber = 'Enter a valid phone number.'
-  if (!values.ownerFirstName.trim()) errors.companyName = 'Owner first name is required.'
-  if (!values.ownerLastName.trim()) errors.companyName = 'Owner last name is required.'
+  if (!values.ownerFirstName.trim()) errors.ownerFirstName = 'Owner first name is required.'
+  if (!values.ownerLastName.trim()) errors.ownerLastName = 'Owner last name is required.'
   if (!emailRegex.test(values.ownerEmail)) errors.ownerEmail = 'Enter a valid email address.'
   if (!phoneRegex.test(values.ownerPhoneNumber)) errors.ownerPhoneNumber = 'Enter a valid phone number.'
-  if (values.password.length < 8) errors.password = 'Password must be at least 8 characters.'
+  if (!passwordRegex.test(values.password)) errors.password = 'Password must be at least 8 characters and include uppercase, lowercase, and a digit.'
   if (values.confirmPassword !== values.password) {
     errors.confirmPassword = 'Passwords do not match.'
   }

@@ -8,14 +8,18 @@ router = APIRouter(prefix="/Register", tags=["Register"])
 @router.post("")
 def register(data: RegisterRequest):
     # new users default to AGENT role (role_id = 3)
-    success = register_user(data)
-    
-    # check if registration failed (most likely due to duplicated email)
-    if not success:
+    try:
+        success = register_user(data)
+        if success:
+            return {"message": "User created successfully"}
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail=str(e)
         )
-        
-    return {"message": "User created successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Registration failed"
+        )
 
