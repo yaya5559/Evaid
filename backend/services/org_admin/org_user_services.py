@@ -19,8 +19,8 @@ def list_org_agents(org_id: int):
                 u.phone_number,
                 u.is_enabled,
                 u.is_profile_complete,
-                u.last_login_at,
-                u.created_at
+                CAST(u.last_login_at AS datetime2) AS last_login_at,
+                CAST(u.created_at AS datetime2) AS created_at
             FROM users u
             WHERE u.org_id = ? AND u.role_id = 3 AND u.deleted_at IS NULL
             ORDER BY u.last_name ASC
@@ -60,8 +60,8 @@ def get_org_agent(user_id: int, org_id: int):
                 u.phone_number,
                 u.is_enabled,
                 u.is_profile_complete,
-                u.last_login_at,
-                u.created_at
+                CAST(u.last_login_at AS datetime2) AS last_login_at,
+                CAST(u.created_at AS datetime2) AS created_at
             FROM users u
             WHERE u.user_id = ? AND u.org_id = ? AND u.deleted_at IS NULL
             """, (user_id, org_id))
