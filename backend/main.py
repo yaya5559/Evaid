@@ -13,7 +13,8 @@ from limiter import limiter
 origins = ["http://localhost:5173"]
 extra = os.getenv("ALLOWED_ORIGIN")
 if extra:
-    origins.append(extra)
+    for origin in extra.split(","):
+        origins.append(origin.strip())
 
 
 def worker_loop():
@@ -46,7 +47,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
