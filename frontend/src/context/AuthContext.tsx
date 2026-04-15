@@ -19,7 +19,10 @@ type User = {
     email: string,
     company:string;
     role:string;
-
+    org_id?: string | number;
+    user_id?: string | number;
+    sub?: string;
+    [k: string]: unknown;
 }
 
 type DecodedJwt = {

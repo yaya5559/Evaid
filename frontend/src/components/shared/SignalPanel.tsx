@@ -2,17 +2,6 @@ import { useSignals } from '../../context/SignalContext'
 import type { Signal } from '../../context/SignalContext'
 import '../../styles/Signals.css'
 
-function formatDate(d: string) {
-  const dt = new Date(d)
-  if (isNaN(dt.getTime())) return '—'
-  return dt.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
 function confidenceColor(score: number): string {
   if (score >= 0.75) return '#16a34a'
   if (score >= 0.5) return '#d97706'
@@ -54,7 +43,7 @@ export function SignalPanel() {
               onClick={closePanel}
               aria-label="Close panel"
             >
-              ×
+              x
             </button>
           </div>
         </div>

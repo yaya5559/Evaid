@@ -6,7 +6,7 @@ import {
   getCaseDetails, updateCase, closeCase, deleteCase,
   getOrgAgents, assignAgent,
   createNote, updateNote, deleteNote,
-  uploadEvidence, confirmEvidence, deleteEvidence,
+  uploadEvidence, deleteEvidence,
   getActorsForCase,
   type CaseDetailResponse, type OrgAgent, type Actor,
 } from '../../helpers/admin/Cases'
