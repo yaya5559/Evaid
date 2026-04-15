@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import OrgLayout from './OrgLayout'
+import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import '../../styles/Admin/AdminLayout.css'
 import Graph from './graph'
 
@@ -200,6 +201,7 @@ function OrgCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [caseId, orgId])
+  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
 
   useEffect(() => {
     if (!caseId) return
@@ -451,6 +453,8 @@ function OrgCaseDetail() {
               <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
             </div>
           </section>
+
+          <PendingSignalsSection />
 
           {/* Evidence */}
           <section className="admin-card">

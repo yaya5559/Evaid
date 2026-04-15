@@ -40,6 +40,43 @@ def get_pending_signals(evidence_id):
         conn.close()
 
 
+def get_pending_signals_for_case(case_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+                SELECT ps.Id, ps.signal_type, ps.raw_value, ps.normalized_value,
+                       ps.confidence, ps.source_locator, ps.triage_reason, ps.evidence_id
+                FROM PendingSignal ps
+                JOIN EvidenceItem ei ON ps.evidence_id = ei.Id
+                WHERE ei.case_id = ? AND ps.triage_status = 'pending'
+                ORDER BY ps.confidence DESC
+            """, (case_id,))
+
+        rows = cursor.fetchall()
+
+        return [
+            {
+                "id": str(row[0]),
+                "signal_type": row[1],
+                "raw_value": row[2],
+                "normalized_value": row[3],
+                "confidence": row[4],
+                "source_locator": row[5],
+                "triage_reason": row[6],
+                "evidence_id": str(row[7]),
+            }
+            for row in rows
+        ]
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    finally:
+        conn.close()
+
+
 def reject_pending_signals(pending_signal_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -83,6 +120,9 @@ def confirm_pending_signal(pending_signal_id):
 
         _ensure_evidence_exists(cursor, row[0])
 
+        normalized = row[5] or ''
+        source_locator = (row[7] or '')[:200]
+
         cursor.execute(
             """
                 INSERT INTO Signal
@@ -90,7 +130,7 @@ def confirm_pending_signal(pending_signal_id):
                     raw_value, normalized_value, confidence, source_locator)
                     OUTPUT INSERTED.Id
                     VALUES (?,?,?,?,?,?,?,?)
-            """, (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]))
+            """, (row[0], row[1], row[2], row[3], row[4], normalized, row[6], source_locator))
 
         signal_id = cursor.fetchone()
 
