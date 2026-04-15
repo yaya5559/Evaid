@@ -5,6 +5,9 @@ from contextlib import asynccontextmanager
 import threading, time
 from services.run_analysis import claim_next_analysis_run, run_analysis
 from services.database import init_db
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from limiter import limiter
 
 
 
@@ -39,6 +42,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 app.add_middleware(
