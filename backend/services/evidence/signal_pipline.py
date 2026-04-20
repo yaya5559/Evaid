@@ -1,6 +1,6 @@
 from models.evidenceShape import ExtractedSignal
 from services.database import get_db_connection
-from openai import AzureOpenAI, BadRequestError
+from openai import AzureOpenAI
 import os
 import re, json
 
@@ -34,40 +34,42 @@ def run_universal_extraction(markdown: str, attachement_id: str, cursor) -> list
 
     #platform detect
 
-def detect_platform(markdown: str) ->  tuple[str, float, str]: 
+def detect_platform(markdown: str) ->  tuple[str, float, str]:
     """return platform name confidence, and reasoning"""
     client = AzureOpenAI(
         api_key= os.environ["openAi_keys"],
         api_version= os.environ["openai_api_version"],
         azure_endpoint=os.environ["openAi_endpoint"],
-        timeout=30.0,
     )
 
     #Example Open Extraction Pass 
-    try:
-        response = client.chat.completions.create(
-            model = "Evaidmodel",
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": "You are an intelligence analyst. Extract entities with character offsets."},
-                {"role": "user", "content": f"""Identify what platform or document type this text came from.
-                        Do not limit yourself to known platforms — name what you observe.
-                        Examples: Discord export, Telegram screenshot, X/Twitter post, Bank statement, Minecraft chat log, Unknown
-                        Text (first 2000 chars):
-                        {markdown[:2000]}
-                        Respond ONLY in JSON:
-                        {{"platform": "...", "confidence": 0.0-1.0, "reasoning": "one sentence"}}"""
-                }
-            ]
-        )
-        result = json.loads(response.choices[0].message.content)
-        return result["platform"], result["confidence"], result["reasoning"]
-    except BadRequestError:
-        return "Unknown", 0.0, "Content filtered by Azure policy"
+    response = client.chat.completions.create(
+        model = "Evaidmodel",
+        response_format={"type": "json_object"}, #forces structured JSON output
+        messages=[
+            {"role": "system", "content": "You are an intelligence analyst. Extract entities with character offsets."},
+            {"role": "user", "content": f"""Identify what platform or document type this text came from.
+                    Do not limit yourself to known platforms — name what you observe.
+                    Examples: Discord export, Telegram screenshot, X/Twitter post, Bank statement, Minecraft chat log, Unknown
+                    Text (first 2000 chars):
+                    {markdown[:2000]}
+                    Respond ONLY in JSON:
+                    {{"platform": "...", "confidence": 0.0-1.0, "reasoning": "one sentence"}}"""
+            }
+        ]
+    ) 
+    result = json.loads(response.choices[0].message.content)
+    return result["platform"], result["confidence"], result["reasoning"]
 
 
 def load_case_hints(case_id: str, cursor) -> list[dict]:
-    return []
+    cursor.execute(
+        "SELECT name, llm_hint FROM SignalTypeDefinition "
+        "WHERE scope = 'custom' and case_id = ?",
+        (case_id,)
+    )
+    rows = cursor.fetchall()
+    return [{"name": r[0], "hint": r[1]} for r in rows]
 
 
 def run_llm_extraction(
@@ -84,54 +86,50 @@ def run_llm_extraction(
         api_key= os.environ["openAi_keys"],
         api_version= os.environ["openai_api_version"],
         azure_endpoint=os.environ["openAi_endpoint"],
-        timeout=30.0,
     )
 
-    try:
-        response = client.chat.completions.create(
-            model="Evaidmodel",
-            response_format={"type":"json_object"},
-            max_tokens=4000,
-            messages=[
-                {
-                    "role":"system",
-                    "content": "You are an intelligence analyst. Extract identifiers with exact character offsets into a JSON array."
-                },
-                {
-                    "role":"user",
-                    "content":
-                    f"""Platform context: {platform_hint}
-                        (Use as context only — do NOT limit extraction to this platform's known patterns)
+    response = client.chat.completions.create(
+        model="Evaidmodel",
+        response_format={"type":"json_object"}, #Enforces structured JSON output
+        max_tokens=4000,
+        messages=[
+            {
+                "role":"system",
+                "content": "You are an intelligence analyst. Extract identifiers with exact character offsets into a JSON array."
+            }, 
+            {
+                "role":"user",
+                "content":
+                f"""Platform context: {platform_hint}
+                    (Use as context only — do NOT limit extraction to this platform's known patterns)
 
-                        {hints_block}
-                        Extract EVERY entity that could identify:
-                            - A person (real name, alias, handle, gamertag, display name)
-                            - An account (username, user ID, profile URL, invite code)
-                            - A community (server name, group name, channel)
-                            - A service or platform
-                            - Any other identifier you consider significant
+                    {hints_block}
+                    Extract EVERY entity that could identify:
+                        - A person (real name, alias, handle, gamertag, display name)
+                        - An account (username, user ID, profile URL, invite code)
+                        - A community (server name, group name, channel)
+                        - A service or platform
+                        - Any other identifier you consider significant
+                    
+                    Include character offsets (char_start, char_end) pointing to exactly where in the text you found it.
 
-                        Include character offsets (char_start, char_end) pointing to exactly where in the text you found it.
+                    Full text:
+                    {markdown}
 
-                        Full text:
-                        {markdown}
-
-                        Return ONLY a JSON object with a 'results' key containing the array
-                        [{{
-                            "signal_type": "descriptive_snake_case_name",
-                            "raw_value": "exactly what you saw",
-                            "normalized_value": "cleaned lowercase",
-                            "confidence": 0.0,
-                            "char_start": 0,
-                            "char_end": 0,
-                            "reasoning": "one sentence"
-                        }}]
-                    """
-                }]
-        )
-        items = json.loads(response.choices[0].message.content)["results"]
-    except BadRequestError:
-        return []
+                    Return ONLY a JSON object with a 'results' key containing the array
+                    [{{
+                        "signal_type": "descriptive_snake_case_name",
+                        "raw_value": "exactly what you saw",
+                        "normalized_value": "cleaned lowercase",
+                        "confidence": 0.0,
+                        "char_start": 0,
+                        "char_end": 0,
+                        "reasoning": "one sentence"
+                    }}]
+                """
+            }]
+    )
+    items = json.loads(response.choices[0].message.content)["results"]
 
     return [
         ExtractedSignal(
