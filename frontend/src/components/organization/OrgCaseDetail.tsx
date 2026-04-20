@@ -7,8 +7,8 @@ import {
   orgGetAgents, orgAssignAgent,
   orgCreateNote, orgUpdateNote, orgDeleteNote,
   orgUploadEvidence, orgDeleteEvidence,
-  getActorsForCase,
-  type OrgCaseDetailResponse, type OrgAgent, type Actor,
+  getActorsForCase, getConfirmedSignals,
+  type OrgCaseDetailResponse, type OrgAgent, type Actor, type ConfirmedSignal,
 } from '../../helpers/org/Cases'
 import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
@@ -78,13 +78,15 @@ function OrgCaseDetail() {
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
+  const [notesCollapsed, setNotesCollapsed] = useState(true)
 
   // evidence
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
   const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
-
+  const [showUploadConfirm, setShowUploadConfirm] = useState<Boolean>(false)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
+  const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -185,6 +187,7 @@ function OrgCaseDetail() {
   const handleUploadEvidence = async () => {
     if (!evidenceFile || !detail) return
     setLoading(true); setError(null)
+    
     try {
       const uploadResult = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
       void fetchSignalsForEvidence(uploadResult.evidenceItemId)
@@ -202,6 +205,10 @@ function OrgCaseDetail() {
 
   useEffect(() => { void loadDetail() }, [caseId, orgId])
   useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
+  }, [caseId])
 
   useEffect(() => {
     if (!caseId) return
@@ -255,8 +262,6 @@ function OrgCaseDetail() {
         </div>
       </header>
 
-      {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
-      {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
 
       {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
@@ -411,50 +416,90 @@ function OrgCaseDetail() {
             ))}
           </section>
 
+
+
           {/* Notes */}
           <section className="admin-card" style={{ marginBottom: '16px' }}>
-            <h2>Notes</h2>
-            {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
-            {detail.notes.map((note) => (
-              <div key={note.note_id} className="orgdash-progress-row">
-                {editingNoteId === note.note_id ? (
-                  <div style={{ width: '100%' }}>
-                    <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
-                      <button type="button" className="admin-btn" onClick={() => setEditingNoteId(null)}>Cancel</button>
-                    </div>
+            <h2
+              onClick={() => setNotesCollapsed(p => !p)}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length} Notes</span>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ transform: notesCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
+            </h2>
+            {notesCollapsed && (
+              <>
+                {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
+                {detail.notes.map((note) => (
+                  <div key={note.note_id} className="orgdash-progress-row">
+                    {editingNoteId === note.note_id ? (
+                      <div style={{ width: '100%' }}>
+                        <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
+                          <button type="button" className="admin-btn" onClick={() => setEditingNoteId(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : confirmDeleteNoteId === note.note_id ? (
+                      <div style={{ width: '100%' }}>
+                        <p style={{ margin: '0 0 8px' }}>{note.content}</p>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
+                          <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
+                          <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0 }}>{note.content}</p>
+                          <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+                          <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
+                          <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                ) : confirmDeleteNoteId === note.note_id ? (
-                  <div style={{ width: '100%' }}>
-                    <p style={{ margin: '0 0 8px' }}>{note.content}</p>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
-                      <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
-                      <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0 }}>{note.content}</p>
-                      <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
-                      <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
-                      <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-            <div style={{ marginTop: '12px' }}>
-              <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
-              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
-            </div>
+                ))}
+                <div style={{ marginTop: '12px' }}>
+                  <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
+                  <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>New Note</button>
+                </div>
+              </>
+            )}
           </section>
 
           <PendingSignalsSection />
+
+          {/* Confirmed Signals */}
+          {confirmedSignals.length > 0 && (
+            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
+              <h2>Confirmed Signals <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span></h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {confirmedSignals.map((s) => (
+                  <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                      <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
+                      <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                        {Math.round(s.confidence * 100)}%
+                      </span>
+                    </div>
+                    {s.normalized_value && s.normalized_value !== s.raw_value && (
+                      <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Evidence */}
           <section className="admin-card">
@@ -484,8 +529,51 @@ function OrgCaseDetail() {
                 <span style={{ opacity: evidenceFile ? 1 : 0.5 }}>{evidenceFile ? evidenceFile.name : 'Choose file to upload...'}</span>
                 <input id="org-case-evidence-upload" type="file" accept="image/*,.pdf,.txt,.csv,.json" style={{ display: 'none' }} onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} />
               </label>
-              <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
+              <button type="button" className="admin-btn primary" onClick={() => setShowUploadConfirm(true)} disabled={loading || !evidenceFile}>Upload</button>
             </div>
+            {showUploadConfirm && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(10, 18, 36, 0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                <div style={{ background: '#010b3d', borderRadius: '14px', padding: '28px', minWidth: '340px', maxWidth: '400px', boxShadow: '0 20px 50px rgba(0, 2, 5, 0.22)', borderTop: '3px solid #2f4161' }}>
+                  {loading ? (
+                    <>
+                      <h3 style={{ margin: '0 0 16px', fontSize: '17px', fontWeight: 650, color: '#f1f1f1' }}>Uploading...</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#cad0df', fontSize: '14px' }}>
+                        <div style={{ width: '20px', height: '20px', border: '2px solid #2f4161', borderTop: '2px solid #5b8dee', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        Uploading...
+                      </div>
+                    </>
+                  ) : success ? (
+                    <>
+                      <div style={{ fontSize: '32px', marginBottom: '10px' }}>✓</div>
+                      <h3 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 650, color: '#4ade80' }}>Upload Successful</h3>
+                      <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#616b79' }}>{success}</p>
+                      <button className="admin-btn primary" onClick={() => { setShowUploadConfirm(false); setSuccess(null) }}>Done</button>
+                    </>
+                  ) : error ? (
+                    <>
+                      <div style={{ fontSize: '32px', marginBottom: '10px' }}>✗</div>
+                      <h3 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 650, color: '#f87171' }}>Upload Failed</h3>
+                      <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#616b79' }}>{error}</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="admin-btn primary" onClick={() => { setError(null); void handleUploadEvidence() }}>Retry</button>
+                        <button className="admin-btn" onClick={() => { setShowUploadConfirm(false); setError(null); setEvidenceFile(null) }}>Cancel</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h3 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 650, color: '#f1f1f1' }}>Confirm Upload</h3>
+                      <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#616b79' }}>
+                        Upload <strong style={{ color: '#cad0df' }}>{evidenceFile?.name}</strong>?
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="admin-btn primary" onClick={() => { void handleUploadEvidence() }}>Confirm</button>
+                        <button className="admin-btn" onClick={() => { setShowUploadConfirm(false); setEvidenceFile(null) }}>Cancel</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
         </>
       )}

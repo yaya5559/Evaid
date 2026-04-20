@@ -14,6 +14,7 @@ export type OrgCaseListItem = {
     created_by_first_name: string
     created_by_last_name: string
     created_by_email: string
+    evidence_count: number
 }
 
 export type OrgCaseDetails = {
@@ -96,6 +97,21 @@ export type Actor = {
 // Stub — connect to /cases/{case_id}/actors when backend is available
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
   return []
+}
+
+export type ConfirmedSignal = {
+  id: string
+  signal_type: string
+  raw_value: string
+  normalized_value: string
+  confidence: number
+  source_locator: string
+  evidence_id: string
+}
+
+export const getConfirmedSignals = async (caseId: string): Promise<ConfirmedSignal[]> => {
+  const res = await api.get(`/evidence/confirmedSignals/${caseId}`, { withCredentials: true })
+  return (res.data ?? []) as ConfirmedSignal[]
 }
 
 

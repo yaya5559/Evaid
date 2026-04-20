@@ -22,6 +22,7 @@ type CaseRecord = {
   severity: string
   priority: string
   dueDate?: string
+  evidenceCount: number
 }
 
 function normalizeStatus(status: string | undefined): CaseStatus {
@@ -58,6 +59,7 @@ function toCaseRecord(item: OrgCaseListItem): CaseRecord {
     severity: item.severity_level,
     priority: item.priority,
     dueDate: item.due_date || undefined,
+    evidenceCount: item.evidence_count ?? 0,
   }
 }
 
@@ -228,9 +230,9 @@ function OrgCaseProgress() {
                 {c.description && <p style={{ margin: '4px 0', opacity: 0.8, fontSize: '0.9rem' }}>{c.description}</p>}
                 <div className="orgdash-progress-meta" style={{ marginTop: '4px' }}>
                   <span className={`admin-pill ${statusTone[c.status]}`}>{c.status}</span>
-                  <span>Severity: {c.severity}</span>
-                  <span>Priority: {c.priority}</span>
-                  {c.dueDate && <span>Due: {formatDate(c.dueDate)}</span>}
+                  <span>Severity: {c.severity},</span>
+                  <span>Priority: {c.priority},</span>
+                  <span>{c.evidenceCount} evidence.</span>
                 </div>
 
                 <div style={{ marginTop: '8px' }}>
@@ -240,6 +242,7 @@ function OrgCaseProgress() {
                     style={{ fontSize: '0.8rem', padding: '2px 8px' }}
                     onClick={() => void handleToggleActors(c.id)}
                   >
+                    {}
                     {expandedActors[c.id] ? 'Hide Actors' : 'Show Actors'}
                     {actorsMap[c.id] !== undefined && ` (${actorsMap[c.id].length})`}
                   </button>

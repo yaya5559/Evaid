@@ -9,7 +9,8 @@ from services.evidence_service import (
     _ensure_evidence_exists,
     _insert_analysis_run,
     _insert_attachment,
-    _get_evidence_case_id
+    _get_evidence_case_id,
+    get_confirmed_signals
 
 )
 from services.evidence.triage_service import get_pending_signals
@@ -180,3 +181,9 @@ async def rejectSignals(pending_signal_id:UUID):
 @router.get("/pending-signals/case/{case_id}")
 async def list_pending_signals_for_case(case_id: str):
     return get_pending_signals_for_case(case_id)
+
+
+
+@router.get("/confirmedSignals/{case_id}")
+async def get_confirmed_signals_for_case(case_id: str):
+    return get_confirmed_signals(case_id)

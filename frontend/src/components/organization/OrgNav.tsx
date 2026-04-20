@@ -26,7 +26,7 @@ function OrgNav() {
       <div className='admin-brand'>
         <div className='admin-brand-mark' />
         <div style={{ flex: 1 }}>
-          <div className='admin-brand-title'>Evaid</div>
+          <div className='admin-brand-title'>Evaide</div>
           <div className='admin-brand-sub'>Organization console</div>
         </div>
         <NotificationBell />

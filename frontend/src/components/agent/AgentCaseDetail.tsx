@@ -58,6 +58,7 @@ function AgentCaseDetail() {
   const [newNoteContent, setNewNoteContent] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
+  const [notesCollapsed, setNotesCollapsed] = useState<Boolean>(false)
 
   // evidence
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
@@ -229,6 +230,70 @@ function AgentCaseDetail() {
               </div>
             ))}
           </section>
+          
+          {/* Notes */}
+          <section className="admin-card" style={{ marginBottom: '16px' }}>
+            <h2
+              onClick={()=>setNotesCollapsed(p=>!p)}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length} Notes</span>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                <svg
+                  width="16" height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    transform: notesCollapsed ? 'rotate(180deg)':'rotate(0deg)' ,
+                    transition: 'transform 0.2s ease'
+                  }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
+            </h2>
+            {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
+            
+            {(notesCollapsed && (
+              <>
+              {detail.notes.map((note) => (
+              <div key={note.note_id} className="orgdash-progress-row">
+                {editingNoteId === note.note_id ? (
+                  <div style={{ width: '100%' }}>
+                    <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
+                      <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(null); setEditNoteContent('') }}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0 }}>{note.content}</p>
+                      <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
+                    </div>
+                    {note.author_id === agentId && (
+                      <button type="button" className="admin-btn" style={{ marginLeft: '8px' }}
+                        onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content) }}>
+                        Edit
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+              ))}
+              </>
+            ))}
+            <div style={{ marginTop: '12px' }}>
+              <textarea className="edit-org-input" rows={3} placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
+            </div>
+          </section>
+
 
           <PendingSignalsSection />
 
@@ -258,41 +323,7 @@ function AgentCaseDetail() {
             </div>
           </section>
 
-          {/* Notes */}
-          <section className="admin-card">
-            <h2>Notes</h2>
-            {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
-            {detail.notes.map((note) => (
-              <div key={note.note_id} className="orgdash-progress-row">
-                {editingNoteId === note.note_id ? (
-                  <div style={{ width: '100%' }}>
-                    <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
-                      <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(null); setEditNoteContent('') }}>Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0 }}>{note.content}</p>
-                      <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
-                    </div>
-                    {note.author_id === agentId && (
-                      <button type="button" className="admin-btn" style={{ marginLeft: '8px' }}
-                        onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content) }}>
-                        Edit
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-            <div style={{ marginTop: '12px' }}>
-              <textarea className="edit-org-input" rows={3} placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
-            </div>
-          </section>
+
         </>
       )}
     </AgentLayout>
