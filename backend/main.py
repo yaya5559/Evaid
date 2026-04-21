@@ -2,7 +2,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router as api_router
 from contextlib import asynccontextmanager
-import threading, time
+import threading, time, os
 from services.run_analysis import claim_next_analysis_run, run_analysis
 from services.database import init_db
 from slowapi import _rate_limit_exceeded_handler
@@ -10,12 +10,11 @@ from slowapi.errors import RateLimitExceeded
 from limiter import limiter
 
 
-
-# Allow frontend to call backend during dev
-origins = [
-    "http://localhost:5173",  # Vite dev server
-    # Add more origins here in future (production URL, etc.)
-]
+origins = ["http://localhost:5173"]
+extra = os.getenv("ALLOWED_ORIGIN")
+if extra:
+    for origin in extra.split(","):
+        origins.append(origin.strip())
 
 
 def worker_loop():
@@ -48,7 +47,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

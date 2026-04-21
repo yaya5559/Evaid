@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Nav from '../admin/Nav';
 import OrgNav from '../organization/OrgNav';
 import '../../styles/Admin/AdminLayout.css';
@@ -43,7 +43,10 @@ function CaseSelectionTable({ onSelect, orgId }: CaseSelectionTableProps) {
 
             try {
                 const data = await getCases();
-                if (!cancelled) setCases(data);
+                const visibleCases = orgId
+                    ? data.filter((item) => String(item.organization_id ?? '') === orgId)
+                    : data;
+                if (!cancelled) setCases(visibleCases);
             } catch (e) {
                 if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load cases');
             } finally {
@@ -303,7 +306,6 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
 
 // root component that manages the overall flow and state of the evidence upload process
 const EvidenceUpload: React.FC = () => {
-    const { caseId } = useParams<{ caseId?: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
     const { fetchSignalsForEvidence } = useSignals();
