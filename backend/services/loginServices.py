@@ -148,6 +148,19 @@ def get_refresh_token(refresh_token):
     finally:
         conn.close()
 
+def update_last_login(user_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE users SET last_login_at = SYSDATETIMEOFFSET() WHERE user_id = ?",
+            (user_id,)
+        )
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
 def end_user_session(refresh_token):
     conn = get_db_connection()
     cursor = conn.cursor()
