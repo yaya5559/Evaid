@@ -43,13 +43,11 @@ export type OrganizationListItem = {
     open_cases?: number;
 };
 
-
-
 export const loginUser = async (email: string, password: string) => {
     try {
         const response = await api.post(
             `/auth/login`,
-            { email, password }, // request body
+            { email, password },
         );
         return response.data.accessToken ?? response.data.access_token;
     } catch (err: any) {
@@ -64,18 +62,18 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const addAgent = async (agent: AgentPayload) => {
-  try {
-    const res = await api.post(`/RegisterAgent`, agent)
-    return res.data
-  } catch (err: any) {
-    const msg = 
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      err?.response?.data?.detail ||
-      err?.message ||
-      "Unable to register agent";
-    throw new Error(msg);
-  }
+    try {
+        const res = await api.post(`/RegisterAgent`, agent)
+        return res.data
+    } catch (err: any) {
+        const msg =
+            err?.response?.data?.error ||
+            err?.response?.data?.message ||
+            err?.response?.data?.detail ||
+            err?.message ||
+            "Unable to register agent";
+        throw new Error(msg);
+    }
 }
 
 export const addOrganization = async (organization: OrganizationPayload) => {
@@ -132,33 +130,29 @@ export const getCases = async () => {
     }
 };
 
-export const getGraph =  async (case_id:string) => {
-    try{
+export const getGraph = async (case_id: string) => {
+    try {
         const res = await api.get(`/graph/cases/${case_id}`)
         return res
-
-    }catch(err: any){
+    } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Could not load cases");
     }
 }
 
 type OrganizationUpdatePayload = {
-  org_id: number;
-  companyName: string;
-  companyEmail: string;
-  companyPhoneNumber: string;
-  ownerFirstName: string;
-  ownerLastName: string;
-  ownerEmail: string;
-  ownerPhoneNumber: string;
-  status: string;
-  description?: string;
+    org_id: number;
+    companyName: string;
+    companyEmail: string;
+    companyPhoneNumber: string;
+    ownerFirstName: string;
+    ownerLastName: string;
+    ownerEmail: string;
+    ownerPhoneNumber: string;
+    status: string;
+    description?: string;
 };
 
-export const editOrganization = async(    
-    organization: OrganizationUpdatePayload
-
-) => {
+export const editOrganization = async (organization: OrganizationUpdatePayload) => {
     try {
         const organizationId = organization.org_id
         const res = await api.put(`/Organization/${organizationId}`, organization, {
@@ -176,22 +170,20 @@ export const editOrganization = async(
     }
 };
 
-// accept caseId + File separately and build FormData here
-export const uploadEvidence = async (caseId: number, file: File, description:string, title:string, evidence_type:string) => {
+export const uploadEvidence = async (caseId: number, file: File, description: string, title: string, evidence_type: string) => {
     try {
-        const formData = new FormData();
-        // case_id must match the Form(...) field name in evidence.py
-        formData.append("case_id", String(caseId));
-        formData.append("description", description)
-        formData.append("title", title)
-        formData.append("evidence_type", evidence_type)
-        // file must match the File(...) field name in evidence.py
-        formData.append("file", file);
+        const itemRes = await api.post(`/evidence/EvidenceItem`, {
+            case_id: caseId,
+            description,
+            title,
+            evidence_type,
+        });
+        const evidenceItemId = itemRes.data.evidenceItem_id;
 
-        // Step 2 — upload the file as an attachment to that item
         const formData = new FormData();
         formData.append("attachement", file);
         const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData);
+
         return { ...attachRes.data, evidenceItemId };
     } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Upload failed");

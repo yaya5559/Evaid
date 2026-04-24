@@ -87,6 +87,19 @@ export const agentGetCases = async (agentId: number, orgId: number): Promise<Age
     }
 }
 
+export const agentGetOrgCases = async (orgId: number): Promise<AgentCaseListItem[]> => {
+    try {
+        const res = await api.get('/agent/cases/org', {
+            params: { org_id: orgId },
+            withCredentials: true,
+        })
+        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to load org cases')
+        return (res.data?.cases ?? []) as AgentCaseListItem[]
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to load org cases')
+    }
+}
+
 export const agentGetCaseDetail = async (caseId: string, agentId: number, orgId: number): Promise<AgentCaseDetailResponse> => {
     try {
         const res = await api.get(`/agent/cases/${caseId}`, {

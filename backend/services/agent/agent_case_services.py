@@ -302,3 +302,27 @@ def create_case(org_id: int, agent_id: int, title: str, description: str = None,
     finally:
         cursor.close()
         conn.close()
+
+def list_org_cases_for_agent(org_id: int):
+    """Returns all cases in the org - read-only view for agents."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT case_id, CaseNumber, title, description, status,
+                priority, severity_level,
+                CAST(created_at AS NVARCHAR(50)) AS created_at,
+                CAST(due_date AS NVARCHAR(50)) AS due_date
+            FROM Cases
+            WHERE org_id = ?
+            ORDER BY created_at DESC
+            """,
+            (org_id,)
+        )
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+        cases = [dict(zip(columns, row)) for row in rows]
+        return {"message": "Success", "cases": cases}
+    finally:
+        conn.close()
