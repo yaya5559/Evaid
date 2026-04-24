@@ -126,6 +126,7 @@ def get_my_case(case_id: int, agent_id: int, org_id: int):
         """, (case_id, org_id))
 
         row = cursor.fetchone()
+
         if not row:
             return {"message": "Case not found or access denied"}
 
