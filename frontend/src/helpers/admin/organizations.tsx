@@ -96,6 +96,30 @@ export const getOrganizations = async () => {
     }
 };
 
+export const disableOrganization = async (orgName: string) => {
+    try {
+        await api.patch(`/Organization/disable_org?org_name=${encodeURIComponent(orgName)}`, null, { withCredentials: true });
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail || err?.message || 'Unable to disable organization');
+    }
+};
+
+export const enableOrganization = async (orgName: string) => {
+    try {
+        await api.patch(`/Organization/enable_org?org_name=${encodeURIComponent(orgName)}`, null, { withCredentials: true });
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail || err?.message || 'Unable to enable organization');
+    }
+};
+
+export const deleteOrganization = async (orgName: string) => {
+    try {
+        await api.delete(`/Organization/Delete?name=${encodeURIComponent(orgName)}`, { withCredentials: true });
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail || err?.message || 'Unable to delete organization');
+    }
+};
+
 export const editOrganization = async (
     organizationId: string | number,
     organization: OrganizationUpdatePayload

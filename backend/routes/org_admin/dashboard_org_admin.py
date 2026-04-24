@@ -28,3 +28,8 @@ def get_admin_dashboard_pipeline(user: dict = Depends(require_roles("evaide_admi
 @dashboard_router.get("/activity")
 def get_admin_dashboard_activity(user: dict = Depends(require_roles("evaide_admin"))):
     return admin_services.get_admin_dashboard_activity()
+
+
+@dashboard_router.get("/last-logins")
+def get_admin_dashboard_last_logins(user: dict = Depends(require_roles("evaide_admin"))):
+    return admin_services.get_admin_dashboard_last_logins()
