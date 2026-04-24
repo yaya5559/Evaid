@@ -88,7 +88,7 @@ def list_my_cases(agent_id: int, org_id: int):
         bridge_cases = [
             dict(zip(bridge_cols, row))
             for row in bridge_rows
-            if row[0] not in direct_ids  # skip if agent already has direct access
+            if row[0] not in direct_ids
         ]
 
         all_cases = direct_cases + bridge_cases
@@ -131,51 +131,12 @@ def get_my_case(case_id: int, agent_id: int, org_id: int):
             WHERE c.case_id = ?
               AND c.deleted_at IS NULL
               AND c.org_id = ?
-              AND (c.created_by_user_id = ? OR ca.user_id = ?)
-        """, (case_id, org_id, agent_id, agent_id))
+        """, (case_id, org_id))
 
         row = cursor.fetchone()
+
         if not row:
-            # Check AI bridge access
-            cursor.execute("""
-                SELECT 1
-                FROM Evidence AS e_target
-                JOIN EvidenceLink AS el
-                    ON el.$from_id = e_target.$node_id
-                    OR el.$to_id   = e_target.$node_id
-                JOIN Evidence AS e_linked
-                    ON (
-                          (el.$to_id   = e_linked.$node_id AND el.$from_id = e_target.$node_id)
-                       OR (el.$from_id = e_linked.$node_id AND el.$to_id   = e_target.$node_id)
-                       )
-                JOIN Cases AS c_linked
-                    ON e_linked.case_id = c_linked.case_id
-                JOIN case_assignments AS ca2
-                    ON ca2.case_id = c_linked.case_id AND ca2.user_id = ?
-                WHERE e_target.case_id = ?
-                  AND c_linked.deleted_at IS NULL
-            """, (agent_id, case_id))
-            if not cursor.fetchone():
-                return {"message": "Case not found or access denied"}
-            # Fetch case without assignment restriction
-            cursor.execute("""
-                SELECT DISTINCT
-                    c.case_id, c.CaseNumber, c.title, c.description, c.status,
-                    c.priority, c.severity_level,
-                    CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
-                    CAST(c.created_at AS NVARCHAR(50)) AS created_at,
-                    CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
-                    c.resolution,
-                    u.user_id AS creator_id,
-                    u.first_name AS creator_first_name,
-                    u.last_name AS creator_last_name
-                FROM Cases c
-                JOIN users u ON c.created_by_user_id = u.user_id
-                WHERE c.case_id = ? AND c.deleted_at IS NULL
-            """, (case_id,))
-            row = cursor.fetchone()
-            if not row:
-                return {"message": "Case not found or access denied"}
+            return {"message": "Case not found or access denied"}
 
         case_cols = [col[0] for col in cursor.description]
         case_data = dict(zip(case_cols, row))
