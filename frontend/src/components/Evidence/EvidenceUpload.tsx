@@ -153,7 +153,12 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
         setErrorMsg(null);
 
         try {
+<<<<<<< HEAD
             const result = await uploadEvidence(selectedCase.id, file, '', '', agentNote);
+=======
+            // can build a proper FormData with the correct multipart boundary.
+            const result = await uploadEvidence(selectedCase.id, file, '', '', '');
+>>>>>>> 26932e3a (fix uploadEvidence call with required arguments)
             onSignalsFetch(result.evidenceItemId)
             setUploadProgress(100);
             setIsComplete(true);
