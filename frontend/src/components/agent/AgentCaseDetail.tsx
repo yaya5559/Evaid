@@ -63,6 +63,7 @@ function AgentCaseDetail() {
 
   // evidence
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
+  const [uploadNote, setUploadNote] = useState('')
   const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
 
   const [actors, setActors] = useState<Actor[]>([])
@@ -123,8 +124,8 @@ function AgentCaseDetail() {
     if (!evidenceFile) return
     setLoading(true); setError(null)
     try {
-      await agentUploadEvidence(caseId, evidenceFile, agentId)
-      setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
+      await agentUploadEvidence(caseId, evidenceFile, agentId, uploadNote ||undefined)
+      setSuccess('Evidence uploaded'); setEvidenceFile(null); setUploadNote('');void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }
 
@@ -334,10 +335,21 @@ function AgentCaseDetail() {
                 )}
               </div>
             ))}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }}>
-              <input type="file" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} style={{ flex: 1, color: 'inherit' }} />
+            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input type="file" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} style={{ flex: 1, color: 'inherit' }} />
+              </div>
+              <textarea
+                className="edit-org-input"
+                rows={2}
+                placeholder="Add context for the AI (optional)..."
+                value={uploadNote}
+                onChange={(e) => setUploadNote(e.target.value)}
+                style={{ width: '100%', boxSizing: 'border-box', fontSize: '13px' }}
+              />
               <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
             </div>
+
           </section>
 
 

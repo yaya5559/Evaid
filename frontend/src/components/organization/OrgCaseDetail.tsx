@@ -79,9 +79,11 @@ function OrgCaseDetail() {
   const [editNoteContent, setEditNoteContent] = useState('')
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
   const [notesCollapsed, setNotesCollapsed] = useState(true)
+  const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
 
   // evidence
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
+  const [uploadNote, setUploadNote] = useState('')
   const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
   const [showUploadConfirm, setShowUploadConfirm] = useState<Boolean>(false)
   const [actors, setActors] = useState<Actor[]>([])
@@ -189,9 +191,9 @@ function OrgCaseDetail() {
     setLoading(true); setError(null)
     
     try {
-      const uploadResult = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
+      const uploadResult = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0), uploadNote || undefined)
       void fetchSignalsForEvidence(uploadResult.evidenceItemId)
-      setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
+      setSuccess('Evidence uploaded'); setEvidenceFile(null); setUploadNote("");void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }
 
@@ -539,12 +541,20 @@ function OrgCaseDetail() {
                   ) : (
                     <>
                       <h3 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 650, color: '#f1f1f1' }}>Confirm Upload</h3>
-                      <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#616b79' }}>
+                      <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#616b79' }}>
                         Upload <strong style={{ color: '#cad0df' }}>{evidenceFile?.name}</strong>?
                       </p>
+                      <textarea
+                        className="edit-org-input"
+                        rows={3}
+                        placeholder="Add context for the AI (optional)..."
+                        value={uploadNote}
+                        onChange={(e) => setUploadNote(e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', marginBottom: '16px', fontSize: '13px' }}
+                      />
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button className="admin-btn primary" onClick={() => { void handleUploadEvidence() }}>Confirm</button>
-                        <button className="admin-btn" onClick={() => { setShowUploadConfirm(false); setEvidenceFile(null) }}>Cancel</button>
+                        <button className="admin-btn" onClick={() => { setShowUploadConfirm(false); setEvidenceFile(null); setUploadNote('') }}>Cancel</button>
                       </div>
                     </>
                   )}
@@ -558,23 +568,37 @@ function OrgCaseDetail() {
           {/* Confirmed Signals */}
           {confirmedSignals.length > 0 && (
             <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
-              <h2>Confirmed Signals <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span></h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {confirmedSignals.map((s) => (
-                  <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                      <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
-                      <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
-                      <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
-                        {Math.round(s.confidence * 100)}%
-                      </span>
+              <h2
+                onClick={() => setConfirmedCollapsed(p => !p)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+              >
+                Confirmed Signals
+                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: confirmedCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </h2>
+              {!confirmedCollapsed && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                  {confirmedSignals.map((s) => (
+                    <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                        <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                          {Math.round(s.confidence * 100)}%
+                        </span>
+                      </div>
+                      {s.normalized_value && s.normalized_value !== s.raw_value && (
+                        <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
+                      )}
                     </div>
-                    {s.normalized_value && s.normalized_value !== s.raw_value && (
-                      <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           )}
         </>

@@ -35,7 +35,7 @@ export function PendingSignalsSection() {
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
-              transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+              transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 0.2s ease'
             }}
           >
@@ -80,7 +80,7 @@ export function PendingSignalsSection() {
                     }}>
                       {Math.round(signal.confidence * 100)}%
                     </span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>Review →</span>
+                    <span style={{ fontSize: '0.8rem', color: '#5b8dee', fontWeight: 600 }}>Review →</span>
                   </div>
                 </div>
               </button>

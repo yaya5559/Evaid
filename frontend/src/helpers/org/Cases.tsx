@@ -313,13 +313,13 @@ export const orgCreateEvidenceItem = async (case_id: string, title: string, desc
 
 
 
-export const orgUploadEvidence = async (caseId: string, file: File, _userId: number) => {
+export const orgUploadEvidence = async (caseId: string, file: File, _userId: number, note?:string) => {
     try {
         // Step 1 — create the EvidenceItem record
         const itemRes = await api.post('/evidence/EvidenceItem', {
             case_id: caseId,
             title: file.name,
-            description: '',
+            description: note ?? '',
         })
         const evidenceItemId: string = itemRes.data.evidenceItem_id
 

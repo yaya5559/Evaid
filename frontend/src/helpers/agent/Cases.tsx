@@ -167,12 +167,12 @@ export const agentCreateCase = async (agentId: number, orgId: number, data: Agen
     }
 }
 
-export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number) => {
+export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number, note?:string) => {
     try {
         const itemRes = await api.post('/evidence/EvidenceItem', {
             case_id: caseId,
             title: file.name,
-            description: '',
+            description: note ?? '',
         })
         const evidenceItemId: string = itemRes.data.evidenceItem_id
 

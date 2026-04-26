@@ -113,20 +113,22 @@ def run_analysis(analysis_run_id):
 
         cursor.execute(
             """
-                SELECT case_id FROM EvidenceItem
+                SELECT case_id, evidenceItem_description FROM EvidenceItem
                 WHERE Id = ?
             """, (evidence_id,)
         )
 
-        case_id = cursor.fetchone()[0]
+        ei_row = cursor.fetchone()
+        case_id = ei_row[0]
+        evidence_description = ei_row[1] or ''
 
-        
+
         regex_signals = run_universal_extraction(markdown, attachement_id, cursor)
-        
+
         platform, confidence, reasoning = detect_platform(markdown)
-        
-        
-        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id, cursor)
+
+
+        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id, cursor, evidence_description)
 
         total_signals = regex_signals + extctractedSignals
         print(total_signals)
