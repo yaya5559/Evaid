@@ -278,7 +278,7 @@ export const assignAgent = async (orgId: string, caseId: string, userId: number,
 
 // unassignAgent(selectedOrgId, selectedCaseId, agent.user_id)
 // --- DELETE /org/assignments/case/{case_id}/agent/{user_id}
-export const unassignAgent = async (orgId: string, caseId: string, userId: number) => {
+export const unassignAgent = async (_orgId: string, caseId: string, userId: number) => {
     try {
         const res = await api.delete(`/org/assignments/case/${caseId}/agent/${userId}`, {
             withCredentials: true,
