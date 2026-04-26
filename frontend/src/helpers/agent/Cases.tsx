@@ -12,6 +12,7 @@ export type AgentCaseListItem = {
     ai_linked: 0 | 1
     linked_from_case_id: number | null
     linked_from_title: string | null
+    evidence_count?: number
 }
 
 export type AgentNote = {

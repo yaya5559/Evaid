@@ -17,6 +17,7 @@ type OrganizationRow = {
   region: string;
   users: string;
   cases: string;
+  evidence: string;
   health: 'Healthy' | 'Needs attention' | 'Critical';
 };
 
@@ -52,6 +53,7 @@ function Dashboard() {
             region: o.companyEmail ?? '',
             users: String(o.user_count || 0),
             cases: String(o.case_count || 0),
+            evidence: String(o.evidence_count || 0),
             health: 'Healthy',
           }));
           setOrganizations(mapped);
@@ -101,7 +103,7 @@ function Dashboard() {
         <header className='admin-header'>
           <div>
             <div className='admin-eyebrow'>Organization command center</div>
-            <h1 className='admin-title'>Operations Dashboard</h1>
+            <h1 className='admin-title'>Admin Console</h1>
             <p className='admin-subtext'>
               Monitor organization health, onboarding progress, and platform readiness from one place.
             </p>
@@ -118,6 +120,20 @@ function Dashboard() {
             <div className='dashboard-kpi-label'>Organizations</div>
             <div className='dashboard-kpi-value'>{organizations.length}</div>
             <div className='dashboard-kpi-delta neutral'>Current</div>
+          </article>
+          <article className='admin-card dashboard-kpi' key='TotalUsers'>
+            <div className='dashboard-kpi-label'>Total Members</div>
+            <div className='dashboard-kpi-value'>
+              {organizations.reduce((sum, o) => sum + Number(o.users), 0)}
+            </div>
+            <div className='dashboard-kpi-delta neutral'>Owners + agents across all orgs</div>
+          </article>
+          <article className='admin-card dashboard-kpi' key='Evidence'>
+            <div className='dashboard-kpi-label'>Total Evidence</div>
+            <div className='dashboard-kpi-value'>
+              {organizations.reduce((sum, o) => sum + Number(o.evidence), 0)}
+            </div>
+            <div className='dashboard-kpi-delta neutral'>Across all orgs</div>
           </article>
           {kpiCards.map((card) => (
             <article className='admin-card dashboard-kpi' key={card.label}>
@@ -138,6 +154,7 @@ function Dashboard() {
               <span>Organization</span>
               <span>Users</span>
               <span>Cases</span>
+              <span>Evidence</span>
               <span>Status</span>
             </div>
             <div className='dashboard-org-body'>
@@ -149,6 +166,7 @@ function Dashboard() {
                   </div>
                   <span>{organization.users}</span>
                   <span>{organization.cases}</span>
+                  <span>{organization.evidence}</span>
                   <span
                     className={`admin-pill ${
                       organization.health === 'Healthy'

@@ -12,35 +12,16 @@ function formatSignalType(type: string): string {
 }
 
 export function PendingSignalsSection() {
-  const { signals, confirmSignal, denySignal } = useSignals()
-  const [error, setError] = useState<string | null>(null)
-  const [collapsed, setCollapsed] =  useState<Boolean>(false)
+  const { signals, setOpenSignal } = useSignals()
+  const [collapsed, setCollapsed] = useState<Boolean>(true)
   const pending = signals.filter((s) => s.status === 'pending')
 
   if (pending.length === 0) return null
 
-  const handleConfirm = async (id: string) => {
-    setError(null)
-    try {
-      await confirmSignal(id)
-    } catch {
-      setError('Failed to confirm signal. Check backend logs.')
-    }
-  }
-
-  const handleDeny = async (id: string) => {
-    setError(null)
-    try {
-      await denySignal(id)
-    } catch {
-      setError('Failed to deny signal.')
-    }
-  }
-
   return (
     <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #d97706' }}>
-      <h2 
-        onClick={()=>setCollapsed(p=>!p)}
+      <h2
+        onClick={() => setCollapsed(p => !p)}
         style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
         Pending Signals
         <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{pending.length} awaiting review</span>
@@ -62,65 +43,47 @@ export function PendingSignalsSection() {
           </svg>
         </span>
       </h2>
-      {!collapsed &&  (
+      {!collapsed && (
         <>
-        
           <p style={{ opacity: 0.6, fontSize: '0.85rem', marginTop: 0, marginBottom: '12px' }}>
-            These signals were extracted from uploaded evidence and need your review.
+            These signals were extracted from uploaded evidence and need your review. Click a signal to review it.
           </p>
 
-          {error && (
-            <div style={{ background: '#fee2e2', color: '#991b1b', padding: '8px 12px', borderRadius: '6px', marginBottom: '10px', fontSize: '0.85rem' }}>
-              {error}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '320px', overflowY: 'auto' }}>
             {pending.map((signal) => (
-              <div
+              <button
                 key={signal.id}
+                type="button"
                 className="orgdash-progress-row"
-                style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', padding: '12px' }}
+                style={{
+                  flexDirection: 'column', alignItems: 'flex-start', gap: '8px', padding: '12px',
+                  cursor: 'pointer', width: '100%', textAlign: 'left', background: 'none', border: 'none',
+                }}
+                onClick={() => setOpenSignal(signal)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span className="signal-type-badge small evidence">
                       {formatSignalType(signal.signal_type)}
                     </span>
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', wordBreak: 'break-all' }}>
+                    <span style={{ color: "#fff8f8", fontFamily: 'monospace', fontSize: '0.9rem', wordBreak: 'break-all' }}>
                       {signal.raw_value}
                     </span>
                   </div>
-                  <span style={{
-                    fontWeight: 700,
-                    color: confidenceColor(signal.confidence),
-                    fontSize: '0.85rem',
-                    minWidth: '36px',
-                    textAlign: 'right',
-                  }}>
-                    {Math.round(signal.confidence * 100)}%
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{
+                      fontWeight: 700,
+                      color: confidenceColor(signal.confidence),
+                      fontSize: '0.85rem',
+                      minWidth: '36px',
+                      textAlign: 'right',
+                    }}>
+                      {Math.round(signal.confidence * 100)}%
+                    </span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>Review →</span>
+                  </div>
                 </div>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    className="admin-btn primary"
-                    style={{ padding: '4px 14px', fontSize: '0.8rem' }}
-                    onClick={() => void handleConfirm(signal.id)}
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    type="button"
-                    className="admin-btn critical"
-                    style={{ padding: '4px 14px', fontSize: '0.8rem' }}
-                    onClick={() => void handleDeny(signal.id)}
-                  >
-                    Deny
-                  </button>
-                </div>
-              </div>
+              </button>
             ))}
           </div>
         </>

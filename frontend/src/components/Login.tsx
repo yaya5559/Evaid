@@ -98,6 +98,9 @@ function Login() {
     <main className="login" aria-labelledby="login-title">
       <section className="card" role="region" aria-labelledby="login-title">
         <header className="header">
+          <Link to="/" className="backLink" aria-label="Back to homepage">
+            ← Home
+          </Link>
           <h1 id="login-title" className="title">
             Welcome back
           </h1>

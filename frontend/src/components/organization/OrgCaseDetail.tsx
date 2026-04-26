@@ -256,7 +256,9 @@ function OrgCaseDetail() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" className="admin-btn" onClick={() => navigate('/OrgCaseProgress')}>← Back</button>
           <div>
-            <div className="admin-eyebrow">Case Detail</div>
+            <div className="admin-eyebrow">
+              {(user as any)?.org_name ? `${(user as any).org_name as string} · ` : ''}Case Detail
+            </div>
             <h1 className="admin-title">{detail?.case.title ?? 'Loading...'}</h1>
           </div>
         </div>
@@ -470,39 +472,14 @@ function OrgCaseDetail() {
                 ))}
                 <div style={{ marginTop: '12px' }}>
                   <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
-                  <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>New Note</button>
+                  <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
                 </div>
               </>
             )}
           </section>
 
-          <PendingSignalsSection />
-
-          {/* Confirmed Signals */}
-          {confirmedSignals.length > 0 && (
-            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
-              <h2>Confirmed Signals <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span></h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {confirmedSignals.map((s) => (
-                  <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                      <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
-                      <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
-                      <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
-                        {Math.round(s.confidence * 100)}%
-                      </span>
-                    </div>
-                    {s.normalized_value && s.normalized_value !== s.raw_value && (
-                      <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* Evidence */}
-          <section className="admin-card">
+          <section className="admin-card" style={{ marginBottom: '16px' }}>
             <h2>Evidence</h2>
             {detail.evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
             {detail.evidence.map((item) => (
@@ -575,6 +552,31 @@ function OrgCaseDetail() {
               </div>
             )}
           </section>
+
+          <PendingSignalsSection />
+
+          {/* Confirmed Signals */}
+          {confirmedSignals.length > 0 && (
+            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
+              <h2>Confirmed Signals <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span></h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {confirmedSignals.map((s) => (
+                  <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                      <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
+                      <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                        {Math.round(s.confidence * 100)}%
+                      </span>
+                    </div>
+                    {s.normalized_value && s.normalized_value !== s.raw_value && (
+                      <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
     </OrgLayout>

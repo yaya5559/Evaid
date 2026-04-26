@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import AgentLayout from './AgentLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
+import Graph from '../organization/graph'
 import '../../styles/Admin/AdminLayout.css'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
@@ -66,6 +67,8 @@ function AgentCaseDetail() {
 
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
+
+  const [showGraph, setShowGraph] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -153,6 +156,19 @@ function AgentCaseDetail() {
 
   return (
     <AgentLayout>
+      {showGraph && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10, 18, 36, 0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 12, width: '90vw', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+              <h2 style={{ margin: 0 }}>Signal Graph</h2>
+              <button className="admin-btn" onClick={() => setShowGraph(false)}>Close</button>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Graph case_id={caseId} />
+            </div>
+          </div>
+        </div>
+      )}
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" className="admin-btn" onClick={() => navigate('/AgentCases')}>← Back</button>
@@ -175,6 +191,7 @@ function AgentCaseDetail() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
               <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>
+              <button type="button" className="admin-btn" onClick={() => setShowGraph(true)}>Signal Graph</button>
             </div>
 
             {showEditForm && (
@@ -290,7 +307,7 @@ function AgentCaseDetail() {
             ))}
             <div style={{ marginTop: '12px' }}>
               <textarea className="edit-org-input" rows={3} placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
+              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
             </div>
           </section>
 

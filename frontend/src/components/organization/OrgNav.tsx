@@ -34,14 +34,21 @@ function OrgNav() {
 
       <nav className='admin-nav'>
         <div className='admin-nav-section'>
-          <div className='admin-nav-label'>Workspace</div>
+          <div className='admin-nav-label'>My Work</div>
+          <NavLink className={navClassName} to='/OrgCaseProgress'>
+            <span className='admin-nav-dot' />
+            My Cases
+          </NavLink>
+          <NavLink className={navClassName} to='/OrgStartCase'>
+            <span className='admin-nav-dot' />
+            Start Case
+          </NavLink>
+        </div>
+        <div className='admin-nav-section'>
+          <div className='admin-nav-label'>Organization</div>
           <NavLink className={navClassName} to='/Org_Dashboard'>
             <span className='admin-nav-dot' />
             Overview
-          </NavLink>
-          <NavLink className={navClassName} to='/OrgCaseProgress'>
-            <span className='admin-nav-dot' />
-            View Cases
           </NavLink>
           <NavLink className={navClassName} to='/OrgAgents'>
             <span className='admin-nav-dot' />
@@ -50,10 +57,6 @@ function OrgNav() {
           <NavLink className={navClassName} to='/OrgRegisterAgent'>
             <span className='admin-nav-dot' />
             Register Agent
-          </NavLink>
-          <NavLink className={navClassName} to='/OrgStartCase'>
-            <span className='admin-nav-dot' />
-            Start Case
           </NavLink>
         </div>
       </nav>
