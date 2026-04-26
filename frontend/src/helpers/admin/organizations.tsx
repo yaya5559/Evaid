@@ -12,28 +12,45 @@ type OrganizationPayload = {
 };
 
 type OrganizationUpdatePayload = {
-    name: string;
-    email: string;
-    phone_number: string;
-    region: string;
+    org_id: number;
+    companyName: string;
+    companyEmail: string;
+    companyPhoneNumber: string;
+    ownerFirstName: string;
+    ownerLastName: string;
+    ownerEmail: string;
+    ownerPhoneNumber: string;
     status: string;
-    seat_limit: number;
-    primary_contact: string;
-    notes: string;
+    description?: string;
 };
 
-
 export type OrganizationListItem = {
-    id: string;
-    name: string;
-    email?: string;
+    id?: string;
+    org_id?: number | string;
+    name?: string;
+    companyName?: string;
+    company_name?: string;
+    companyEmail?: string;
+    company_email?: string;
+    companyPhoneNumber?: string;
+    company_phone_number?: string;
+    ownerFirstName?: string;
+    owner_first_name?: string;
+    ownerLastName?: string;
+    owner_last_name?: string;
+    ownerEmail?: string;
+    owner_email?: string;
+    ownerPhoneNumber?: string;
+    owner_phone_number?: string;
     phone_number?: string;
+    description?: string;
     status?: string;
+    updatedAt?: string;
+    updated_at?: string;
     region?: string;
     seat_limit?: number;
     primary_contact?: string;
     notes?: string;
-    updated_at?: string;
     open_cases?: number;
 };
 
@@ -106,7 +123,7 @@ export const deleteOrganization = async (orgName: string) => {
 };
 
 export const editOrganization = async (
-    organizationId: string,
+    organizationId: string | number,
     organization: OrganizationUpdatePayload
 ) => {
     try {

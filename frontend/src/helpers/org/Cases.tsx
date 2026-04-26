@@ -1,4 +1,3 @@
-import type { UUID } from 'crypto'
 import { api } from '../../context/AuthContext'
 
 export type OrgCaseListItem = {
@@ -111,7 +110,7 @@ export type OrgCreateCasePayload = {
     due_date?: string
 }
 
-export const orgGetCases = async (orgId: string): Promise<OrgCaseListItem[]> => {
+export const orgGetCases = async (_orgId: string): Promise<OrgCaseListItem[]> => {
     try {
         const res = await api.get('/org/cases/', {
             withCredentials: true,
@@ -124,7 +123,7 @@ export const orgGetCases = async (orgId: string): Promise<OrgCaseListItem[]> => 
     }
 }
 
-export const orgGetCaseDetail = async (caseId: string, orgId: string): Promise<OrgCaseDetailResponse> => {
+export const orgGetCaseDetail = async (caseId: string, _orgId: string): Promise<OrgCaseDetailResponse> => {
     try {
         const res = await api.get(`/org/cases/${caseId}`, {
             withCredentials: true,
@@ -137,7 +136,7 @@ export const orgGetCaseDetail = async (caseId: string, orgId: string): Promise<O
     }
 }
 
-export const orgCreateCase = async (orgId: string, _userId: number, data: OrgCreateCasePayload) => {
+export const orgCreateCase = async (_orgId: string, _userId: number, data: OrgCreateCasePayload) => {
     try {
         const res = await api.post('/org/cases/', data, {
             withCredentials: true,
@@ -153,7 +152,7 @@ export const orgCreateCase = async (orgId: string, _userId: number, data: OrgCre
     }
 }
 
-export const orgUpdateCase = async (caseId: string, orgId: string, fields: { description?: string; priority?: string; severity_level?: string; due_date?: string }) => {
+export const orgUpdateCase = async (caseId: string, _orgId: string, fields: { description?: string; priority?: string; severity_level?: string; due_date?: string }) => {
     try {
         const res = await api.patch(`/org/cases/${caseId}`, null, {
             params: { ...fields },
@@ -166,7 +165,7 @@ export const orgUpdateCase = async (caseId: string, orgId: string, fields: { des
     }
 }
 
-export const orgCloseCase = async (caseId: string, orgId: string, closedByUserId: number, resolution: string) => {
+export const orgCloseCase = async (caseId: string, _orgId: string, _closedByUserId: number, resolution: string) => {
     try {
         const res = await api.patch(`/org/cases/close/${caseId}`, null, {
             params: { resolution },
@@ -178,7 +177,7 @@ export const orgCloseCase = async (caseId: string, orgId: string, closedByUserId
     }
 }
 
-export const orgDeleteCase = async (caseId: string, orgId: string) => {
+export const orgDeleteCase = async (caseId: string, _orgId: string) => {
     try {
         const res = await api.delete(`/org/cases/${caseId}`, {
             withCredentials: true,
@@ -189,10 +188,8 @@ export const orgDeleteCase = async (caseId: string, orgId: string) => {
     }
 }
 
-export const orgGetAgents = async (orgId: string): Promise<OrgAgent[]> => {
+export const orgGetAgents = async (_orgId: string): Promise<OrgAgent[]> => {
     try {
-        // FIXED: was /org/agents/ — correct route is /org/cases/agents/ (case_org_admin.py)
-        // org_id is read from the JWT token on the backend, no query param needed
         const res = await api.get('/org/cases/agents/', {
             withCredentials: true,
         })
@@ -204,7 +201,7 @@ export const orgGetAgents = async (orgId: string): Promise<OrgAgent[]> => {
     }
 }
 
-export const orgAssignAgent = async (caseId: string, userId: number, assignedBy: number, orgId: string) => {
+export const orgAssignAgent = async (caseId: string, userId: number, assignedBy: number, _orgId: string) => {
     try {
         const res = await api.post(`/org/assignments/case/${caseId}`, null, {
             params: { user_id: userId, assigned_by: assignedBy },
@@ -216,7 +213,7 @@ export const orgAssignAgent = async (caseId: string, userId: number, assignedBy:
     }
 }
 
-export const orgUnassignAgent = async (caseId: string, userId: number, orgId: string) => {
+export const orgUnassignAgent = async (caseId: string, userId: number, _orgId: string) => {
     try {
         const res = await api.delete(`/org/assignments/case/${caseId}/agent/${userId}`, {
             withCredentials: true,
@@ -280,15 +277,14 @@ export const orgDeleteEvidence = async (fileId: string, orgId: string) => {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete evidence')
     }
 }
-export const orgCreateEvidenceItem = async (case_id: UUID, title: string, description: string) => {
-  try{
-    const formData = new FormData()
 
-  }catch(err:any){
-
-  }
+export const orgCreateEvidenceItem = async (_case_id: string, _title: string, _description: string) => {
+    try {
+        // placeholder - implement when backend endpoint is ready
+    } catch (err: any) {
+        throw new Error(err?.message ?? 'Unable to create evidence item')
+    }
 }
-
 
 export const orgUploadEvidence = async (caseId: string, file: File, userId: number) => {
     try {

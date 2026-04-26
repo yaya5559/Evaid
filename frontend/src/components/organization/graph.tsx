@@ -1,43 +1,42 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../../context/AuthContext'
 
 type edge = {
     id: string,
     from: string,
-    to:string,
+    to: string,
     source: "AI" | "USER"
-    confidence : Number
+    confidence: Number
 }
 
-type Node= {
+type Node = {
     id: string,
-    type:string,
-    label:string,
-    source:"AI" | "USER"
+    type: string,
+    label: string,
+    source: "AI" | "USER"
 }
 
 type GraphResponse = {
     id: string
     node: Node[]
-    edge:edge[]
+    edge: edge[]
 }
 
+type GraphProps = {
+    caseId: string
+}
 
-function graph() {
+function Graph({ caseId }: GraphProps) {
+    const [_data, setData] = useState<GraphResponse | null>(null)
 
-    const [data, setData] = useState<GraphResponse | null>(null)
-    const [selectedEdge, setSelectedEdge] = useState<edge| null>(null)
-    const [caseId, setCaseId] = useState<string | null>(null)
-
-    useEffect(()=>{
+    useEffect(() => {
         api.get(`/graph/cases/${caseId}`).then((res) => setData(res.data))
-    })
+    }, [caseId])
 
-  return (
-    <div>
-      
-    </div>
-  )
+    return (
+        <div>
+        </div>
+    )
 }
 
-export default graph
+export default Graph
