@@ -1,4 +1,4 @@
-import { api } from '../context/AuthContext';
+import { api } from '../../context/AuthContext.tsx';
 
 export type ProfileData = {
   first_name?: string;
