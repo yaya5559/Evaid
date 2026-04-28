@@ -1,42 +1,50 @@
-from fastapi import HTTPException, status, Response, APIRouter, Depends, Header
+﻿from fastapi import HTTPException, status, Response, APIRouter, Depends, Header, Cookie
 from pydantic import BaseModel, EmailStr
 from dotenv import load_dotenv
-from services.loginServices import( store_refresh_token, create_access_token, get_user_by_email, verify_password, decode_access_token)
+import services.loginServices as logFuncs
 import secrets
+import os
 
 load_dotenv()
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
+SECURE_COOKIES = os.getenv("SECURE_COOKIES", "false").lower() == "true"
 
 #pydantic guarantees email and password exist 
 class LoginRequest(BaseModel):
     email: EmailStr # pydantic's built in email validator
     password: str
 
-# Abenezer: get function verifies jwt and returns the info from token
-@router.get("/me")
-def me(authorization: str = Header(None)):
-    if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authorization header"
-        )
-    
-    try:
-        scheme, token = authorization.split(" ")
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Authorization header format"
-        )
-    
-    payload = decode_access_token(token)
 
-    return{
-        "user_id": payload["user_id"],
-        "email": payload["email"],
-        "role": payload["role"]
+@router.post("/refresh")
+def refresh_token(response: Response, refresh_token: str = Cookie(None)):
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="No session cookie found")
+
+    user = logFuncs.get_refresh_token(refresh_token)
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    token = logFuncs.create_access_token(
+        user_id=user.user_id,
+        email=user.email,
+        role=user.role_name,
+        org_id=user.org_id,
+        remember=True
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=SECURE_COOKIES,   # false for localhost
+        samesite="strict",
+        path="/",
+        max_age=60*60*24*7 #7days
+    )
+
+    return {
+        "accessToken": token
     }
 
 @router.post("/login")
@@ -44,35 +52,39 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
     email= data.email
     password = data.password
 
-    user = get_user_by_email(email)
+    user = logFuncs.get_user_by_email(email)
     
-    # user with that email doesnt exist
+    # user with that email doesn't exist
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials - Email"
+            detail="Invalid credentials!!"
         )
         
     #wrong password
-    if not verify_password(password, user.password_hash):
+    if not logFuncs.verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials!! - Password"
+            detail="Invalid credentials!!"
         )
         
     # # we need database to get username
     # user_name = user.first_name
+    token = logFuncs.create_access_token(
+        user_id=user.user_id,
+        email=user.email,
+        role=user.role_name,
+        org_id=user.org_id,
+        remember=remember
+    )
 
-    token = create_access_token(
-    user_id=user.user_id,
-    email=user.email,
-    role=user.role_id,
-    remember=remember)
+    logFuncs.update_last_login(user.user_id)
 
+    #creates a cryptographically secure random string
     refresh_token = secrets.token_urlsafe(64)
 
     #refreshToken should be in database
-    store_refresh_token(
+    logFuncs.store_refresh_token(
         user_id=user.user_id,
         refresh_token=refresh_token
     )
@@ -81,12 +93,24 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,   # false for localhost
+        secure=SECURE_COOKIES,   # false for localhost
         samesite="strict",
-        path="/auth/refresh",
+        path="/",
         max_age=60*60*24*7 #7days
     )
 
     return {
-        "access_token":token
+        "accessToken":token
     }
+
+@router.post("/logout")
+def logout(response: Response, refresh_token: str = Cookie(None)):
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="No session cookie found")
+    
+    logout = logFuncs.end_user_session(refresh_token)
+
+    if not logout:
+        raise HTTPException(status_code=401, detail="Unable to logout user")
+    
+    return "logout success"
