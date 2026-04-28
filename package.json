@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "scripts": {
     "dev": "node start-dev.js",
     "cy:open": "node cypress-start.js",
@@ -8,9 +7,6 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-=======
-  "devDependencies": {
->>>>>>> a3d8991 (Add files via upload)
     "cypress": "^15.9.0"
   },
   "dependencies": {
