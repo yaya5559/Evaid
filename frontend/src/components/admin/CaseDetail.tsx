@@ -6,12 +6,14 @@ import {
   getCaseDetails, updateCase, closeCase, deleteCase,
   getOrgAgents, assignAgent,
   createNote, updateNote, deleteNote,
-  uploadEvidence, confirmEvidence, deleteEvidence,
+  uploadEvidence, deleteEvidence,
   getActorsForCase,
   type CaseDetailResponse, type OrgAgent, type Actor,
 } from '../../helpers/admin/Cases'
 import { useAuth } from '../../context/AuthContext'
+import { useSignals } from '../../context/SignalContext'
 import Nav from './Nav'
+import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import '../../styles/Admin/AdminLayout.css'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded'
@@ -42,6 +44,7 @@ function formatDate(d: string | undefined | null) {
 function AdminCaseDetail() {
   const { orgId = '', caseId = '' } = useParams<{ orgId: string; caseId: string }>()
   const { user } = useAuth()
+  const { fetchSignalsForCase } = useSignals()
   const navigate = useNavigate()
 
   const [detail, setDetail] = useState<CaseDetailResponse | null>(null)
@@ -181,8 +184,7 @@ function AdminCaseDetail() {
     if (!evidenceFile || !detail) return
     setLoading(true); setError(null)
     try {
-      const result = await uploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
-      await confirmEvidence(result.file_id)
+      await uploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
       setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }
@@ -196,6 +198,7 @@ function AdminCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [orgId, caseId])
+  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
 
   useEffect(() => {
     if (!caseId) return
@@ -428,6 +431,8 @@ function AdminCaseDetail() {
                 <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
               </div>
             </section>
+
+            <PendingSignalsSection />
 
             {/* Evidence */}
             <section className="admin-card">

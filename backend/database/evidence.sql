@@ -5,7 +5,7 @@ CREATE TABLE SignalTypeDefinition (
     platform_key NVARCHAR(100) NOT NULL, -- NULL if universal/custom
     regex_pattern NVARCHAR(500), --used for LLM optional
     llm_hint NVARCHAR(500) NOT NULL, --sent to LLM as desc
-    case_id UNIQUEIDENTIFIER, --NULL = global, set = case-specific
+    case_id  UNIQUEIDENTIFIER, --NULL = global, set = case-specific
     created_by INT NOT NULL,
     FOREIGN KEY (case_id) REFERENCES cases(case_id),
     FOREIGN KEY (created_by) REFERENCES users(user_id)

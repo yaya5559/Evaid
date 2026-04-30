@@ -51,7 +51,7 @@ function formatDate(date: string | undefined | null) {
 }
 
 function toRecordOrganizations(item: OrganizationListItem): Organization {
-  return { id: String(item.id), name: item.name.trim() }
+  return { id: String(item.org_id), name: (item.companyName ?? item.name ?? '').trim() }
 }
 
 function toCaseRecord(item: CaseListItem): CaseRecord {
@@ -300,6 +300,9 @@ function AdminCases() {
                     <div className="orgdash-progress-title">
                       <strong>{c.title}</strong>
                       <small>{c.caseNumber ?? c.id}</small>
+                      {selectedOrg && (
+                        <span className="admin-pill info" style={{ fontSize: '0.75rem' }}>{selectedOrg.name}</span>
+                      )}
                     </div>
                     {c.description && <p style={{ margin: '4px 0', opacity: 0.8, fontSize: '0.9rem' }}>{c.description}</p>}
                     <div className="orgdash-progress-meta" style={{ marginTop: '4px' }}>

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 import services.org_admin.org_dashboard_services as services
 import services.evaide_admin.admin_dashboard_services as admin_services
-from dependencies.auth import require_roles, get_user_org_id
+from dependencies.auth import require_roles
 
 router = APIRouter(prefix="/org/dashboard", tags=["Org Admin - Dashboard"])
 dashboard_router = APIRouter(prefix="/dashboard", tags=["Evaide Admin - Dashboard"])
@@ -9,7 +9,7 @@ dashboard_router = APIRouter(prefix="/dashboard", tags=["Evaide Admin - Dashboar
 
 @router.get("/summary")
 def get_org_dashboard_summary(user: dict = Depends(require_roles("org_admin"))):
-    org_id = get_user_org_id(user["user_id"])
+    org_id = user.get("claims", {}).get("org_id")
     if not org_id:
         return {"message": "User not associated with an organization"}
     return services.get_org_dashboard_summary(org_id)
@@ -28,3 +28,8 @@ def get_admin_dashboard_pipeline(user: dict = Depends(require_roles("evaide_admi
 @dashboard_router.get("/activity")
 def get_admin_dashboard_activity(user: dict = Depends(require_roles("evaide_admin"))):
     return admin_services.get_admin_dashboard_activity()
+
+
+@dashboard_router.get("/last-logins")
+def get_admin_dashboard_last_logins(user: dict = Depends(require_roles("evaide_admin"))):
+    return admin_services.get_admin_dashboard_last_logins()

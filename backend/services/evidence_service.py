@@ -211,6 +211,3 @@ def get_evidence_file(file_id):
         return None
     finally:
         conn.close()
-
-
-

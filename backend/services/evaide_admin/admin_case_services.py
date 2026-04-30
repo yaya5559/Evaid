@@ -232,10 +232,13 @@ def update_case(case_id: int, data: UpdateCase):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    updates = data.model_dump(exclude_unset=True)
+    ALLOWED = {"title", "description", "status", "priority", "severity_level", "due_date", "resolution"}
+    updates = {k: v for k, v in data.model_dump(exclude_unset=True).items() if k in ALLOWED}
+
 
     if not updates:
       return {"message": "No fields to update"}
+    
 
     set_clause = ", ".join([f"{key} = ?" for key in updates])
     values = list(updates.values()) + [case_id]

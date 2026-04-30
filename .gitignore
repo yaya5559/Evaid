@@ -21,7 +21,13 @@ __pycache__/
 
 # Virtual environments
 venv/
-backend/venv
+backend/venv/
+
+# Env files
+.env
+.env.*
+frontend/.env
+backend/.env
 
 # Node
 node_modules/

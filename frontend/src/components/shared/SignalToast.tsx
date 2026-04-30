@@ -11,6 +11,10 @@ function confidenceColor(score: number): string {
   return '#dc2626'
 }
 
+function formatSignalType(type: string): string {
+  return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 function ToastItem({
   signal,
   onDismiss,
@@ -34,12 +38,8 @@ function ToastItem({
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
     >
       <div className="signal-toast-header">
-        <span
-          className={`signal-type-badge ${
-            signal.type === 'evidence_analysis' ? 'evidence' : 'connection'
-          }`}
-        >
-          {signal.type === 'evidence_analysis' ? 'Evidence Analysis' : 'Case Connection'}
+        <span className="signal-type-badge evidence">
+          {formatSignalType(signal.signal_type)}
         </span>
         <button
           type="button"
@@ -54,15 +54,17 @@ function ToastItem({
         </button>
       </div>
 
-      <div className="signal-toast-case">{signal.caseTitle}</div>
+      <div className="signal-toast-case" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+        {signal.raw_value}
+      </div>
 
       <div className="signal-toast-confidence">
-        <span style={{ color: confidenceColor(signal.confidenceScore) }}>
-          {Math.round(signal.confidenceScore * 100)}% confidence
+        <span style={{ color: confidenceColor(signal.confidence) }}>
+          {Math.round(signal.confidence * 100)}% confidence
         </span>
       </div>
 
-      <div className="signal-toast-action">Click to view signal →</div>
+      <div className="signal-toast-action">Click to review →</div>
     </div>
   )
 }

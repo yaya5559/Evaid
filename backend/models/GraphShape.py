@@ -2,6 +2,7 @@ from enum import Enum
 from dataclasses import dataclass
 from uuid import UUID
 
+
 class NodeType(str, Enum):
     PERSON = 'person'
     LOCATION = "location"
@@ -25,8 +26,8 @@ class GraphEdge:
     id: str
     From: str #node id
     to: str #node id
-    type : str 
-    source: str 
+    type : str
+    source: str
     confidence: float | None = None
 
 

@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Nav from '../admin/Nav';
 import OrgNav from '../organization/OrgNav';
 import '../../styles/Admin/AdminLayout.css';
 import '../../styles/Evidence/EvidenceUpload.css';
 import { useAuth } from '../../context/AuthContext';
+import { useSignals } from '../../context/SignalContext';
 import { uploadEvidence, getCases, type CaseListItem } from '../../helpers/api-communicators';
 
 // maps case status to the existing admin-pill colour classes
@@ -42,7 +43,10 @@ function CaseSelectionTable({ onSelect, orgId }: CaseSelectionTableProps) {
 
             try {
                 const data = await getCases();
-                if (!cancelled) setCases(data);
+                const visibleCases = orgId
+                    ? data.filter((item) => String(item.organization_id ?? '') === orgId)
+                    : data;
+                if (!cancelled) setCases(visibleCases);
             } catch (e) {
                 if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load cases');
             } finally {
@@ -143,9 +147,10 @@ interface FileUploadPanelProps {
     selectedCase: CaseListItem;
     onBack: () => void;
     onDone: () => void;
+    onSignalsFetch: (evidenceItemId: string) => void;
 }
 
-function FileUploadPanel({ selectedCase, onBack, onDone }: FileUploadPanelProps) {
+function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileUploadPanelProps) {
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -172,7 +177,8 @@ function FileUploadPanel({ selectedCase, onBack, onDone }: FileUploadPanelProps)
 
         try {
             // can build a proper FormData with the correct multipart boundary.
-            await uploadEvidence(selectedCase.id, file);
+            const result = await uploadEvidence(selectedCase.id, file);
+            onSignalsFetch(result.evidenceItemId)
             setUploadProgress(100);
             setIsComplete(true);
         } catch (err) {
@@ -300,9 +306,9 @@ function FileUploadPanel({ selectedCase, onBack, onDone }: FileUploadPanelProps)
 
 // root component that manages the overall flow and state of the evidence upload process
 const EvidenceUpload: React.FC = () => {
-    const { caseId } = useParams<{ caseId?: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { fetchSignalsForEvidence } = useSignals();
 
     const isAdmin = user?.role === 'evaide_admin';
     const NavComponent = isAdmin ? Nav : OrgNav;
@@ -353,6 +359,7 @@ const EvidenceUpload: React.FC = () => {
                             selectedCase={selectedCase}
                             onBack={() => setSelectedCase(null)}
                             onDone={handleDone}
+                            onSignalsFetch={fetchSignalsForEvidence}
                         />
                     )}
                 </section>

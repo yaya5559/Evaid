@@ -123,8 +123,8 @@ function toRecord(apiItem: OrganizationListItem): OrganizationRecord {
     throw new Error('Organization list response included an invalid organization id.')
   }
 
-  const companyName = apiItem.companyName?.trim()
-  const companyEmail = apiItem.companyEmail?.trim()
+  const companyName = (apiItem.companyName ?? apiItem.company_name ?? apiItem.name ?? '').trim()
+  const companyEmail = (apiItem.companyEmail ?? apiItem.company_email ?? '').trim()
   if (!companyName || !companyEmail) {
     throw new Error(`Organization ${org_id} is missing required profile fields.`)
   }
@@ -133,14 +133,14 @@ function toRecord(apiItem: OrganizationListItem): OrganizationRecord {
     org_id,
     companyName,
     companyEmail,
-    companyPhoneNumber: apiItem.companyPhoneNumber?.trim() || '',
-    ownerFirstName: apiItem.ownerFirstName?.trim() || '',
-    ownerLastName: apiItem.ownerLastName?.trim() || '',
-    ownerEmail: apiItem.ownerEmail?.trim() || '',
-    ownerPhoneNumber: apiItem.ownerPhoneNumber?.trim() || '',
+    companyPhoneNumber: (apiItem.companyPhoneNumber ?? apiItem.company_phone_number ?? '').trim(),
+    ownerFirstName: (apiItem.ownerFirstName ?? apiItem.owner_first_name ?? '').trim(),
+    ownerLastName: (apiItem.ownerLastName ?? apiItem.owner_last_name ?? '').trim(),
+    ownerEmail: (apiItem.ownerEmail ?? apiItem.owner_email ?? '').trim(),
+    ownerPhoneNumber: (apiItem.ownerPhoneNumber ?? apiItem.owner_phone_number ?? '').trim(),
     description: apiItem.description?.trim() || "",
     status: normalizeStatus(apiItem.status),
-    lastUpdated: apiItem.updatedAt || "",
+    lastUpdated: apiItem.updatedAt ?? apiItem.updated_at ?? "",
   };
 }
 
@@ -234,7 +234,8 @@ function EditOrganization() {
     setFieldErrors({})
     setError(null)
     setSuccess(null)
-  }, [selectedOrganization])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId])
 
   const filteredOrganizations = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()

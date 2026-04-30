@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
-from fastapi import Depends, status, APIRouter, UploadFile, File, Form, Response, HTTPException
-from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals
+from fastapi import Depends, Request, status, APIRouter, UploadFile, File, Form, Response, HTTPException
+from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals, get_pending_signals_for_case
 from services.evidence_service import (
     analyze_and_stage_evidence,
     confirm_evidence,
@@ -19,6 +19,8 @@ from services.database import get_db_connection
 from uuid import UUID
 import hashlib
 from typing import Final
+from limiter import limiter
+
 
 
 router = APIRouter(
@@ -47,7 +49,6 @@ async def Create_EvidenceItem(
         item: EvidenceItemCreate,
         user: dict = Depends(get_current_user)
     ):
-    
         case_id = item.case_id
         org_id = get_user_org_id(user["user_id"])
         if org_id is None or not case_belong_to_org(case_id, org_id):
@@ -59,6 +60,7 @@ async def Create_EvidenceItem(
         try:
             created_at = datetime.now(timezone.utc)
 
+
             cursor.execute(
                 """
                     INSERT INTO EvidenceItem (case_id, evidenceItem_description, title, created_by_user_id, created_at)
@@ -69,6 +71,10 @@ async def Create_EvidenceItem(
             )
 
             evidence_item_id = cursor.fetchone()[0]
+
+            if not evidence_item_id:
+                raise HTTPException(status_code=403, detail="no evidence_item_id found")
+
             conn.commit()
 
 
@@ -87,7 +93,9 @@ async def Create_EvidenceItem(
         
 
 @router.post("/{evidence_item_id}/attachments", status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def upload_attachement(
+    request:Request,
     evidence_item_id: UUID,
     attachement: UploadFile = File(...),
     user = Depends(get_current_user)
@@ -100,8 +108,7 @@ async def upload_attachement(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Unsupported content type: {attachement.content_type}",
         )
-    
-    
+        
 
     checksum_sha256, size_bytes, file_bytes = _hash_uploadfile_sha256(attachement)
     captured_at_utc = datetime.now(timezone.utc)
@@ -169,3 +176,7 @@ async def confirmSignals(pending_signal_id:UUID):
 @router.delete("/pending-signals/{pending_signal_id}/reject")
 async def rejectSignals(pending_signal_id:UUID):
     reject_pending_signals(pending_signal_id)
+
+@router.get("/pending-signals/case/{case_id}")
+async def list_pending_signals_for_case(case_id: str):
+    return get_pending_signals_for_case(case_id)

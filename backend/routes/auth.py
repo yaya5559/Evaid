@@ -3,41 +3,17 @@ from pydantic import BaseModel, EmailStr
 from dotenv import load_dotenv
 import services.loginServices as logFuncs
 import secrets
+import os
 
 load_dotenv()
 router = APIRouter(prefix="/auth", tags=["Auth"])
+SECURE_COOKIES = os.getenv("SECURE_COOKIES", "false").lower() == "true"
 
 #pydantic guarantees email and password exist 
 class LoginRequest(BaseModel):
     email: EmailStr # pydantic's built in email validator
     password: str
 
-# Abenezer: get function verifies jwt and returns the info from token
-# @router.get("/me")
-# def me(authorization: str = Header(None)):
-#     if not authorization:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Missing authorization header"
-#         )
-    
-#     try:
-#         scheme, token = authorization.split(" ")
-#         if scheme.lower() != "bearer":
-#             raise ValueError()
-#     except ValueError:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid Authorization header format"
-#         )
-    
-#     payload = decode_access_token(token)
-
-#     return{
-#         "user_id": payload["user_id"],
-#         "email": payload["email"],
-#         "role": payload["role"]
-#     }
 
 @router.post("/refresh")
 def refresh_token(response: Response, refresh_token: str = Cookie(None)):
@@ -61,7 +37,7 @@ def refresh_token(response: Response, refresh_token: str = Cookie(None)):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,   # false for localhost
+        secure=SECURE_COOKIES,   # false for localhost
         samesite="strict",
         path="/",
         max_age=60*60*24*7 #7days
@@ -82,14 +58,14 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials - Email"
+            detail="Invalid credentials!!"
         )
         
     #wrong password
     if not logFuncs.verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials!! - Password"
+            detail="Invalid credentials!!"
         )
         
     # # we need database to get username
@@ -101,6 +77,8 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
         org_id=user.org_id,
         remember=remember
     )
+
+    logFuncs.update_last_login(user.user_id)
 
     #creates a cryptographically secure random string
     refresh_token = secrets.token_urlsafe(64)
@@ -115,7 +93,7 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,   # false for localhost
+        secure=SECURE_COOKIES,   # false for localhost
         samesite="strict",
         path="/",
         max_age=60*60*24*7 #7days
@@ -136,4 +114,3 @@ def logout(response: Response, refresh_token: str = Cookie(None)):
         raise HTTPException(status_code=401, detail="Unable to logout user")
     
     return "logout success"
-

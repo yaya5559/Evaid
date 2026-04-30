@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   agentGetCaseDetail, agentUpdateCase,
   agentCreateNote, agentUpdateNote,
-  agentUploadEvidence, agentConfirmEvidence, agentDeleteEvidence,
+  agentUploadEvidence, agentDeleteEvidence,
   getActorsForCase,
   type AgentCaseDetailResponse, type Actor,
 } from '../../helpers/agent/Cases'
 import { useAuth } from '../../context/AuthContext'
+import { useSignals } from '../../context/SignalContext'
 import AgentLayout from './AgentLayout'
+import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import '../../styles/Admin/AdminLayout.css'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
@@ -40,6 +42,7 @@ function formatDate(d: string | undefined | null) {
 function AgentCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
+  const { fetchSignalsForCase } = useSignals()
   const navigate = useNavigate()
   const agentId = Number((user as any)?.user_id ?? 0)
   const orgId = Number((user as any)?.org_id ?? 0)
@@ -116,9 +119,7 @@ function AgentCaseDetail() {
     if (!evidenceFile) return
     setLoading(true); setError(null)
     try {
-      const uploadRes = await agentUploadEvidence(caseId, evidenceFile, agentId)
-      const fileId = uploadRes?.file_id ?? uploadRes?.FileId
-      if (fileId) await agentConfirmEvidence(fileId)
+      await agentUploadEvidence(caseId, evidenceFile, agentId)
       setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }
@@ -132,6 +133,7 @@ function AgentCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [caseId, agentId, orgId])
+  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
 
   useEffect(() => {
     if (!caseId) return
@@ -227,6 +229,8 @@ function AgentCaseDetail() {
               </div>
             ))}
           </section>
+
+          <PendingSignalsSection />
 
           {/* Evidence */}
           <section className="admin-card" style={{ marginBottom: '16px' }}>
