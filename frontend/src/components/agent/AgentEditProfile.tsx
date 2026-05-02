@@ -58,6 +58,12 @@ function AgentEditProfile() {
       return
     }
 
+    const phoneTrimmed = phoneNumber.trim()
+    if (phoneTrimmed && !/^[+]?\d[0-9()\s-]{6,19}$/.test(phoneTrimmed)) {
+      setError('Phone number must be at least 7 digits and may include +, spaces, parentheses, or hyphens.')
+      return
+    }
+
     setSaving(true)
     setError(null)
 

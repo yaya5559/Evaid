@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, validator
 from typing import Optional
@@ -18,6 +19,15 @@ class UpdateProfileRequest(BaseModel):
         if value is not None and not value.strip():
             raise ValueError("must not be empty")
         return value
+
+    @validator("phone_number")
+    def validate_phone_number(cls, value):
+        if value is None or not value.strip():
+            return value
+        phone_regex = re.compile(r'^[+]?[0-9()\s-]{7,20}$')
+        if not phone_regex.match(value.strip()):
+            raise ValueError("Phone number must be 7-20 digits and may include +, spaces, parentheses, or hyphens.")
+        return value.strip()
 
 
 @router.get("/{agent_id}")
