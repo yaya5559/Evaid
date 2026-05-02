@@ -33,13 +33,6 @@ backend/.env
 node_modules/
 package-lock.json
 
-# Editors
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# Temporary test files
-YusufTest.txt
-test.tsx
-backend/tmp*.py
+.vs/
+.db
+backend/.env

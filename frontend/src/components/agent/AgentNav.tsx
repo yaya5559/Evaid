@@ -37,6 +37,10 @@ function AgentNav() {
       <nav className='admin-nav'>
         <div className='admin-nav-section'>
           <div className='admin-nav-label'>Workspace</div>
+          <NavLink className={navClassName} to='/AgentDashboard'>
+            <span className='admin-nav-dot' />
+            Dashboard
+          </NavLink>
           <NavLink className={navClassName} to='/AgentCases'>
             <span className='admin-nav-dot' />
             My Cases
