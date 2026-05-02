@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import OrgLayout from './OrgLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
+import { EvidenceSection } from '../shared/EvidenceSection'
 import '../../styles/Admin/AdminLayout.css'
 import Graph from './graph'
 
@@ -182,22 +183,17 @@ function OrgCaseDetail() {
     } catch (err: any) { setError(err?.message ?? 'Failed to delete note') } finally { setLoading(false) }
   }
 
-  const handleUploadEvidence = async () => {
-    if (!evidenceFile || !detail) return
-    setLoading(true); setError(null)
-    try {
-      const uploadResult = await orgUploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
-      void fetchSignalsForEvidence(uploadResult.file_id)
-      setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
-    } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
+  const handleUploadEvidence = async (file: File, _agentContext: string) => {
+    const uploadResult = await orgUploadEvidence(caseId, file, Number((user as any)?.user_id ?? 0))
+    void fetchSignalsForEvidence(uploadResult.file_id)
+    setSuccess('Evidence uploaded')
+    void loadDetail()
   }
 
   const handleDeleteEvidence = async (fileId: string) => {
-    setLoading(true); setError(null)
-    try {
-      await orgDeleteEvidence(fileId, orgId)
-      setSuccess('Evidence deleted'); setConfirmDeleteEvidenceId(null); void loadDetail()
-    } catch (err: any) { setError(err?.message ?? 'Failed to delete evidence') } finally { setLoading(false) }
+    await orgDeleteEvidence(fileId, orgId)
+    setSuccess('Evidence deleted')
+    void loadDetail()
   }
 
   useEffect(() => { void loadDetail() }, [caseId, orgId])
@@ -458,37 +454,13 @@ function OrgCaseDetail() {
 
           <PendingSignalsSection />
 
-          {/* Evidence */}
-          <section className="admin-card">
-            <h2>Evidence</h2>
-            {detail.evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
-            {detail.evidence.map((item) => (
-              <div key={item.file_id} className="orgdash-progress-row">
-                <div className="orgdash-progress-meta" style={{ justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <span>{item.file_name}</span>
-                    <span style={{ opacity: 0.6 }}>{item.processing_status}</span>
-                    <span>{formatDate(item.upload_date)}</span>
-                  </div>
-                  <button type="button" className="admin-btn critical" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => setConfirmDeleteEvidenceId(item.file_id)} disabled={loading}>Delete</button>
-                </div>
-                {confirmDeleteEvidenceId === item.file_id && (
-                  <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.85rem' }}>Delete this evidence?</span>
-                    <button type="button" className="admin-btn critical" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => void handleDeleteEvidence(item.file_id)} disabled={loading}>Yes, Delete</button>
-                    <button type="button" className="admin-btn" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => setConfirmDeleteEvidenceId(null)}>Cancel</button>
-                  </div>
-                )}
-              </div>
-            ))}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
-              <label htmlFor="org-case-evidence-upload" className="edit-org-input" style={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <span style={{ opacity: evidenceFile ? 1 : 0.5 }}>{evidenceFile ? evidenceFile.name : 'Choose file to upload...'}</span>
-                <input id="org-case-evidence-upload" type="file" accept="image/*,.pdf,.txt,.csv,.json" style={{ display: 'none' }} onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} />
-              </label>
-              <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
-            </div>
-          </section>
+          <EvidenceSection
+            evidence={detail.evidence}
+            loading={loading}
+            onUpload={handleUploadEvidence}
+            onDelete={handleDeleteEvidence}
+            previewRoute="/org/evidence/preview"
+          />
         </>
       )}
     </OrgLayout>

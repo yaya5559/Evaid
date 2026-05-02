@@ -8,7 +8,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useSignals } from '../../context/SignalContext';
 import { uploadEvidence, getCases, type CaseListItem } from '../../helpers/api-communicators';
 
-// maps case status to the existing admin-pill colour classes
 const statusTone = (status: string) => {
     switch (status?.toLowerCase()) {
         case 'solved': return 'good';
@@ -21,8 +20,6 @@ const statusTone = (status: string) => {
 const formatDate = (value: string | null) =>
     value ? new Date(value).toLocaleDateString() : '—';
 
-
-// case selection table component
 interface CaseSelectionTableProps {
     onSelect: (c: CaseListItem) => void;
     orgId?: string;
@@ -36,11 +33,9 @@ function CaseSelectionTable({ onSelect, orgId }: CaseSelectionTableProps) {
 
     useEffect(() => {
         let cancelled = false;
-
         const fetchCases = async () => {
             if (!cancelled) setLoading(true);
             if (!cancelled) setError(null);
-
             try {
                 const data = await getCases();
                 const visibleCases = orgId
@@ -53,7 +48,6 @@ function CaseSelectionTable({ onSelect, orgId }: CaseSelectionTableProps) {
                 if (!cancelled) setLoading(false);
             }
         };
-
         fetchCases();
         return () => { cancelled = true; };
     }, [orgId]);
@@ -83,21 +77,10 @@ function CaseSelectionTable({ onSelect, orgId }: CaseSelectionTableProps) {
                 />
             </div>
 
-            {loading && (
-                <div className="eu-state-msg">
-                    <span className="eu-spinner" />
-                    Loading cases…
-                </div>
-            )}
-
-            {!loading && error && (
-                <div className="eu-state-msg eu-state-error">⚠ {error}</div>
-            )}
-
+            {loading && <div className="eu-state-msg"><span className="eu-spinner" />Loading cases…</div>}
+            {!loading && error && <div className="eu-state-msg eu-state-error">⚠ {error}</div>}
             {!loading && !error && filtered.length === 0 && (
-                <div className="eu-state-msg">
-                    {search ? 'No cases match your search.' : 'No cases found.'}
-                </div>
+                <div className="eu-state-msg">{search ? 'No cases match your search.' : 'No cases found.'}</div>
             )}
 
             {!loading && !error && filtered.length > 0 && (
@@ -117,17 +100,10 @@ function CaseSelectionTable({ onSelect, orgId }: CaseSelectionTableProps) {
                                 <tr key={c.id} className="eu-table-row">
                                     <td className="eu-mono">{c.id}</td>
                                     <td><strong>{c.description}</strong></td>
-                                    <td>
-                                        <span className={`admin-pill ${statusTone(c.status)}`}>
-                                            {c.status}
-                                        </span>
-                                    </td>
+                                    <td><span className={`admin-pill ${statusTone(c.status)}`}>{c.status}</span></td>
                                     <td>{formatDate(c.created_at)}</td>
                                     <td>
-                                        <button
-                                            className="admin-btn admin-btn-primary eu-select-btn"
-                                            onClick={() => onSelect(c)}
-                                        >
+                                        <button className="admin-btn admin-btn-primary eu-select-btn" onClick={() => onSelect(c)}>
                                             Select →
                                         </button>
                                     </td>
@@ -141,8 +117,6 @@ function CaseSelectionTable({ onSelect, orgId }: CaseSelectionTableProps) {
     );
 }
 
-
-// file upload panel
 interface FileUploadPanelProps {
     selectedCase: CaseListItem;
     onBack: () => void;
@@ -157,6 +131,10 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
     const [isUploading, setIsUploading] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    // Agent context note
+    const [agentNote, setAgentNote] = useState('');
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileSelection = (selectedFile: File) => {
@@ -164,7 +142,6 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
         setIsComplete(false);
         setUploadProgress(0);
         setErrorMsg(null);
-
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(selectedFile));
     };
@@ -176,8 +153,7 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
         setErrorMsg(null);
 
         try {
-            // can build a proper FormData with the correct multipart boundary.
-            const result = await uploadEvidence(selectedCase.id, file, '', '', '');
+            const result = await uploadEvidence(selectedCase.id, file, '', '', agentNote);
             onSignalsFetch(result.evidenceItemId)
             setUploadProgress(100);
             setIsComplete(true);
@@ -197,21 +173,18 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
         setIsComplete(false);
         setUploadProgress(0);
         setErrorMsg(null);
+        setAgentNote('');
     };
 
     return (
         <div className="eu-upload-panel">
-
-            {/* shows which case we're uploading to, with a back button */}
             <div className="eu-case-banner">
                 <div className="eu-case-banner-left">
                     <span className="eu-case-banner-label">Uploading evidence to</span>
                     <div className="eu-case-banner-title">
                         <strong>{selectedCase.description}</strong>
                         <span className="eu-mono eu-case-banner-id">#{selectedCase.id}</span>
-                        <span className={`admin-pill ${statusTone(selectedCase.status)}`}>
-                            {selectedCase.status}
-                        </span>
+                        <span className={`admin-pill ${statusTone(selectedCase.status)}`}>{selectedCase.status}</span>
                     </div>
                 </div>
                 {!isComplete && (
@@ -222,28 +195,45 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
             </div>
 
             {!isComplete && (
-                <div
-                    className={`upload-zone ${file ? 'has-file' : ''}`}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                        e.preventDefault();
-                        if (e.dataTransfer.files[0]) handleFileSelection(e.dataTransfer.files[0]);
-                    }}
-                >
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        style={{ display: 'none' }}
-                        onChange={(e) => e.target.files && handleFileSelection(e.target.files[0])}
-                        accept="image/*,.pdf,.txt,.csv,.json"
-                    />
-                    <div className="upload-icon">📁</div>
-                    <p>Drag and drop file here</p>
-                    <p style={{ color: 'var(--muted)', fontSize: '14px' }}>OR</p>
-                    <button className="admin-btn admin-btn-secondary" onClick={() => fileInputRef.current?.click()}>
-                        Browse Files
-                    </button>
-                </div>
+                <>
+                    {/* Agent context note */}
+                    <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', fontSize: '0.9rem' }}>
+                            📝 Note for AI <span style={{ opacity: 0.6, fontWeight: 400 }}>(optional — helps the AI extract more relevant signals)</span>
+                        </label>
+                        <textarea
+                            className="edit-org-input"
+                            rows={3}
+                            placeholder="e.g. 'This is a Discord chat log from a suspect. Focus on usernames, server names, and any location references.'"
+                            value={agentNote}
+                            onChange={(e) => setAgentNote(e.target.value)}
+                            style={{ width: '100%', boxSizing: 'border-box' }}
+                        />
+                    </div>
+
+                    <div
+                        className={`upload-zone ${file ? 'has-file' : ''}`}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            if (e.dataTransfer.files[0]) handleFileSelection(e.dataTransfer.files[0]);
+                        }}
+                    >
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            onChange={(e) => e.target.files && handleFileSelection(e.target.files[0])}
+                            accept="image/*,.pdf,.txt,.csv,.json"
+                        />
+                        <div className="upload-icon">📁</div>
+                        <p>Drag and drop file here</p>
+                        <p style={{ color: 'var(--muted)', fontSize: '14px' }}>OR</p>
+                        <button className="admin-btn admin-btn-secondary" onClick={() => fileInputRef.current?.click()}>
+                            Browse Files
+                        </button>
+                    </div>
+                </>
             )}
 
             {previewUrl && file?.type.startsWith('image/') && (
@@ -267,9 +257,7 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
                 </button>
             )}
 
-            {errorMsg && (
-                <div className="eu-state-msg eu-state-error">⚠ {errorMsg}</div>
-            )}
+            {errorMsg && <div className="eu-state-msg eu-state-error">⚠ {errorMsg}</div>}
 
             {(isUploading || isComplete) && (
                 <div className='upload-progress-section'>
@@ -303,8 +291,6 @@ function FileUploadPanel({ selectedCase, onBack, onDone, onSignalsFetch }: FileU
     );
 }
 
-
-// root component that manages the overall flow and state of the evidence upload process
 const EvidenceUpload: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -312,12 +298,8 @@ const EvidenceUpload: React.FC = () => {
 
     const isAdmin = user?.role === 'evaide_admin';
     const NavComponent = isAdmin ? Nav : OrgNav;
-
-    // org users only see their own cases, admins see everything
     const orgId = !isAdmin && user?.org_id ? String(user.org_id) : undefined;
 
-    // default test case uses (id: number, description, status, created_at) matching the backend
-    // to be changed later to load the actual case if caseID param is provided
     const [selectedCase, setSelectedCase] = useState<CaseListItem | null>({
         id: 1,
         description: "Default Testing Case",
@@ -338,19 +320,15 @@ const EvidenceUpload: React.FC = () => {
             <aside className='admin-left'>
                 <NavComponent />
             </aside>
-
             <main className='admin-main'>
                 <header className='admin-header'>
                     <div>
                         <div className='admin-eyebrow'>Evidence management</div>
                         <h1 className='admin-page-title'>
-                            {selectedCase
-                                ? `Evidence Upload — Case #${selectedCase.id}`
-                                : 'Evidence Upload'}
+                            {selectedCase ? `Evidence Upload — Case #${selectedCase.id}` : 'Evidence Upload'}
                         </h1>
                     </div>
                 </header>
-
                 <section className='admin-card eu-root-card'>
                     {selectedCase === null ? (
                         <CaseSelectionTable orgId={orgId} onSelect={setSelectedCase} />

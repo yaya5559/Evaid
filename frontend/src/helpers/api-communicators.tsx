@@ -30,25 +30,38 @@ type AgentPayload = {
 }
 
 export type OrganizationListItem = {
-    id: string;
-    name: string;
-    email?: string;
+    id?: string;
+    org_id?: number | string;
+    name?: string;
+    companyName?: string;
+    company_name?: string;
+    companyEmail?: string;
+    company_email?: string;
+    companyPhoneNumber?: string;
+    company_phone_number?: string;
+    ownerFirstName?: string;
+    owner_first_name?: string;
+    ownerLastName?: string;
+    owner_last_name?: string;
+    ownerEmail?: string;
+    owner_email?: string;
+    ownerPhoneNumber?: string;
+    owner_phone_number?: string;
     phone_number?: string;
+    description?: string;
     status?: string;
+    updatedAt?: string;
+    updated_at?: string;
     region?: string;
     seat_limit?: number;
     primary_contact?: string;
     notes?: string;
-    updated_at?: string;
     open_cases?: number;
 };
 
 export const loginUser = async (email: string, password: string) => {
     try {
-        const response = await api.post(
-            `/auth/login`,
-            { email, password },
-        );
+        const response = await api.post(`/auth/login`, { email, password });
         return response.data.accessToken ?? response.data.access_token;
     } catch (err: any) {
         const msg =
@@ -121,9 +134,7 @@ export const getOrganizations = async () => {
 
 export const getCases = async () => {
     try {
-        const res = await api.get("/cases/all", {
-            withCredentials: true,
-        });
+        const res = await api.get("/cases/all", { withCredentials: true });
         return res.data as CaseListItem[];
     } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Could not load cases");
@@ -170,14 +181,25 @@ export const editOrganization = async (organization: OrganizationUpdatePayload) 
     }
 };
 
-export const uploadEvidence = async (caseId: number, file: File, description: string, title: string, evidence_type: string) => {
+// Step 1: Create EvidenceItem with agent context note
+// Step 2: Upload file as attachment
+export const uploadEvidence = async (
+    caseId: number,
+    file: File,
+    _description: string,
+    _title: string,
+    agentContext: string
+) => {
     try {
+        const fileName = file.name.replace(/\.[^/.]+$/, '') // use filename without extension as title
+
         const itemRes = await api.post(`/evidence/EvidenceItem`, {
             case_id: caseId,
-            description,
-            title,
-            evidence_type,
+            description: fileName,
+            title: fileName,
+            agent_context: agentContext || null,
         });
+
         const evidenceItemId = itemRes.data.evidenceItem_id;
 
         const formData = new FormData();

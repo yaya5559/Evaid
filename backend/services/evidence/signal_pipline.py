@@ -5,18 +5,13 @@ import os
 import re, json
 
 
-#universal Regex
-
 def run_universal_extraction(markdown: str, attachement_id: str, cursor) -> list[ExtractedSignal]:
     cursor.execute(
         "SELECT name, regex_pattern FROM SignalTypeDefinition "
         "WHERE scope = 'universal' AND regex_pattern IS NOT NULL"
     )
-
     definitions = cursor.fetchall()
-
     signals = []
-
     for name, pattern in definitions:
         for match in re.finditer(pattern, markdown, re.IGNORECASE):
             signals.append(ExtractedSignal(
@@ -25,27 +20,25 @@ def run_universal_extraction(markdown: str, attachement_id: str, cursor) -> list
                 normalized_value=match.group().lower().strip(),
                 confidence=0.96,
                 source_locator={
-                    "method":"regex",
-                    "char_start":match.start(),
-                    "char_end":match.end(),
-                    "attachement_id":str(attachement_id),                 }
+                    "method": "regex",
+                    "char_start": match.start(),
+                    "char_end": match.end(),
+                    "attachement_id": str(attachement_id),
+                }
             ))
     return signals
 
-    #platform detect
 
-def detect_platform(markdown: str) ->  tuple[str, float, str]:
-    """return platform name confidence, and reasoning"""
+def detect_platform(markdown: str) -> tuple[str, float, str]:
+    """return platform name, confidence, and reasoning"""
     client = AzureOpenAI(
-        api_key= os.environ["openAi_keys"],
-        api_version= os.environ["openai_api_version"],
+        api_key=os.environ["openAi_keys"],
+        api_version=os.environ["openai_api_version"],
         azure_endpoint=os.environ["openAi_endpoint"],
     )
-
-    #Example Open Extraction Pass 
     response = client.chat.completions.create(
-        model = "Evaidmodel",
-        response_format={"type": "json_object"}, #forces structured JSON output
+        model="Evaidmodel",
+        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": "You are an intelligence analyst. Extract entities with character offsets."},
             {"role": "user", "content": f"""Identify what platform or document type this text came from.
@@ -54,10 +47,9 @@ def detect_platform(markdown: str) ->  tuple[str, float, str]:
                     Text (first 2000 chars):
                     {markdown[:2000]}
                     Respond ONLY in JSON:
-                    {{"platform": "...", "confidence": 0.0-1.0, "reasoning": "one sentence"}}"""
-            }
+                    {{"platform": "...", "confidence": 0.0-1.0, "reasoning": "one sentence"}}"""}
         ]
-    ) 
+    )
     result = json.loads(response.choices[0].message.content)
     return result["platform"], result["confidence"], result["reasoning"]
 
@@ -72,38 +64,65 @@ def load_case_hints(case_id: str, cursor) -> list[dict]:
     return [{"name": r[0], "hint": r[1]} for r in rows]
 
 
+def load_agent_context(evidence_id: str, cursor) -> str | None:
+    """Load the agent's note for this evidence item to inject into the LLM prompt."""
+    cursor.execute(
+        "SELECT agent_context FROM EvidenceItem WHERE Id = ?",
+        (evidence_id,)
+    )
+    row = cursor.fetchone()
+    if row and row[0]:
+        return row[0].strip()
+    return None
+
+
 def run_llm_extraction(
-    markdown: str, platform_hint: str, case_id: str, attachment_id: str, cursor
+    markdown: str, platform_hint: str, case_id: str, attachment_id: str, cursor,
+    evidence_id: str = None
 ) -> list[ExtractedSignal]:
     custom_hints = load_case_hints(case_id, cursor)
     hints_block = ""
 
-    if custom_hints: 
-        hints_block = "The investigator flagged these as relevant:\n"
+    if custom_hints:
+        hints_block = "The investigator flagged these signal types as relevant:\n"
         hints_block += "\n".join([f"- {h['name']}: {h['hint']}" for h in custom_hints])
 
+    # Inject agent context note if provided
+    agent_context_block = ""
+    if evidence_id:
+        agent_context = load_agent_context(evidence_id, cursor)
+        if agent_context:
+            agent_context_block = f"""
+Investigator's note about this evidence:
+\"\"\"{agent_context}\"\"\"
+Use this context to guide your extraction — pay special attention to entities or patterns 
+the investigator has highlighted.
+"""
+
     client = AzureOpenAI(
-        api_key= os.environ["openAi_keys"],
-        api_version= os.environ["openai_api_version"],
+        api_key=os.environ["openAi_keys"],
+        api_version=os.environ["openai_api_version"],
         azure_endpoint=os.environ["openAi_endpoint"],
     )
 
     response = client.chat.completions.create(
         model="Evaidmodel",
-        response_format={"type":"json_object"}, #Enforces structured JSON output
+        response_format={"type": "json_object"},
         max_tokens=4000,
         messages=[
             {
-                "role":"system",
+                "role": "system",
                 "content": "You are an intelligence analyst. Extract identifiers with exact character offsets into a JSON array."
-            }, 
+            },
             {
-                "role":"user",
+                "role": "user",
                 "content":
                 f"""Platform context: {platform_hint}
                     (Use as context only — do NOT limit extraction to this platform's known patterns)
 
+                    {agent_context_block}
                     {hints_block}
+
                     Extract EVERY entity that could identify:
                         - A person (real name, alias, handle, gamertag, display name)
                         - An account (username, user ID, profile URL, invite code)
@@ -147,6 +166,3 @@ def run_llm_extraction(
             }
         ) for i in items
     ]
-
-
-

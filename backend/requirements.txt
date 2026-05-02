@@ -50,3 +50,6 @@ python-dateutil
 python-docx
 isodate
 openai
+azure-ai-documentintelligence
+azure-storage-blob
+azure-core

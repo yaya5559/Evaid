@@ -9,8 +9,11 @@ import {
 } from '../../helpers/agent/Cases'
 import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
+import { api } from '../../context/AuthContext'
 import AgentLayout from './AgentLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
+import { SignalHistoryModal } from '../shared/SignalHistoryModal'
+import { EvidenceSection } from '../shared/EvidenceSection'
 import '../../styles/Admin/AdminLayout.css'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
@@ -39,33 +42,95 @@ function formatDate(d: string | undefined | null) {
   return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+function FilePreviewModal({ evidenceId, fileName, onClose }: { evidenceId: string; fileName: string; onClose: () => void }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [contentType, setContentType] = useState<string>('')
+  const [loadingPreview, setLoadingPreview] = useState(true)
+  const [previewError, setPreviewError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let objectUrl: string | null = null
+    const load = async () => {
+      try {
+        const res = await api.get(`/agent/evidence/preview/${evidenceId}`, {
+          responseType: 'blob',
+          withCredentials: true,
+        })
+        objectUrl = URL.createObjectURL(res.data)
+        setBlobUrl(objectUrl)
+        setContentType(res.data.type ?? '')
+      } catch {
+        setPreviewError('Failed to load file preview')
+      } finally {
+        setLoadingPreview(false)
+      }
+    }
+    void load()
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [evidenceId])
+
+  const isImage = contentType.startsWith('image/')
+  const isPdf = contentType === 'application/pdf'
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: '#1a1a1a', borderRadius: '12px', width: '90vw', height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#1a1a1a' }}>
+          <strong style={{ fontSize: '0.95rem', color: '#fff' }}>{fileName}</strong>
+          <button type="button" className="admin-btn" onClick={onClose} style={{ padding: '4px 10px' }}>✕ Close</button>
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
+          {loadingPreview && <p style={{ opacity: 0.6, color: '#fff' }}>Loading preview...</p>}
+          {previewError && <p style={{ color: '#f87171' }}>{previewError}</p>}
+          {blobUrl && isImage && (
+            <img
+              src={blobUrl}
+              alt={fileName}
+              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
+            />
+          )}
+          {blobUrl && isPdf && (
+            <iframe src={blobUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />
+          )}
+          {blobUrl && !isImage && !isPdf && (
+            <div style={{ color: '#fff', textAlign: 'center', padding: '32px' }}>
+              <p style={{ marginBottom: '12px', opacity: 0.8 }}>Preview not available for this file type.</p>
+              <a href={blobUrl} download={fileName} className="admin-btn primary">Download File</a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AgentCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase } = useSignals()
+  const { fetchSignalsForCase, clearSignals } = useSignals()
   const navigate = useNavigate()
   const agentId = Number((user as any)?.user_id ?? 0)
   const orgId = Number((user as any)?.org_id ?? 0)
 
   const [detail, setDetail] = useState<AgentCaseDetailResponse | null>(null)
-
-  // edit case
   const [showEditForm, setShowEditForm] = useState(false)
   const [editTitle, setEditTitle] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
-
-  // notes
   const [newNoteContent, setNewNoteContent] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
-
-  // evidence
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
   const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
-
+  const [signalHistoryEvidence, setSignalHistoryEvidence] = useState<{ id: string; name: string } | null>(null)
+  const [previewEvidence, setPreviewEvidence] = useState<{ id: string; name: string } | null>(null)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -115,33 +180,31 @@ function AgentCaseDetail() {
     } catch (err: any) { setError(err?.message ?? 'Failed to update note') } finally { setLoading(false) }
   }
 
-  const handleUploadEvidence = async () => {
-    if (!evidenceFile) return
-    setLoading(true); setError(null)
-    try {
-      await agentUploadEvidence(caseId, evidenceFile, agentId)
-      setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
-    } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
+  const handleUploadEvidence = async (file: File, agentContext: string) => {
+    await agentUploadEvidence(caseId, file, agentId, agentContext)
+    setSuccess('Evidence uploaded')
+    void loadDetail()
   }
 
-  const handleDeleteEvidence = async (fileId: string) => {
-    setLoading(true); setError(null)
-    try {
-      await agentDeleteEvidence(fileId, agentId)
-      setSuccess('Evidence deleted'); setConfirmDeleteEvidenceId(null); void loadDetail()
-    } catch (err: any) { setError(err?.message ?? 'Failed to delete evidence') } finally { setLoading(false) }
+    const handleDeleteEvidence = async (fileId: string) => {
+
+    await agentDeleteEvidence(fileId, agentId)
+    setSuccess('Evidence deleted')
+    void loadDetail()
   }
 
+  // Load case detail and signals automatically on page load
   useEffect(() => { void loadDetail() }, [caseId, agentId, orgId])
-  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
-
+  useEffect(() => {
+    if (caseId) {
+      clearSignals()
+      void fetchSignalsForCase(caseId)
+    }
+  }, [caseId])
   useEffect(() => {
     if (!caseId) return
     setActorsLoading(true)
-    getActorsForCase(caseId)
-      .then(setActors)
-      .catch(() => setActors([]))
-      .finally(() => setActorsLoading(false))
+    getActorsForCase(caseId).then(setActors).catch(() => setActors([])).finally(() => setActorsLoading(false))
   }, [caseId])
 
   useEffect(() => {
@@ -152,6 +215,7 @@ function AgentCaseDetail() {
 
   return (
     <AgentLayout>
+
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" className="admin-btn" onClick={() => navigate('/AgentCases')}>← Back</button>
@@ -164,18 +228,15 @@ function AgentCaseDetail() {
 
       {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
       {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
-
       {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
       {detail && (
         <>
-          {/* Actions */}
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
               <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>
             </div>
-
             {showEditForm && (
               <div className="admin-card" style={{ marginTop: '16px' }}>
                 <h3>Edit Case</h3>
@@ -195,7 +256,6 @@ function AgentCaseDetail() {
             )}
           </section>
 
-          {/* Case Info */}
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <h2>Case Info</h2>
             <div className="orgdash-progress-meta">
@@ -208,7 +268,6 @@ function AgentCaseDetail() {
             {detail.case.description && <p style={{ marginTop: '12px' }}>{detail.case.description}</p>}
           </section>
 
-          {/* Actors */}
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <h2>Actors ({actors.length})</h2>
             {actorsLoading && <p style={{ opacity: 0.6 }}>Loading actors...</p>}
@@ -232,33 +291,14 @@ function AgentCaseDetail() {
 
           <PendingSignalsSection />
 
-          {/* Evidence */}
-          <section className="admin-card" style={{ marginBottom: '16px' }}>
-            <h2>Evidence</h2>
-            {detail.evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
-            {detail.evidence.map((ev) => (
-              <div key={ev.file_id} className="orgdash-progress-row">
-                <div style={{ flex: 1 }}>
-                  <span>{ev.file_name}</span>
-                  <small style={{ display: 'block', opacity: 0.6 }}>{ev.file_extension} · {formatDate(ev.upload_date)}</small>
-                </div>
-                {confirmDeleteEvidenceId === ev.file_id ? (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button type="button" className="admin-btn critical" onClick={() => void handleDeleteEvidence(ev.file_id)} disabled={loading}>Delete</button>
-                    <button type="button" className="admin-btn" onClick={() => setConfirmDeleteEvidenceId(null)}>Cancel</button>
-                  </div>
-                ) : (
-                  <button type="button" className="admin-btn critical" onClick={() => setConfirmDeleteEvidenceId(ev.file_id)}>Delete</button>
-                )}
-              </div>
-            ))}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }}>
-              <input type="file" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} style={{ flex: 1, color: 'inherit' }} />
-              <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
-            </div>
-          </section>
+          <EvidenceSection
+            evidence={detail.evidence}
+            loading={loading}
+            onUpload={handleUploadEvidence}
+            onDelete={handleDeleteEvidence}
+            previewRoute="/agent/evidence/preview"
+          />
 
-          {/* Notes */}
           <section className="admin-card">
             <h2>Notes</h2>
             {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}

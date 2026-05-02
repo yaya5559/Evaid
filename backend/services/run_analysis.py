@@ -3,18 +3,9 @@ from fastapi import HTTPException, status
 from datetime import datetime, timezone
 from services.extractors import DocumentExtractor
 from services.evidence.signal_pipline import run_llm_extraction, run_universal_extraction, detect_platform
+from services.case_link_service import find_and_create_case_links
 from models.evidenceShape import ExtractedSignal
 import json
-
-
-# worker loop polls for one queued AnalysisRun
-# worker atomically marks it running
-# worker loads the related attachment bytes
-# worker chooses the correct extractor from attachment type
-# worker extracts low-level signals
-# worker stores signals with provenance
-# if extraction completes, mark run succeeded
-# if an exception occurs, mark run failed and store the error message
 
 
 STATUS_QUEUED = "queued"
@@ -62,7 +53,6 @@ def claim_next_analysis_run():
         }
     except:
         conn.rollback()
-        # Don’t leak internal exception strings to clients
         raise 
     finally:
         conn.close()
@@ -92,12 +82,12 @@ def load_run_attachment(analysis_run_id):
                 WHERE Id = ?
             """, (attachment_id,)
         )
-        attachment_row  = cursor.fetchone()
+        attachment_row = cursor.fetchone()
 
         if attachment_row is None:
             return None
 
-        return{
+        return {
             "analysis_run_id": analysis_run_id,
             "evidence_id": evidence_id,
             "attachment_id": attachment_id,
@@ -108,7 +98,6 @@ def load_run_attachment(analysis_run_id):
     finally:
         conn.close()
 
-#choose extractor by MIME type
 def select_extractor(attachment_kind):
     if attachment_kind in DocumentExtractor.SUPPORTED_TYPES:
         return DocumentExtractor()
@@ -134,18 +123,18 @@ def run_analysis(analysis_run_id):
             """
                 SELECT attachment_kind, file_bytes, attachment_status
                 FROM Attachment WHERE Id = ?
-            """, (attachement_id, )
+            """, (attachement_id,)
         )
-        attachement =  cursor.fetchone()
+        attachement = cursor.fetchone()
         if attachement is None:
-            raise HTTPException(status_code=400 , detail="Attachement not Found")
+            raise HTTPException(status_code=400, detail="Attachement not Found")
         
         extractor = select_extractor(attachement[0])
 
         if extractor is None:
             raise ValueError(f"Unsupported attachment type: {attachement[0]}")
 
-        markdown  = extractor.extract_to_markdown(attachement[1], attachement[2])
+        markdown = extractor.extract_to_markdown(attachement[1], attachement[2])
 
         cursor.execute(
             """
@@ -158,11 +147,11 @@ def run_analysis(analysis_run_id):
         
         regex_signals = run_universal_extraction(markdown, attachement_id, cursor)
         platform, confidence, reasoning = detect_platform(markdown)
-        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id, cursor)
+        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id, cursor, evidence_id=str(evidence_id))
 
         total_signals = regex_signals + extctractedSignals
 
-        for  signal in total_signals:
+        for signal in total_signals:
             if signal.source_locator["method"] == "regex":
                 cursor.execute(
                     """
@@ -192,8 +181,17 @@ def run_analysis(analysis_run_id):
                             json.dumps(signal.source_locator), 'llm_extracted', 'pending'
                         )
                 )
-        
+
         conn.commit()
+
+        # After signals are saved, find and create cross-case links
+        try:
+            find_and_create_case_links(str(case_id), str(evidence_id), cursor)
+            conn.commit()
+        except Exception as link_err:
+            # Don't fail the whole analysis if linking fails
+            print(f"[CaseLink] Warning: cross-case linking failed: {link_err}")
+
         cursor.execute(
             "UPDATE AnalysisRun SET analysisrun_status = 'success', finished_at = ? WHERE Id = ?",
             (datetime.now(timezone.utc), analysis_run_id)
@@ -212,5 +210,3 @@ def run_analysis(analysis_run_id):
         )
     finally:
         conn.close()
-
-

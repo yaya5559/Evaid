@@ -7,14 +7,6 @@ load_dotenv()
 
 
 def list_my_cases(agent_id: int, org_id: int):
-    """
-    Returns all cases the agent can see:
-    1. Cases they created or are directly assigned to
-    2. AI-bridged cases: cases linked via EvidenceLink graph edges
-       to evidence on cases the agent IS assigned to
-    Each case includes an 'ai_linked' flag and 'linked_from_case_id'
-    so the frontend can show which case triggered the link.
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -40,7 +32,6 @@ def list_my_cases(agent_id: int, org_id: int):
             WHERE c.deleted_at IS NULL
               AND c.org_id = ?
               AND (c.created_by_user_id = ? OR ca.user_id = ?)
-
         """, (org_id, agent_id, agent_id))
 
         direct_rows = cursor.fetchall()
@@ -48,7 +39,8 @@ def list_my_cases(agent_id: int, org_id: int):
         direct_cases = [dict(zip(columns, row)) for row in direct_rows]
         direct_ids = {c["case_id"] for c in direct_cases}
 
-        # AI-bridged cases: linked via EvidenceLink graph edges
+        # AI-bridged cases via EvidenceLink graph edges
+        # Uses old Evidence table which is a graph NODE table
         cursor.execute("""
             SELECT DISTINCT
                 c_target.case_id,
@@ -134,7 +126,6 @@ def get_my_case(case_id: int, agent_id: int, org_id: int):
         """, (case_id, org_id))
 
         row = cursor.fetchone()
-
         if not row:
             return {"message": "Case not found or access denied"}
 
@@ -161,19 +152,21 @@ def get_my_case(case_id: int, agent_id: int, org_id: int):
         note_cols = [col[0] for col in cursor.description]
         notes = [dict(zip(note_cols, r)) for r in note_rows]
 
-        # Evidence (read-only, no binary)
+        # Evidence display from EvidenceItem + Attachment (new upload flow)
         cursor.execute("""
             SELECT
-                CAST(FileId AS NVARCHAR(36)) AS file_id,
-                FileName        AS file_name,
-                FileExtension   AS file_extension,
-                ContentType     AS content_type,
-                CAST(upload_date AS NVARCHAR(50)) AS upload_date,
-                uploaded_by,
-                processing_status
-            FROM Evidence
-            WHERE case_id = ?
-            ORDER BY upload_date DESC
+                CAST(ei.Id AS NVARCHAR(36))         AS file_id,
+                ei.title                            AS file_name,
+                a.attachment_kind                   AS content_type,
+                CAST(ei.created_at AS NVARCHAR(50)) AS upload_date,
+                ei.created_by_user_id               AS uploaded_by,
+                ei.agent_context,
+                ar.analysisrun_status               AS processing_status
+            FROM EvidenceItem ei
+            LEFT JOIN Attachment a  ON a.evidence_id = ei.Id
+            LEFT JOIN AnalysisRun ar ON ar.evidence_id = ei.Id
+            WHERE ei.case_id = ?
+            ORDER BY ei.created_at DESC
         """, (case_id,))
 
         evidence_rows = cursor.fetchall()
@@ -263,6 +256,7 @@ def create_case(org_id: int, agent_id: int, title: str, description: str = None,
     finally:
         cursor.close()
         conn.close()
+
 
 def list_org_cases_for_agent(org_id: int):
     """Returns all cases in the org - read-only view for agents."""
