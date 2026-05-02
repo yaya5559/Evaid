@@ -6,7 +6,7 @@ import {
   orgGetCaseDetail, orgUpdateCase, orgCloseCase, orgDeleteCase,
   orgGetAgents, orgAssignAgent,
   orgCreateNote, orgUpdateNote, orgDeleteNote,
-  orgUploadEvidence, orgConfirmEvidence, orgDeleteEvidence,
+  orgUploadEvidence, orgDeleteEvidence,
   getActorsForCase,
   type OrgCaseDetailResponse, type OrgAgent, type Actor,
 } from '../../helpers/org/Cases'

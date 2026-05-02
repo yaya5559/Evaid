@@ -13,7 +13,12 @@ from limiter import limiter
 origins = ["http://localhost:5173"]
 extra = os.getenv("ALLOWED_ORIGIN")
 if extra:
+<<<<<<< HEAD
     origins.append(extra)
+=======
+    for origin in extra.split(","):
+        origins.append(origin.strip())
+>>>>>>> origin/main
 
 
 def worker_loop():

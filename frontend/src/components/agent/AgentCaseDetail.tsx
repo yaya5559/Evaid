@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   agentGetCaseDetail, agentUpdateCase,
   agentCreateNote, agentUpdateNote,
-  agentUploadEvidence, agentConfirmEvidence, agentDeleteEvidence,
+  agentUploadEvidence, agentDeleteEvidence,
   getActorsForCase,
   type AgentCaseDetailResponse, type Actor,
 } from '../../helpers/agent/Cases'
@@ -119,9 +119,7 @@ function AgentCaseDetail() {
     if (!evidenceFile) return
     setLoading(true); setError(null)
     try {
-      const uploadRes = await agentUploadEvidence(caseId, evidenceFile, agentId)
-      const fileId = uploadRes?.file_id ?? uploadRes?.FileId
-      if (fileId) await agentConfirmEvidence(fileId)
+      await agentUploadEvidence(caseId, evidenceFile, agentId)
       setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
   }
