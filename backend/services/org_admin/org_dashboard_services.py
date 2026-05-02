@@ -53,9 +53,9 @@ def get_org_dashboard_summary(org_id: int):
         }
 
     except pyodbc.Error as e:
-        return {
         cursor.close()
         conn.close()
+        return {"message": "Error", "error": str(e)}
 
 
 def get_org_dashboard_kpis(org_id: int):

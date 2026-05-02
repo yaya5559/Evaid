@@ -10,6 +10,7 @@ CREATE TABLE [dbo].[users]
   [email] [nvarchar](255) NOT NULL,
   [password_hash] [nvarchar](255) NOT NULL,
   [phone_number] [nvarchar](20) NULL,
+  [profile_picture] [nvarchar](max) NULL,
   [role_id] [int] NOT NULL,
   [org_id] [int] NULL,
   [is_enabled] [bit] NOT NULL,

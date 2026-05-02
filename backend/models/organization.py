@@ -1,4 +1,6 @@
-﻿from pydantic import BaseModel, EmailStr
+﻿import re
+
+from pydantic import BaseModel, EmailStr, validator
 
 class Organization(BaseModel):
     company_name: str
