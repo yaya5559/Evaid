@@ -204,16 +204,26 @@ def list_active_organization():
         COALESCE(o.description, ''),
         COALESCE(CONVERT(VARCHAR(33), o.updated_at, 127), ''),
         (SELECT COUNT(*) FROM users u2 WHERE u2.org_id = o.org_id AND u2.deleted_at IS NULL) AS user_count,
-        (SELECT COUNT(*) FROM Cases c WHERE c.org_id = o.org_id AND c.deleted_at IS NULL) AS case_count
+        (SELECT COUNT(*) FROM Cases c WHERE c.org_id = o.org_id AND c.deleted_at IS NULL) AS case_count,
+        (SELECT COUNT(*) FROM users ua WHERE ua.org_id = o.org_id AND ua.role_id = 3 AND ua.deleted_at IS NULL) AS agent_count,
+        (SELECT COUNT(*) FROM Evidence ev JOIN Cases ce ON ev.case_id = ce.case_id WHERE ce.org_id = o.org_id) AS evidence_count,
+        COALESCE(
+          (SELECT SUM(DATALENGTH(a.file_bytes)) FROM Attachment a JOIN EvidenceItem ei ON a.evidence_id = ei.Id JOIN Cases ce ON ei.case_id = ce.case_id WHERE ce.org_id = o.org_id),
+          0
+        ) +
+        COALESCE(
+          (SELECT SUM(DATALENGTH(ev.FileData)) FROM Evidence ev JOIN Cases ce ON ev.case_id = ce.case_id WHERE ce.org_id = o.org_id),
+          0
+        ) AS storage_bytes
       FROM organizations AS o
       LEFT JOIN users AS u
         ON u.user_id = o.owner_id
-      WHERE o.is_active = 1
+      WHERE o.deleted_at IS NULL
       ORDER BY o.name
     """
     cursor.execute(query)
     rows = cursor.fetchall()
-    
+
     organizations = [
       {
         "org_id": row[0],
@@ -229,6 +239,9 @@ def list_active_organization():
         "updatedAt": row[10],
         "user_count": row[11],
         "case_count": row[12],
+        "agent_count": row[13],
+        "evidence_count": row[14],
+        "storage_bytes": row[15],
       }
       for row in rows
     ]

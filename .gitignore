@@ -19,4 +19,8 @@ frontend/node_modules/
 
 .vs/
 .db
+<<<<<<< HEAD
 
+=======
+backend/.env
+>>>>>>> main

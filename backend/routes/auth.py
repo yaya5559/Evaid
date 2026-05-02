@@ -78,6 +78,8 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
         remember=remember
     )
 
+    logFuncs.update_last_login(user.user_id)
+
     #creates a cryptographically secure random string
     refresh_token = secrets.token_urlsafe(64)
 
