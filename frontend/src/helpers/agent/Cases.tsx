@@ -12,6 +12,7 @@ export type AgentCaseListItem = {
     ai_linked: 0 | 1
     linked_from_case_id: number | null
     linked_from_title: string | null
+    evidence_count?: number
 }
 
 export type AgentNote = {
@@ -84,7 +85,6 @@ export type LinkedCase = {
     confidence: number
 }
 
-// Stub — connect to /cases/{case_id}/actors when backend is available
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
     return []
 }
@@ -208,8 +208,6 @@ export const agentCreateCase = async (agentId: number, orgId: number, data: Agen
 export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number, agentContext?: string) => {
     try {
         const fileName = file.name.replace(/\.[^/.]+$/, '')
-
-        // Step 1: Create evidence item
         const itemRes = await api.post('/evidence/EvidenceItem', {
             case_id: caseId,
             description: fileName,
@@ -219,7 +217,6 @@ export const agentUploadEvidence = async (caseId: string, file: File, _agentId: 
 
         const evidenceItemId = itemRes.data.evidenceItem_id
 
-        // Step 2: Upload file as attachment
         const formData = new FormData()
         formData.append('attachement', file)
         const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData, { withCredentials: true })

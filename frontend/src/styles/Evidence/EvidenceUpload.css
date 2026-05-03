@@ -1,4 +1,8 @@
-﻿/* Container and Layout */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Container and Layout */
 .evidence-container {
     padding: 40px;
     max-width: 800px;

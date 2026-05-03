@@ -37,15 +37,9 @@ def get_pending_signals(evidence_id):
 
 
 def get_signal_history(evidence_id):
-    """
-    Returns all confirmed and rejected signals for a given evidence item.
-    Confirmed signals come from the Signal table.
-    Rejected signals come from PendingSignal with triage_status = 'rejected'.
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Confirmed signals from Signal table
         cursor.execute(
             """
                 SELECT 
@@ -67,7 +61,6 @@ def get_signal_history(evidence_id):
         confirmed_cols = [col[0] for col in cursor.description]
         confirmed = [dict(zip(confirmed_cols, row)) for row in confirmed_rows]
 
-        # Rejected signals from PendingSignal
         cursor.execute(
             """
                 SELECT 
@@ -102,7 +95,6 @@ def get_signal_history(evidence_id):
 
 
 def reject_pending_signals(pending_signal_id):
-    """Soft-delete: mark as rejected instead of hard deleting."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -145,6 +137,9 @@ def confirm_pending_signal(pending_signal_id):
 
         _ensure_evidence_exists(cursor, row[0])
 
+        normalized = row[5].lower().strip() if row[5] else row[4].lower().strip()
+        source_locator = row[7]
+
         cursor.execute(
             """
                 INSERT INTO Signal
@@ -152,9 +147,43 @@ def confirm_pending_signal(pending_signal_id):
                     raw_value, normalized_value, confidence, source_locator)
                     OUTPUT INSERTED.Id
                     VALUES (?,?,?,?,?,?,?,?)
-            """, (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]))
+            """, (row[0], row[1], row[2], row[3], row[4], normalized, row[6], source_locator))
 
         signal_id = cursor.fetchone()
+
+        # Cross-case correlation
+        new_evidence_id = row[0]
+        new_signal_type = row[3]
+        new_raw_value = row[4]
+        new_confidence = row[6]
+
+        cursor.execute(
+            """
+            INSERT INTO CaseCorrelation (case_id_a, case_id_b, signal_type, shared_value, confidence)
+            SELECT DISTINCT 
+                CAST(ei_a.case_id AS NVARCHAR(50)),
+                CAST(ei_b.case_id AS NVARCHAR(50)),
+                ?,
+                ?,
+                ?
+            FROM EvidenceItem ei_a
+            JOIN EvidenceItem ei_b
+                ON ei_b.case_id != ei_a.case_id
+            JOIN Signal s_other
+                ON s_other.evidence_id = ei_b.Id
+               AND s_other.signal_type = ?
+               AND s_other.raw_value   = ?
+            WHERE ei_a.Id = ?
+                AND NOT EXISTS (
+                    SELECT 1 FROM CaseCorrelation cc
+                    WHERE cc.case_id_a = CAST(ei_a.case_id AS NVARCHAR(50))
+                        AND cc.case_id_b = CAST(ei_b.case_id AS NVARCHAR(50))
+                        AND cc.shared_value = ?
+                )
+            """,
+            (new_signal_type, new_raw_value, new_confidence,
+             new_signal_type, new_raw_value, new_evidence_id, new_raw_value)
+        )
 
         # Soft-delete from PendingSignal by marking confirmed
         cursor.execute(

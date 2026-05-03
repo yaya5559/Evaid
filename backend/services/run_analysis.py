@@ -14,7 +14,6 @@ STATUS_RUNNING = "running"
 def claim_next_analysis_run():
     conn = get_db_connection()
     cursor = conn.cursor()
-
     try:
         cursor.execute(
             """
@@ -23,27 +22,20 @@ def claim_next_analysis_run():
                 WHERE analysisrun_status = ? 
                 ORDER BY Id
             """, (STATUS_QUEUED,))
-        
         row = cursor.fetchone()
-
         if row is None:
             return None
-
         run_id = row[0]
-
         cursor.execute(
             """
                 UPDATE AnalysisRun
                 SET analysisrun_status = ?, started_at =?
                 WHERE Id = ? AND analysisrun_status = ?
             """, (STATUS_RUNNING, datetime.now(timezone.utc), run_id, STATUS_QUEUED))
-        
         if cursor.rowcount == 0:
             conn.rollback()
             return None
-        
         conn.commit()
-
         return {
             "analysis_run_id": row[0],
             "evidence_id": row[1],
@@ -52,29 +44,25 @@ def claim_next_analysis_run():
         }
     except:
         conn.rollback()
-        raise 
+        raise
     finally:
         conn.close()
+
 
 def load_run_attachment(analysis_run_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     try:
         cursor.execute(
             """
                 SELECT attachment_id, evidence_id FROM AnalysisRun WHERE 
                 Id= ?            
             """, (analysis_run_id,))
-        
         run_row = cursor.fetchone()
-
-        if run_row is None: 
+        if run_row is None:
             return None
-        
         attachment_id = run_row[0]
         evidence_id = run_row[1]
-        
         cursor.execute(
             """
                 SELECT attachment_kind, file_bytes FROM Attachment
@@ -82,10 +70,8 @@ def load_run_attachment(analysis_run_id):
             """, (attachment_id,)
         )
         attachment_row = cursor.fetchone()
-
         if attachment_row is None:
             return None
-
         return {
             "analysis_run_id": analysis_run_id,
             "evidence_id": evidence_id,
@@ -93,19 +79,19 @@ def load_run_attachment(analysis_run_id):
             "attachment_kind": attachment_row[0],
             "file_bytes": attachment_row[1],
         }
-
     finally:
         conn.close()
+
 
 def select_extractor(attachment_kind):
     if attachment_kind in DocumentExtractor.SUPPORTED_TYPES:
         return DocumentExtractor()
     return None
 
+
 def run_analysis(analysis_run_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     try:
         cursor.execute(
             """
@@ -113,7 +99,6 @@ def run_analysis(analysis_run_id):
                 FROM AnalysisRun WHERE Id = ?                       
             """, (analysis_run_id,)
         )
-
         row = cursor.fetchone()
         evidence_id = row[0]
         attachement_id = row[1]
@@ -127,9 +112,8 @@ def run_analysis(analysis_run_id):
         attachement = cursor.fetchone()
         if attachement is None:
             raise HTTPException(status_code=400, detail="Attachement not Found")
-        
-        extractor = select_extractor(attachement[0])
 
+        extractor = select_extractor(attachement[0])
         if extractor is None:
             raise ValueError(f"Unsupported attachment type: {attachement[0]}")
 
@@ -141,12 +125,13 @@ def run_analysis(analysis_run_id):
                 WHERE Id = ?
             """, (evidence_id,)
         )
-
         case_id = cursor.fetchone()[0]
-        
+
         regex_signals = run_universal_extraction(markdown, attachement_id, cursor)
         platform, confidence, reasoning = detect_platform(markdown)
-        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(markdown, platform, case_id, attachement_id, cursor, evidence_id=str(evidence_id))
+        extctractedSignals: list[ExtractedSignal] = run_llm_extraction(
+            markdown, platform, case_id, attachement_id, cursor, evidence_id=str(evidence_id)
+        )
 
         total_signals = regex_signals + extctractedSignals
 
@@ -159,7 +144,7 @@ def run_analysis(analysis_run_id):
                             signal_type, raw_value, normalized_value,
                             confidence, source_locator                                                    
                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, 
+                    """,
                     (
                         evidence_id, attachement_id, analysis_run_id,
                         signal.signal_type, signal.raw_value, signal.normalized_value,
@@ -175,10 +160,10 @@ def run_analysis(analysis_run_id):
                                                     triage_reason, triage_status)
                                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
-                            evidence_id, attachement_id, analysis_run_id, signal.signal_type,
-                            signal.raw_value, signal.normalized_value, signal.confidence,
-                            json.dumps(signal.source_locator), 'llm_extracted', 'pending'
-                        )
+                        evidence_id, attachement_id, analysis_run_id, signal.signal_type,
+                        signal.raw_value, signal.normalized_value, signal.confidence,
+                        json.dumps(signal.source_locator), 'llm_extracted', 'pending'
+                    )
                 )
 
         conn.commit()
@@ -187,7 +172,7 @@ def run_analysis(analysis_run_id):
             "UPDATE AnalysisRun SET analysisrun_status = 'success', finished_at = ? WHERE Id = ?",
             (datetime.now(timezone.utc), analysis_run_id)
         )
-        conn.commit()          
+        conn.commit()
     except Exception as e:
         conn.rollback()
         cursor.execute(

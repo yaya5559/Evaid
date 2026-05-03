@@ -14,6 +14,7 @@ export type OrgCaseListItem = {
     created_by_first_name: string
     created_by_last_name: string
     created_by_email: string
+    evidence_count: number
 }
 
 export type OrgCaseDetails = {
@@ -93,9 +94,23 @@ export type Actor = {
   casesCount: number
 }
 
-// Stub — connect to /cases/{case_id}/actors when backend is available
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
   return []
+}
+
+export type ConfirmedSignal = {
+  id: string
+  signal_type: string
+  raw_value: string
+  normalized_value: string
+  confidence: number
+  source_locator: string
+  evidence_id: string
+}
+
+export const getConfirmedSignals = async (caseId: string): Promise<ConfirmedSignal[]> => {
+  const res = await api.get(`/evidence/confirmedSignals/${caseId}`, { withCredentials: true })
+  return (res.data ?? []) as ConfirmedSignal[]
 }
 
 export type OrgCreateCasePayload = {
@@ -112,9 +127,7 @@ export type OrgCreateCasePayload = {
 
 export const orgGetCases = async (_orgId: string): Promise<OrgCaseListItem[]> => {
     try {
-        const res = await api.get('/org/cases/', {
-            withCredentials: true,
-        })
+        const res = await api.get('/org/cases/', { withCredentials: true })
         const data = res.data
         if (data?.message === 'Error') throw new Error(data.error ?? 'Failed to load cases')
         return (data?.cases ?? []) as OrgCaseListItem[]
@@ -125,9 +138,7 @@ export const orgGetCases = async (_orgId: string): Promise<OrgCaseListItem[]> =>
 
 export const orgGetCaseDetail = async (caseId: string, _orgId: string): Promise<OrgCaseDetailResponse> => {
     try {
-        const res = await api.get(`/org/cases/${caseId}`, {
-            withCredentials: true,
-        })
+        const res = await api.get(`/org/cases/${caseId}`, { withCredentials: true })
         const data = res.data
         if (!data?.case) throw new Error(data?.message ?? 'Case not found')
         return data as OrgCaseDetailResponse
@@ -138,9 +149,7 @@ export const orgGetCaseDetail = async (caseId: string, _orgId: string): Promise<
 
 export const orgCreateCase = async (_orgId: string, _userId: number, data: OrgCreateCasePayload) => {
     try {
-        const res = await api.post('/org/cases/', data, {
-            withCredentials: true,
-        })
+        const res = await api.post('/org/cases/', data, { withCredentials: true })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to create case')
         return res.data
     } catch (err: any) {
@@ -179,9 +188,7 @@ export const orgCloseCase = async (caseId: string, _orgId: string, _closedByUser
 
 export const orgDeleteCase = async (caseId: string, _orgId: string) => {
     try {
-        const res = await api.delete(`/org/cases/${caseId}`, {
-            withCredentials: true,
-        })
+        const res = await api.delete(`/org/cases/${caseId}`, { withCredentials: true })
         return res.data
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete case')
@@ -190,9 +197,7 @@ export const orgDeleteCase = async (caseId: string, _orgId: string) => {
 
 export const orgGetAgents = async (_orgId: string): Promise<OrgAgent[]> => {
     try {
-        const res = await api.get('/org/cases/agents/', {
-            withCredentials: true,
-        })
+        const res = await api.get('/org/cases/agents/', { withCredentials: true })
         const data = res.data
         if (data?.message === 'Error') throw new Error(data.error ?? 'Failed to load agents')
         return (data?.agents ?? []) as OrgAgent[]
@@ -215,9 +220,7 @@ export const orgAssignAgent = async (caseId: string, userId: number, assignedBy:
 
 export const orgUnassignAgent = async (caseId: string, userId: number, _orgId: string) => {
     try {
-        const res = await api.delete(`/org/assignments/case/${caseId}/agent/${userId}`, {
-            withCredentials: true,
-        })
+        const res = await api.delete(`/org/assignments/case/${caseId}/agent/${userId}`, { withCredentials: true })
         return res.data
     } catch (err: any) {
         throw new Error(err?.message ?? 'Unable to unassign agent')
@@ -286,14 +289,23 @@ export const orgCreateEvidenceItem = async (_case_id: string, _title: string, _d
     }
 }
 
-export const orgUploadEvidence = async (caseId: string, file: File, userId: number) => {
+export const orgUploadEvidence = async (caseId: string, file: File, _userId: number, note?: string) => {
     try {
+        // Step 1 — create the EvidenceItem record
+        const itemRes = await api.post('/evidence/EvidenceItem', {
+            case_id: caseId,
+            title: file.name,
+            description: file.name.replace(/\.[^/.]+$/, ''),
+            agent_context: note ?? null,
+        })
+        const evidenceItemId: string = itemRes.data.evidenceItem_id
+
+        // Step 2 — upload the file as an attachment
         const formData = new FormData()
-        formData.append('case_id', caseId)
-        formData.append('file', file)
-        formData.append('user_id', String(userId))
-        const res = await api.post('/evidence/upload', formData, { withCredentials: true })
-        return res.data as { file_id: string; filename: string; metadata: any; message: string }
+        formData.append('attachement', file)
+        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData, { withCredentials: true })
+
+        return { ...attachRes.data, file_id: evidenceItemId }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Upload failed')
     }
@@ -305,5 +317,24 @@ export const orgConfirmEvidence = async (fileId: string) => {
         return res.data
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Confirm failed')
+    }
+}
+
+export type CaseCorrelation = {
+    related_case_id: string,
+    related_case_title: string
+    related_case_status: string
+    signal_type: string
+    shared_value: string
+    confidence: number
+    created_at: string
+}
+
+export const getCaseCorrelation = async (caseId: string): Promise<CaseCorrelation[]> => {
+    try {
+        const res = await api.get(`/evidence/correlations/${caseId}`)
+        return Array.isArray(res.data) ? res.data : []
+    } catch {
+        return []
     }
 }

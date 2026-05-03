@@ -156,7 +156,7 @@ function HomePage() {
           <div className="features card">
             <h1>What is EVAIDE?</h1>
             <h2 className="lede">
-              Your AI copilot for investigators: structured evidence database,
+              Your AI Agent for investigators: structured evidence database,
               real-time link discovery, and AI-guided insights.
             </h2>
 
