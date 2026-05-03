@@ -165,7 +165,7 @@ function AdminCaseDetail() {
     } catch (err: any) { setError(err?.message ?? 'Failed to delete note') } finally { setLoading(false) }
   }
 
-  const handleUploadEvidence = async (file: File, agentContext: string) => {
+  const handleUploadEvidence = async (file: File, _agentContext: string) => {
     await uploadEvidence(caseId, file, Number((user as any)?.user_id ?? 0))
     setSuccess('Evidence uploaded')
     void loadDetail()

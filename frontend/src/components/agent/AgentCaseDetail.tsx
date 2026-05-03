@@ -11,7 +11,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import AgentLayout from './AgentLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
-import { SignalHistoryModal } from '../shared/SignalHistoryModal'
 import { EvidenceSection } from '../shared/EvidenceSection'
 import Graph from '../organization/graph'
 import '../../styles/Admin/AdminLayout.css'
@@ -161,7 +160,7 @@ function AgentCaseDetail() {
               <button className="admin-btn" onClick={() => setShowGraph(false)}>Close</button>
             </div>
             <div style={{ flex: 1 }}>
-              <Graph case_id={caseId} />
+              <Graph caseId={caseId} />
             </div>
           </div>
         </div>
