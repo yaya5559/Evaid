@@ -115,7 +115,7 @@ function EdgeLine({
   edge: GraphEdge
   layoutNodes: LayoutNode[]
   selected: boolean
-  onClick: () => void
+  onClick: (e: React.MouseEvent) => void
 }) {
   const from = layoutNodes.find((n) => n.id === edge.From)
   const to = layoutNodes.find((n) => n.id === edge.to)
@@ -169,7 +169,7 @@ function NodeBox({
 }: {
   node: LayoutNode
   selected: boolean
-  onClick: () => void
+  onClick: (e: React.MouseEvent) => void
   dark: boolean
 }) {
   const style = dark ? NODE_STYLE_DARK[node.type] : { fill: NODE_STYLE[node.type].fill, stroke: NODE_STYLE[node.type].stroke }
