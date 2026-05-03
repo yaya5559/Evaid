@@ -122,7 +122,37 @@ def _get_evidence_case_id(cursor, evidence_item_id: UUID) -> UUID:
         raise HTTPException(status_code=404, detail="Evidence item doesn't exist.")
     return row[0]
 
+def get_confirmed_signals(case_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+                SELECT s.Id, s.signal_type, s.raw_value, s.normalized_value,
+                       s.confidence, s.source_locator, s.evidence_id
+                FROM Signal s
+                JOIN EvidenceItem ei ON s.evidence_id = ei.Id
+                WHERE ei.case_id = ?
+                ORDER BY s.confidence DESC
+            """, (case_id,))
 
+        rows = cursor.fetchall()
+        return [
+            {
+                "id": str(row[0]),
+                "signal_type": row[1],
+                "raw_value": row[2],
+                "normalized_value": row[3],
+                "confidence": row[4],
+                "source_locator": row[5],
+                "evidence_id": str(row[6]),
+            }
+            for row in rows
+        ]
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    finally:
+        conn.close()
 
 def analyze_and_stage_evidence(case_id, filename, content_type, file_bytes, user_id="System"):
     conn = get_db_connection()

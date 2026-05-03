@@ -10,7 +10,7 @@ export function NotificationBell() {
         type="button"
         className="signal-nc-bell"
         onClick={openPanel}
-        aria-label={`Notifications${unseenCount > 0 ? ` (${unseenCount} new)` : ''}`}
+        aria-label={`Signals${unseenCount > 0 ? ` (${unseenCount} new)` : ''}`}
       >
         <svg
           width="18"
@@ -22,8 +22,12 @@ export function NotificationBell() {
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          {/* radar / signal arcs */}
+          <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+          <path d="M8.5 8.5a5 5 0 0 0 0 7" />
+          <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+          <path d="M5.5 5.5a9 9 0 0 0 0 13" />
+          <path d="M18.5 5.5a9 9 0 0 1 0 13" />
         </svg>
         {unseenCount > 0 && (
           <span className="signal-nc-badge">

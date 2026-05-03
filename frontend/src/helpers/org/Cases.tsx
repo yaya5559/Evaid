@@ -14,6 +14,7 @@ export type OrgCaseListItem = {
     created_by_first_name: string
     created_by_last_name: string
     created_by_email: string
+    evidence_count: number
 }
 
 export type OrgCaseDetails = {
@@ -96,6 +97,21 @@ export type Actor = {
 // Stub — connect to /cases/{case_id}/actors when backend is available
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
   return []
+}
+
+export type ConfirmedSignal = {
+  id: string
+  signal_type: string
+  raw_value: string
+  normalized_value: string
+  confidence: number
+  source_locator: string
+  evidence_id: string
+}
+
+export const getConfirmedSignals = async (caseId: string): Promise<ConfirmedSignal[]> => {
+  const res = await api.get(`/evidence/confirmedSignals/${caseId}`, { withCredentials: true })
+  return (res.data ?? []) as ConfirmedSignal[]
 }
 
 
@@ -297,13 +313,13 @@ export const orgCreateEvidenceItem = async (case_id: string, title: string, desc
 
 
 
-export const orgUploadEvidence = async (caseId: string, file: File, _userId: number) => {
+export const orgUploadEvidence = async (caseId: string, file: File, _userId: number, note?:string) => {
     try {
         // Step 1 — create the EvidenceItem record
         const itemRes = await api.post('/evidence/EvidenceItem', {
             case_id: caseId,
             title: file.name,
-            description: '',
+            description: note ?? '',
         })
         const evidenceItemId: string = itemRes.data.evidenceItem_id
 
@@ -323,5 +339,25 @@ export const orgConfirmEvidence = async (fileId: string) => {
         return res.data
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Confirm failed')
+    }
+}
+
+
+export type CaseCorrelation  = {
+    related_case_id: string,
+    related_case_title: string
+    related_case_status: string
+    signal_type: string
+    shared_value: string
+    confidence: number
+    created_at: string
+}
+
+export const getCaseCorrelation = async (caseId: string):Promise<CaseCorrelation[]> => {
+    try{
+        const res = await api.get(`/evidence/correlations/${caseId}`)
+        return Array.isArray(res.data) ? res.data : []
+    }catch {
+        return []
     }
 }

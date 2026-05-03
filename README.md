@@ -1,4 +1,4 @@
-# Evaid
+# Evaide
 Capstone senior project
 
 ---

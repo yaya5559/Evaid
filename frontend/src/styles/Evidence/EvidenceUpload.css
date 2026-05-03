@@ -1,3 +1,7 @@
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .upload-zone {
     border: 2px dashed rgba(77, 163, 255, 0.3);
     border-radius: 12px;
