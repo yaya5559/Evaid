@@ -3,7 +3,6 @@ from fastapi import HTTPException, status
 from datetime import datetime, timezone
 from services.extractors import DocumentExtractor
 from services.evidence.signal_pipline import run_llm_extraction, run_universal_extraction, detect_platform
-from services.case_link_service import find_and_create_case_links
 from models.evidenceShape import ExtractedSignal
 import json
 
@@ -183,14 +182,6 @@ def run_analysis(analysis_run_id):
                 )
 
         conn.commit()
-
-        # After signals are saved, find and create cross-case links
-        try:
-            find_and_create_case_links(str(case_id), str(evidence_id), cursor)
-            conn.commit()
-        except Exception as link_err:
-            # Don't fail the whole analysis if linking fails
-            print(f"[CaseLink] Warning: cross-case linking failed: {link_err}")
 
         cursor.execute(
             "UPDATE AnalysisRun SET analysisrun_status = 'success', finished_at = ? WHERE Id = ?",
