@@ -9,15 +9,11 @@ import {
 } from '../../helpers/agent/Cases'
 import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
-import { api } from '../../context/AuthContext'
 import AgentLayout from './AgentLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
-<<<<<<< HEAD
 import { SignalHistoryModal } from '../shared/SignalHistoryModal'
 import { EvidenceSection } from '../shared/EvidenceSection'
-=======
 import Graph from '../organization/graph'
->>>>>>> origin/main
 import '../../styles/Admin/AdminLayout.css'
 import { getCaseCorrelation, getConfirmedSignals, type CaseCorrelation, type ConfirmedSignal } from '../../helpers/org/Cases'
 
@@ -47,74 +43,6 @@ function formatDate(d: string | undefined | null) {
   return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-function FilePreviewModal({ evidenceId, fileName, onClose }: { evidenceId: string; fileName: string; onClose: () => void }) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null)
-  const [contentType, setContentType] = useState<string>('')
-  const [loadingPreview, setLoadingPreview] = useState(true)
-  const [previewError, setPreviewError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let objectUrl: string | null = null
-    const load = async () => {
-      try {
-        const res = await api.get(`/agent/evidence/preview/${evidenceId}`, {
-          responseType: 'blob',
-          withCredentials: true,
-        })
-        objectUrl = URL.createObjectURL(res.data)
-        setBlobUrl(objectUrl)
-        setContentType(res.data.type ?? '')
-      } catch {
-        setPreviewError('Failed to load file preview')
-      } finally {
-        setLoadingPreview(false)
-      }
-    }
-    void load()
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
-  }, [evidenceId])
-
-  const isImage = contentType.startsWith('image/')
-  const isPdf = contentType === 'application/pdf'
-
-  return (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
-      onClick={onClose}
-    >
-      <div
-        style={{ background: '#1a1a1a', borderRadius: '12px', width: '90vw', height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#1a1a1a' }}>
-          <strong style={{ fontSize: '0.95rem', color: '#fff' }}>{fileName}</strong>
-          <button type="button" className="admin-btn" onClick={onClose} style={{ padding: '4px 10px' }}>✕ Close</button>
-        </div>
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
-          {loadingPreview && <p style={{ opacity: 0.6, color: '#fff' }}>Loading preview...</p>}
-          {previewError && <p style={{ color: '#f87171' }}>{previewError}</p>}
-          {blobUrl && isImage && (
-            <img
-              src={blobUrl}
-              alt={fileName}
-              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
-            />
-          )}
-          {blobUrl && isPdf && (
-            <iframe src={blobUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />
-          )}
-          {blobUrl && !isImage && !isPdf && (
-            <div style={{ color: '#fff', textAlign: 'center', padding: '32px' }}>
-              <p style={{ marginBottom: '12px', opacity: 0.8 }}>Preview not available for this file type.</p>
-              <a href={blobUrl} download={fileName} className="admin-btn primary">Download File</a>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function AgentCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
@@ -130,32 +58,15 @@ function AgentCaseDetail() {
   const [newNoteContent, setNewNoteContent] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
-<<<<<<< HEAD
-=======
-  const [notesCollapsed, setNotesCollapsed] = useState<Boolean>(false)
-
-  // evidence
->>>>>>> origin/main
-  const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
-  const [uploadNote, setUploadNote] = useState('')
-  const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
-  const [signalHistoryEvidence, setSignalHistoryEvidence] = useState<{ id: string; name: string } | null>(null)
-  const [previewEvidence, setPreviewEvidence] = useState<{ id: string; name: string } | null>(null)
+  const [notesCollapsed, setNotesCollapsed] = useState<boolean>(false)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
-<<<<<<< HEAD
-=======
-
   const [showGraph, setShowGraph] = useState(false)
-
->>>>>>> origin/main
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-
   const [correlations, setCorrelations] = useState<CaseCorrelation[]>([])
   const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
-
   const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
   const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
 
@@ -210,30 +121,18 @@ function AgentCaseDetail() {
     } catch (err: any) { setError(err?.message ?? 'Failed to update note') } finally { setLoading(false) }
   }
 
-<<<<<<< HEAD
   const handleUploadEvidence = async (file: File, agentContext: string) => {
     await agentUploadEvidence(caseId, file, agentId, agentContext)
     setSuccess('Evidence uploaded')
     void loadDetail()
-=======
-  const handleUploadEvidence = async () => {
-    if (!evidenceFile) return
-    setLoading(true); setError(null)
-    try {
-      await agentUploadEvidence(caseId, evidenceFile, agentId, uploadNote ||undefined)
-      setSuccess('Evidence uploaded'); setEvidenceFile(null); setUploadNote('');void loadDetail()
-    } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
->>>>>>> origin/main
   }
 
-    const handleDeleteEvidence = async (fileId: string) => {
-
+  const handleDeleteEvidence = async (fileId: string) => {
     await agentDeleteEvidence(fileId, agentId)
     setSuccess('Evidence deleted')
     void loadDetail()
   }
 
-  // Load case detail and signals automatically on page load
   useEffect(() => { void loadDetail() }, [caseId, agentId, orgId])
   useEffect(() => {
     if (caseId) {
@@ -246,7 +145,6 @@ function AgentCaseDetail() {
     setActorsLoading(true)
     getActorsForCase(caseId).then(setActors).catch(() => setActors([])).finally(() => setActorsLoading(false))
   }, [caseId])
-
   useEffect(() => {
     if (!success && !error) return
     const t = setTimeout(() => { setSuccess(null); setError(null) }, 4000)
@@ -255,9 +153,6 @@ function AgentCaseDetail() {
 
   return (
     <AgentLayout>
-<<<<<<< HEAD
-
-=======
       {showGraph && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(10, 18, 36, 0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#fff', borderRadius: 12, width: '90vw', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -271,7 +166,7 @@ function AgentCaseDetail() {
           </div>
         </div>
       )}
->>>>>>> origin/main
+
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" className="admin-btn" onClick={() => navigate('/AgentCases')}>← Back</button>
@@ -346,7 +241,6 @@ function AgentCaseDetail() {
             ))}
           </section>
 
-<<<<<<< HEAD
           <PendingSignalsSection />
 
           <EvidenceSection
@@ -357,186 +251,125 @@ function AgentCaseDetail() {
             previewRoute="/agent/evidence/preview"
           />
 
-          <section className="admin-card">
-            <h2>Notes</h2>
-=======
-          {/* Evidence */}
-          <section className="admin-card" style={{ marginBottom: '16px' }}>
-            <h2>Evidence</h2>
-            {detail.evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
-            {detail.evidence.map((ev) => (
-              <div key={ev.file_id} className="orgdash-progress-row">
-                <div style={{ flex: 1 }}>
-                  <span>{ev.file_name}</span>
-                  <small style={{ display: 'block', opacity: 0.6 }}>{ev.file_extension} · {formatDate(ev.upload_date)}</small>
-                </div>
-                {confirmDeleteEvidenceId === ev.file_id ? (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button type="button" className="admin-btn critical" onClick={() => void handleDeleteEvidence(ev.file_id)} disabled={loading}>Delete</button>
-                    <button type="button" className="admin-btn" onClick={() => setConfirmDeleteEvidenceId(null)}>Cancel</button>
-                  </div>
-                ) : (
-                  <button type="button" className="admin-btn critical" onClick={() => setConfirmDeleteEvidenceId(ev.file_id)}>Delete</button>
-                )}
-              </div>
-            ))}
-            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input type="file" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} style={{ flex: 1, color: 'inherit' }} />
-              </div>
-              <textarea
-                className="edit-org-input"
-                rows={2}
-                placeholder="Add context for the AI (optional)..."
-                value={uploadNote}
-                onChange={(e) => setUploadNote(e.target.value)}
-                style={{ width: '100%', boxSizing: 'border-box', fontSize: '13px' }}
-              />
-              <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
-            </div>
-
-
-          </section>
-          
-          {/* Notes */}
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <h2
-              onClick={()=>setNotesCollapsed(p=>!p)}
+              onClick={() => setNotesCollapsed(p => !p)}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
             >
               <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length} Notes</span>
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                <svg
-                  width="16" height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{
-                    transform: notesCollapsed ? 'rotate(180deg)':'rotate(0deg)' ,
-                    transition: 'transform 0.2s ease'
-                  }}
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ transform: notesCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </span>
             </h2>
->>>>>>> origin/main
             {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
-            
-            {(notesCollapsed && (
+            {notesCollapsed && (
               <>
-              {detail.notes.map((note) => (
-              <div key={note.note_id} className="orgdash-progress-row">
-                {editingNoteId === note.note_id ? (
-                  <div style={{ width: '100%' }}>
-                    <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
-                      <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(null); setEditNoteContent('') }}>Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0 }}>{note.content}</p>
-                      <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
-                    </div>
-                    {note.author_id === agentId && (
-                      <button type="button" className="admin-btn" style={{ marginLeft: '8px' }}
-                        onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content) }}>
-                        Edit
-                      </button>
+                {detail.notes.map((note) => (
+                  <div key={note.note_id} className="orgdash-progress-row">
+                    {editingNoteId === note.note_id ? (
+                      <div style={{ width: '100%' }}>
+                        <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
+                          <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(null); setEditNoteContent('') }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0 }}>{note.content}</p>
+                          <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
+                        </div>
+                        {note.author_id === agentId && (
+                          <button type="button" className="admin-btn" style={{ marginLeft: '8px' }}
+                            onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content) }}>
+                            Edit
+                          </button>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-              ))}
+                  </div>
+                ))}
               </>
-            ))}
+            )}
             <div style={{ marginTop: '12px' }}>
               <textarea className="edit-org-input" rows={3} placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
               <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
             </div>
           </section>
 
-          <PendingSignalsSection />
-
           {/* Confirmed Signals */}
-          {(
-            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
-              <h2
-                onClick={() => setConfirmedCollapsed(p => !p)}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
-              >
-                Confirmed Signals
-                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span>
-                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transform: confirmedCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </span>
-              </h2>
-              {!confirmedCollapsed && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
-                  {confirmedSignals.map((s) => (
-                    <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                        <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
-                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
-                          {Math.round(s.confidence * 100)}%
-                        </span>
-                      </div>
-                      {s.normalized_value && s.normalized_value !== s.raw_value && (
-                        <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
-                      )}
+          <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
+            <h2
+              onClick={() => setConfirmedCollapsed(p => !p)}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+            >
+              Confirmed Signals
+              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ transform: confirmedCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
+            </h2>
+            {!confirmedCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                {confirmedSignals.map((s) => (
+                  <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                      <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
+                      <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                        {Math.round(s.confidence * 100)}%
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
+                    {s.normalized_value && s.normalized_value !== s.raw_value && (
+                      <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           {/* Related Cases */}
-          {(
-            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
-              <h2
-                onClick={() => setCorrelationsCollapsed(p => !p)}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
-              >
-                Related Cases
-                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{correlations.length} correlation{correlations.length !== 1 ? 's' : ''}</span>
-                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transform: correlationsCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </span>
-              </h2>
-              {!correlationsCollapsed && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
-                  {correlations.map((c, i) => (
-                    <div key={i} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                        <strong style={{ fontSize: '0.95rem' }}>{c.related_case_title}</strong>
-                        <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{c.related_case_status}</span>
-                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: c.confidence >= 0.75 ? '#16a34a' : c.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
-                          {Math.round(c.confidence * 100)}%
-                        </span>
-                      </div>
-                      <small style={{ opacity: 0.65 }}>
-                        Shared: <span style={{ fontFamily: 'monospace' }}>{c.signal_type.replace(/_/g, ' ')} — {c.shared_value}</span>
-                      </small>
+          <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
+            <h2
+              onClick={() => setCorrelationsCollapsed(p => !p)}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+            >
+              Related Cases
+              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{correlations.length} correlation{correlations.length !== 1 ? 's' : ''}</span>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ transform: correlationsCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
+            </h2>
+            {!correlationsCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                {correlations.map((c, i) => (
+                  <div key={i} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                      <strong style={{ fontSize: '0.95rem' }}>{c.related_case_title}</strong>
+                      <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{c.related_case_status}</span>
+                      <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: c.confidence >= 0.75 ? '#16a34a' : c.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                        {Math.round(c.confidence * 100)}%
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
+                    <small style={{ opacity: 0.65 }}>
+                      Shared: <span style={{ fontFamily: 'monospace' }}>{c.signal_type.replace(/_/g, ' ')} — {c.shared_value}</span>
+                    </small>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </>
       )}
     </AgentLayout>
