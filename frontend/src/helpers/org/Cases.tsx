@@ -341,3 +341,23 @@ export const orgConfirmEvidence = async (fileId: string) => {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Confirm failed')
     }
 }
+
+
+export type CaseCorrelation  = {
+    related_case_id: string,
+    related_case_title: string
+    related_case_status: string
+    signal_type: string
+    shared_value: string
+    confidence: number
+    created_at: string
+}
+
+export const getCaseCorrelation = async (caseId: string):Promise<CaseCorrelation[]> => {
+    try{
+        const res = await api.get(`/evidence/correlations/${caseId}`)
+        return Array.isArray(res.data) ? res.data : []
+    }catch {
+        return []
+    }
+}

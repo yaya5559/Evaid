@@ -182,7 +182,60 @@ async def rejectSignals(pending_signal_id:UUID):
 async def list_pending_signals_for_case(case_id: str):
     return get_pending_signals_for_case(case_id)
 
+@router.get("/correlations/{case_id}")
+async def get_case_correaltion(case_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+                cc.case_id_b AS related_case_id,
+                c.title AS related_case_title,
+                c.status AS related_case_status,
+                cc.signal_type,
+                cc.shared_value,
+                cc.confidence,
+                cc.created_at
+            FROM CaseCorrelation cc
+            JOIN Cases c ON CAST(c.case_id AS NVARCHAR(50)) = case_id_b
+            WHERE cc.case_id_a = ?
+                AND c.deleted_at IS NULL
+                       
+            UNION
+                       
+            SELECT
+                cc.case_id_a AS related_case_id,
+                c.title      AS related_case_title,
+                c.status     AS related_case_status,
+                cc.signal_type,
+                cc.shared_value,
+                cc.confidence,
+                cc.created_at
+            FROM CaseCorrelation cc
+            JOIN Cases c ON CAST(c.case_id AS NVARCHAR(50)) = cc.case_id_b
+            WHERE cc.case_id_b = ?
+              AND c.deleted_at IS NULL
 
+            ORDER BY cc.confidence DESC                 
+            """,(case_id, case_id)                       
+        )
+        rows = cursor.fetchall()
+        return [
+            {
+                "related_case_id": str(row[0]),
+                "related_case_title": row[1],
+                "related_case_status": row[2],
+                "signal_type": row[3],
+                "shared_value": row[4],
+                "confidence": row[5],
+                "created_at": str(row[6]),
+            }
+            for row in rows
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 @router.get("/confirmedSignals/{case_id}")
 async def get_confirmed_signals_for_case(case_id: str):

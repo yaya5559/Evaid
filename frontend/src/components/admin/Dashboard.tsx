@@ -21,18 +21,12 @@ type OrganizationRow = {
   org_id: number;
   name: string;
   region: string;
-<<<<<<< HEAD
-  users: string;
-  cases: string;
-  evidence: string;
-=======
   users: number;
   cases: number;
   agents: number;
   evidence: number;
   storageBytes: number;
   isActive: boolean;
->>>>>>> main
   health: 'Healthy' | 'Needs attention' | 'Critical';
 };
 
@@ -130,16 +124,6 @@ function Dashboard() {
         if (orgResult.status === 'fulfilled') {
           const data = orgResult.value.data;
           const orgs = Array.isArray(data.organizations) ? data.organizations : [];
-<<<<<<< HEAD
-          const mapped = orgs.map((o: any) => ({
-            name: o.companyName,
-            region: o.companyEmail ?? '',
-            users: String(o.user_count || 0),
-            cases: String(o.case_count || 0),
-            evidence: String(o.evidence_count || 0),
-            health: 'Healthy',
-          }));
-=======
           const mapped: OrganizationRow[] = orgs.map((o: any) => {
             const agents = Number(o.agent_count || 0);
             const cases = Number(o.case_count || 0);
@@ -156,7 +140,6 @@ function Dashboard() {
               health: computeHealth(agents, cases),
             };
           });
->>>>>>> main
           setOrganizations(mapped);
         } else {
           setOrganizations([]);
@@ -279,29 +262,6 @@ function Dashboard() {
             <div className='dashboard-kpi-value'>{loading ? '—' : organizations.length}</div>
             <div className='dashboard-kpi-delta neutral'>Current</div>
           </article>
-<<<<<<< HEAD
-          <article className='admin-card dashboard-kpi' key='TotalUsers'>
-            <div className='dashboard-kpi-label'>Total Members</div>
-            <div className='dashboard-kpi-value'>
-              {organizations.reduce((sum, o) => sum + Number(o.users), 0)}
-            </div>
-            <div className='dashboard-kpi-delta neutral'>Owners + agents across all orgs</div>
-          </article>
-          <article className='admin-card dashboard-kpi' key='Evidence'>
-            <div className='dashboard-kpi-label'>Total Evidence</div>
-            <div className='dashboard-kpi-value'>
-              {organizations.reduce((sum, o) => sum + Number(o.evidence), 0)}
-            </div>
-            <div className='dashboard-kpi-delta neutral'>Across all orgs</div>
-          </article>
-          {kpiCards.map((card) => (
-            <article className='admin-card dashboard-kpi' key={card.label}>
-              <div className='dashboard-kpi-label'>{card.label}</div>
-              <div className='dashboard-kpi-value'>{card.value}</div>
-              <div className={`dashboard-kpi-delta ${card.tone}`}>{card.delta}</div>
-            </article>
-          ))}
-=======
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <article className='admin-card dashboard-kpi' key={i}>
@@ -318,7 +278,6 @@ function Dashboard() {
                   )}
                 </article>
               ))}
->>>>>>> main
         </section>
 
         {/* Health Board + Pipeline */}
@@ -414,10 +373,7 @@ function Dashboard() {
               <span>Agents</span>
               <span>Cases</span>
               <span>Evidence</span>
-<<<<<<< HEAD
-=======
               <span>Storage</span>
->>>>>>> main
               <span>Status</span>
               <span>Actions</span>
             </div>
@@ -445,10 +401,7 @@ function Dashboard() {
                   <span>{organization.agents}</span>
                   <span>{organization.cases}</span>
                   <span>{organization.evidence}</span>
-<<<<<<< HEAD
-=======
                   <span>{formatBytes(organization.storageBytes)}</span>
->>>>>>> main
                   <span
                     className={`admin-pill ${
                       !organization.isActive

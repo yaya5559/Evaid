@@ -13,6 +13,7 @@ import AgentLayout from './AgentLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import Graph from '../organization/graph'
 import '../../styles/Admin/AdminLayout.css'
+import { getCaseCorrelation, getConfirmedSignals, type CaseCorrelation, type ConfirmedSignal } from '../../helpers/org/Cases'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
 
@@ -74,6 +75,18 @@ function AgentCaseDetail() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  const [correlations, setCorrelations] = useState<CaseCorrelation[]>([])
+  const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
+
+  const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
+  const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
+
+  useEffect(() => {
+    if (!caseId) return
+    getCaseCorrelation(caseId).then(setCorrelations).catch(() => setCorrelations([]))
+    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
+  }, [caseId])
 
   const loadDetail = async () => {
     setLoading(true)
@@ -248,6 +261,44 @@ function AgentCaseDetail() {
               </div>
             ))}
           </section>
+
+          {/* Evidence */}
+          <section className="admin-card" style={{ marginBottom: '16px' }}>
+            <h2>Evidence</h2>
+            {detail.evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
+            {detail.evidence.map((ev) => (
+              <div key={ev.file_id} className="orgdash-progress-row">
+                <div style={{ flex: 1 }}>
+                  <span>{ev.file_name}</span>
+                  <small style={{ display: 'block', opacity: 0.6 }}>{ev.file_extension} · {formatDate(ev.upload_date)}</small>
+                </div>
+                {confirmDeleteEvidenceId === ev.file_id ? (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button type="button" className="admin-btn critical" onClick={() => void handleDeleteEvidence(ev.file_id)} disabled={loading}>Delete</button>
+                    <button type="button" className="admin-btn" onClick={() => setConfirmDeleteEvidenceId(null)}>Cancel</button>
+                  </div>
+                ) : (
+                  <button type="button" className="admin-btn critical" onClick={() => setConfirmDeleteEvidenceId(ev.file_id)}>Delete</button>
+                )}
+              </div>
+            ))}
+            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input type="file" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} style={{ flex: 1, color: 'inherit' }} />
+              </div>
+              <textarea
+                className="edit-org-input"
+                rows={2}
+                placeholder="Add context for the AI (optional)..."
+                value={uploadNote}
+                onChange={(e) => setUploadNote(e.target.value)}
+                style={{ width: '100%', boxSizing: 'border-box', fontSize: '13px' }}
+              />
+              <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
+            </div>
+
+
+          </section>
           
           {/* Notes */}
           <section className="admin-card" style={{ marginBottom: '16px' }}>
@@ -312,47 +363,81 @@ function AgentCaseDetail() {
             </div>
           </section>
 
-
           <PendingSignalsSection />
 
-          {/* Evidence */}
-          <section className="admin-card" style={{ marginBottom: '16px' }}>
-            <h2>Evidence</h2>
-            {detail.evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
-            {detail.evidence.map((ev) => (
-              <div key={ev.file_id} className="orgdash-progress-row">
-                <div style={{ flex: 1 }}>
-                  <span>{ev.file_name}</span>
-                  <small style={{ display: 'block', opacity: 0.6 }}>{ev.file_extension} · {formatDate(ev.upload_date)}</small>
+          {/* Confirmed Signals */}
+          {(
+            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
+              <h2
+                onClick={() => setConfirmedCollapsed(p => !p)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+              >
+                Confirmed Signals
+                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: confirmedCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </h2>
+              {!confirmedCollapsed && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                  {confirmedSignals.map((s) => (
+                    <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                        <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                          {Math.round(s.confidence * 100)}%
+                        </span>
+                      </div>
+                      {s.normalized_value && s.normalized_value !== s.raw_value && (
+                        <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                {confirmDeleteEvidenceId === ev.file_id ? (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button type="button" className="admin-btn critical" onClick={() => void handleDeleteEvidence(ev.file_id)} disabled={loading}>Delete</button>
-                    <button type="button" className="admin-btn" onClick={() => setConfirmDeleteEvidenceId(null)}>Cancel</button>
-                  </div>
-                ) : (
-                  <button type="button" className="admin-btn critical" onClick={() => setConfirmDeleteEvidenceId(ev.file_id)}>Delete</button>
-                )}
-              </div>
-            ))}
-            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input type="file" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} style={{ flex: 1, color: 'inherit' }} />
-              </div>
-              <textarea
-                className="edit-org-input"
-                rows={2}
-                placeholder="Add context for the AI (optional)..."
-                value={uploadNote}
-                onChange={(e) => setUploadNote(e.target.value)}
-                style={{ width: '100%', boxSizing: 'border-box', fontSize: '13px' }}
-              />
-              <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
-            </div>
+              )}
+            </section>
+          )}
 
-          </section>
-
-
+          {/* Related Cases */}
+          {(
+            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
+              <h2
+                onClick={() => setCorrelationsCollapsed(p => !p)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+              >
+                Related Cases
+                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{correlations.length} correlation{correlations.length !== 1 ? 's' : ''}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: correlationsCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </h2>
+              {!correlationsCollapsed && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                  {correlations.map((c, i) => (
+                    <div key={i} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                        <strong style={{ fontSize: '0.95rem' }}>{c.related_case_title}</strong>
+                        <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{c.related_case_status}</span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: c.confidence >= 0.75 ? '#16a34a' : c.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                          {Math.round(c.confidence * 100)}%
+                        </span>
+                      </div>
+                      <small style={{ opacity: 0.65 }}>
+                        Shared: <span style={{ fontFamily: 'monospace' }}>{c.signal_type.replace(/_/g, ' ')} — {c.shared_value}</span>
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </>
       )}
     </AgentLayout>

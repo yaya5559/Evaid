@@ -131,8 +131,43 @@ def confirm_pending_signal(pending_signal_id):
                     OUTPUT INSERTED.Id
                     VALUES (?,?,?,?,?,?,?,?)
             """, (row[0], row[1], row[2], row[3], row[4], normalized, row[6], source_locator))
+        
 
         signal_id = cursor.fetchone()
+        #cross-case correlation: find other cases with the same confirmed signal
+
+        new_evidence_id = row[0]
+        new_signal_type = row[3]
+        new_raw_value   = row[4]
+        new_confidence  = row[6]
+
+        cursor.execute(
+            """
+            INSERT INTO CaseCorrelation (case_id_a, case_id_b, signal_type, shared_value, confidence)
+            SELECT DISTINCT 
+                CAST(ei_a.case_id AS NVARCHAR(50)),
+                CAST(ei_b.case_id AS NVARCHAR(50)),
+                ?,
+                ?,
+                ?
+            FROM EvidenceItem ei_a
+            JOIN EvidenceItem ei_b
+                ON ei_b.case_id != ei_a.case_id
+            JOIN Signal s_other
+                ON s_other.evidence_id = ei_b.Id
+               AND s_other.signal_type = ?
+               AND s_other.raw_value   = ?
+            WHERE ei_a.Id = ?
+                AND NOT EXISTS (
+                    SELECT 1 FROM CaseCorrelation cc
+                    WHERE cc.case_id_a = CAST(ei_a.case_id AS NVARCHAR(50))
+                        AND cc.case_id_b = CAST(ei_b.case_id AS NVARCHAR(50))
+                        AND cc.shared_value = ?
+                )
+            """,
+            (new_signal_type, new_raw_value, new_confidence,
+             new_signal_type, new_raw_value, new_evidence_id, new_raw_value)
+        )
 
         cursor.execute(
             """
