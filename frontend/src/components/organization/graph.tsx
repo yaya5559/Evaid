@@ -386,16 +386,17 @@ function EvidenceList({ nodeId, allNodes, edges, previewRoute }: {
     setEvidence([])
     const thisNode = allNodes.find((n) => n.id === nodeId)
     const evidenceIds = new Set<string>()
-    if (thisNode?.type === 'evidence') evidenceIds.add(thisNode.id)
+
     if (thisNode?.evidence_id) evidenceIds.add(thisNode.evidence_id)
+
     edges.filter((e) => e.From === nodeId || e.to === nodeId).forEach((e) => {
       const otherId = e.From === nodeId ? e.to : e.From
       const other = allNodes.find((n) => n.id === otherId)
-      if (other?.type === 'evidence') evidenceIds.add(other.id)
       if (other?.evidence_id) evidenceIds.add(other.evidence_id)
     })
+
     if (evidenceIds.size === 0) { setLoading(false); return }
-    Promise.all([...evidenceIds].map((id) => api.get<EvidenceItem>(`/evidence/${id}`).then((r) => r.data).catch(() => null)))
+    Promise.all([...evidenceIds].map((id) => api.get<EvidenceItem>(`/evidence/item/${id}`).then((r) => r.data).catch(() => null)))
       .then((results) => { setEvidence(results.filter((r): r is EvidenceItem => r !== null)); setLoading(false) })
   }, [nodeId, allNodes, edges, previewRoute])
 

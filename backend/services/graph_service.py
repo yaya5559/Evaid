@@ -49,34 +49,39 @@ def get_case_graph(case_id: int) -> dict:
     case_id_str = str(case_id)
 
     try:
-        # NODES - Confirmed signals
+        # ── NODES ──────────────────────────────────────────────────────────────
+        # Confirmed signals
         cursor.execute("""
-            SELECT DISTINCT
+            SELECT
                 s.signal_type,
                 s.normalized_value,
-                s.raw_value,
-                s.confidence,
+                MAX(s.raw_value) AS raw_value,
+                MAX(s.confidence) AS confidence,
                 'AI' AS source,
-                'confirmed' AS triage_status
+                'confirmed' AS triage_status,
+                CAST(MAX(CAST(s.evidence_id AS NVARCHAR(36))) AS NVARCHAR(36)) AS evidence_id
             FROM Signal s
             JOIN EvidenceItem e ON e.Id = s.evidence_id
             WHERE e.case_id = ?
+            GROUP BY s.signal_type, s.normalized_value
         """, case_id_str)
         confirmed_rows = cursor.fetchall()
 
         # Pending signals
         cursor.execute("""
-            SELECT DISTINCT
+            SELECT
                 ps.signal_type,
                 ps.normalized_value,
-                ps.raw_value,
-                ps.confidence,
+                MAX(ps.raw_value) AS raw_value,
+                MAX(ps.confidence) AS confidence,
                 'AI' AS source,
-                'pending' AS triage_status
+                'pending' AS triage_status,
+                CAST(MAX(CAST(ps.evidence_id AS NVARCHAR(36))) AS NVARCHAR(36)) AS evidence_id
             FROM PendingSignal ps
             JOIN EvidenceItem e ON e.Id = ps.evidence_id
             WHERE e.case_id = ?
               AND ps.triage_status = 'pending'
+            GROUP BY ps.signal_type, ps.normalized_value
         """, case_id_str)
         pending_rows = cursor.fetchall()
 
@@ -89,18 +94,20 @@ def get_case_graph(case_id: int) -> dict:
                 continue
             seen_nodes.add(node_id)
             nodes.append({
-                "id":             node_id,
-                "label":          row.normalized_value or row.signal_type,
-                "type":           _map_node_type(row.signal_type),
-                "source":         row.source,
-                "signal_type":    row.signal_type,
-                "raw_value":      row.raw_value,
+                "id":               node_id,
+                "label":            row.normalized_value or row.signal_type,
+                "type":             _map_node_type(row.signal_type),
+                "source":           row.source,
+                "signal_type":      row.signal_type,
+                "raw_value":        row.raw_value,
                 "normalized_value": row.normalized_value,
-                "confidence":     round(float(row.confidence), 3) if row.confidence is not None else None,
-                "triage_status":  row.triage_status,
+                "confidence":       round(float(row.confidence), 3) if row.confidence is not None else None,
+                "triage_status":    row.triage_status,
+                "evidence_id":      row.evidence_id,
             })
 
-        # EDGES - Confirmed co-occurrence edges
+        # ── EDGES ──────────────────────────────────────────────────────────────
+        # Confirmed co-occurrence edges
         cursor.execute("""
             SELECT
                 s1.signal_type      AS from_type,

@@ -134,6 +134,29 @@ async def upload_attachement(
         conn.close()
 
 
+@router.get("/item/{evidence_id}")
+async def get_evidence_item(evidence_id: UUID):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                CAST(Id AS NVARCHAR(36)) AS file_id,
+                title AS file_name,
+                created_at AS upload_date,
+                'confirmed' AS processing_status
+            FROM EvidenceItem
+            WHERE Id = ?
+        """, (str(evidence_id),))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Evidence item not found.")
+        cols = [col[0] for col in cursor.description]
+        return dict(zip(cols, row))
+    finally:
+        conn.close()
+
+
 # Must be before /{evidence_id}/pending-signals to avoid route conflict
 @router.get("/pending-signals/case/{case_id}")
 async def list_pending_signals_for_case(case_id: int):
