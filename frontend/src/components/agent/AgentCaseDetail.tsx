@@ -173,7 +173,7 @@ function AgentCaseDetail() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
               <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>
-              <button type="button" className="admin-btn" onClick={() => setShowGraph(true)}>Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => navigate(`/AgentCase/${caseId}/graph`)} >Signal Graph</button>
             </div>
             {showEditForm && (
               <div className="admin-card" style={{ marginTop: '16px' }}>

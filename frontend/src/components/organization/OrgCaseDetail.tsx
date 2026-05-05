@@ -241,7 +241,7 @@ function OrgCaseDetail() {
                 setShowDeleteConfirm((p) => !p)
                 setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Delete</button>
-              <button type="button" className="admin-btn" onClick={() => setShowGraph(true)}>Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)} >Signal Graph</button>
             </div>
 
             {showEditForm && (
