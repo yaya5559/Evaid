@@ -60,7 +60,6 @@ function AgentCaseDetail() {
   const [notesCollapsed, setNotesCollapsed] = useState<boolean>(false)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
-  const [showGraph, setShowGraph] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -174,7 +173,7 @@ function AgentCaseDetail() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
               <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>
-              <button type="button" className="admin-btn" onClick={() => navigate(`/AgentCase/${caseId}/graph`)}>Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => setShowGraph(true)}>Signal Graph</button>
             </div>
             {showEditForm && (
               <div className="admin-card" style={{ marginTop: '16px' }}>

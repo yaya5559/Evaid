@@ -54,7 +54,6 @@ function OrgCaseDetail() {
   const orgId = String((user as any)?.org_id ?? '')
 
   const [detail, setDetail] = useState<OrgCaseDetailResponse | null>(null)
-  const [showGraph, setShowGraph] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [editDescription, setEditDescription] = useState('')
   const [editPriority, setEditPriority] = useState('')
@@ -211,7 +210,7 @@ function OrgCaseDetail() {
 
   return (
     <OrgLayout>
-      <GraphFAB graphPath={`/OrgCase/${caseId}/graph`} />
+      <GraphFAB graphPath={`/OrgCases/${caseId}/graph`} />
 
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -242,7 +241,7 @@ function OrgCaseDetail() {
                 setShowDeleteConfirm((p) => !p)
                 setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Delete</button>
-              <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)}>Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => setShowGraph(true)}>Signal Graph</button>
             </div>
 
             {showEditForm && (
