@@ -15,6 +15,7 @@ import { useSignals } from '../../context/SignalContext'
 import Nav from './Nav'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import { EvidenceSection } from '../shared/EvidenceSection'
+import { GraphFAB } from '../shared/GraphDrawer'
 import '../../styles/Admin/AdminLayout.css'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded'
@@ -71,6 +72,7 @@ function AdminCaseDetail() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [showGraph, setShowGraph] = useState(false)
 
   const loadDetail = async () => {
     setLoading(true)
@@ -193,6 +195,7 @@ function AdminCaseDetail() {
   return (
     <div className="admin-shell">
       <aside className="admin-left"><Nav /></aside>
+      <GraphFAB graphPath={`/Cases/${orgId}/${caseId}/graph`} />
       <main className="admin-main">
         <header className="admin-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

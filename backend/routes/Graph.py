@@ -2,8 +2,6 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from dependencies.auth import get_current_user
 from services.graph_service import get_case_graph
-from uuid import UUID
-
 
 router = APIRouter(prefix="/graph")
 
@@ -15,5 +13,5 @@ class CreateEdgeModel(BaseModel):
 
 
 @router.get('/cases/{caseId}')
-async def getGraph(caseId: UUID, current_user=Depends(get_current_user)):
+async def getGraph(caseId: int, current_user=Depends(get_current_user)):
     return get_case_graph(caseId)

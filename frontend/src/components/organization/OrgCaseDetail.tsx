@@ -18,7 +18,7 @@ import OrgLayout from './OrgLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import { EvidenceSection } from '../shared/EvidenceSection'
 import '../../styles/Admin/AdminLayout.css'
-import Graph from './graph'
+import { GraphFAB } from '../shared/GraphDrawer'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
 
@@ -211,19 +211,7 @@ function OrgCaseDetail() {
 
   return (
     <OrgLayout>
-      {showGraph && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', borderRadius: 12, width: '90vw', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
-              <h2 style={{ margin: 0 }}>Signal Graph</h2>
-              <button className="admin-btn" onClick={() => setShowGraph(false)}>Close</button>
-            </div>
-            <div style={{ flex: 1 }}>
-              <Graph caseId={caseId} />
-            </div>
-          </div>
-        </div>
-      )}
+      <GraphFAB graphPath={`/OrgCase/${caseId}/graph`} />
 
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -254,7 +242,7 @@ function OrgCaseDetail() {
                 setShowDeleteConfirm((p) => !p)
                 setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Delete</button>
-              <button type="button" className="admin-btn" onClick={() => setShowGraph(true)}>Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)}>Signal Graph</button>
             </div>
 
             {showEditForm && (
