@@ -26,7 +26,7 @@ type OrganizationUpdatePayload = {
 
 
 export type OrganizationListItem = {
-    org_id: string | number;
+    org_id?: string | number;
     companyName?: string;
     companyEmail?: string;
     companyPhoneNumber?: string;
@@ -40,6 +40,13 @@ export type OrganizationListItem = {
     updated_at?: string;
     user_count?: number;
     case_count?: number;
+    email?: string;
+    phone_number?: string;
+    region?: string;
+    seat_limit?: number;
+    primary_contact?: string;
+    notes?: string;
+    open_cases?: number;
     // legacy aliases kept for compatibility
     id?: string;
     name?: string;
