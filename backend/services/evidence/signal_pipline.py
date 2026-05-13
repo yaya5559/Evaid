@@ -71,14 +71,16 @@ def load_case_hints(case_id: str, cursor) -> list[dict]:
 
 
 def run_llm_extraction(
-    markdown: str, platform_hint: str, case_id: str, attachment_id: str, cursor
+    markdown: str, platform_hint: str, case_id: str, attachment_id: str, cursor, evidence_description: str = ''
 ) -> list[ExtractedSignal]:
     custom_hints = load_case_hints(case_id, cursor)
     hints_block = ""
 
-    if custom_hints: 
+    if custom_hints:
         hints_block = "The investigator flagged these as relevant:\n"
         hints_block += "\n".join([f"- {h['name']}: {h['hint']}" for h in custom_hints])
+
+    description_block = f"Investigator's context for this file: {evidence_description}\n" if evidence_description.strip() else ""
 
     client = AzureOpenAI(
         api_key= os.environ["openAi_keys"],
@@ -103,7 +105,7 @@ def run_llm_extraction(
                     f"""Platform context: {platform_hint}
                         (Use as context only — do NOT limit extraction to this platform's known patterns)
 
-                        {hints_block}
+                        {description_block}{hints_block}
                         Extract EVERY entity that could identify:
                             - A person (real name, alias, handle, gamertag, display name)
                             - An account (username, user ID, profile URL, invite code)

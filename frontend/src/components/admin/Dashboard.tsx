@@ -243,7 +243,7 @@ function Dashboard() {
         <header className='admin-header'>
           <div>
             <div className='admin-eyebrow'>Organization command center</div>
-            <h1 className='admin-title'>Operations Dashboard</h1>
+            <h1 className='admin-title'>Admin Console</h1>
             <p className='admin-subtext'>
               Monitor organization health, onboarding progress, and platform readiness from one place.
             </p>

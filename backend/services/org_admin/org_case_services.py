@@ -27,10 +27,16 @@ def list_org_cases(org_id: int):
                 CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
                 u.first_name    AS created_by_first_name,
                 u.last_name     AS created_by_last_name,
-                u.email         AS created_by_email
+                u.email         AS created_by_email,
+                COUNT(e.Id) AS evidence_count
             FROM Cases c
             JOIN users u ON c.created_by_user_id = u.user_id
+            LEFT JOIN EvidenceItem e ON e.case_id = c.case_id
             WHERE c.org_id = ? AND c.deleted_at IS NULL
+            GROUP BY
+                c.case_id, c.CaseNumber, c.title, c.description, c.status,
+                c.priority, c.severity_level, c.due_date, c.created_at,
+                c.closed_at, u.first_name, u.last_name, u.email
             ORDER BY c.created_at DESC
             """, (org_id,))
 
