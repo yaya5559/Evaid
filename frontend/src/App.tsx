@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { SignalProvider } from './context/SignalContext'
+import { AIWarningProvider } from './context/AIWarningContext'
 import { SignalToast } from './components/shared/SignalToast'
 import { SignalModal } from './components/shared/SignalModal'
 import { SignalPanel } from './components/shared/SignalPanel'
@@ -59,6 +60,7 @@ function AuthenticatedSignals() {
 function App() {
   return (
     <SignalProvider>
+      <AIWarningProvider>
       <AuthenticatedSignals />
       <Routes>
       <Route path="/" element={<HomePage />} />
@@ -92,6 +94,7 @@ function App() {
       <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+      </AIWarningProvider>
     </SignalProvider>
   )
 }
