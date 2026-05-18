@@ -43,6 +43,7 @@ type SignalContextValue = {
   confirmSignal: (id: string) => Promise<void>
   denySignal: (id: string) => Promise<void>
   fetchSignalsForEvidence: (evidenceId: string) => Promise<void>
+  fetchSignalsForCase: (caseId: string) => Promise<void>
 }
 
 const SignalContext = createContext<SignalContextValue | null>(null)
@@ -87,6 +88,10 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     if (pendingNew.length > 0) {
       setToastQueue((prev) => [...prev, ...pendingNew])
     }
+  }, [])
+
+  const fetchSignalsForCase = useCallback(async (_caseId: string) => {
+    // placeholder — wire to a case-level signals endpoint when available
   }, [])
 
   // Fetch pending signals for a specific evidence item and start watching it
@@ -178,6 +183,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         confirmSignal,
         denySignal,
         fetchSignalsForEvidence,
+        fetchSignalsForCase,
       }}
     >
       {children}

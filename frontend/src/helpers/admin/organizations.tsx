@@ -36,6 +36,15 @@ export type OrganizationListItem = {
     // legacy aliases kept for compatibility
     id?: string;
     name?: string;
+    // snake_case aliases from older API responses
+    company_name?: string;
+    company_email?: string;
+    company_phone_number?: string;
+    owner_first_name?: string;
+    owner_last_name?: string;
+    owner_email?: string;
+    owner_phone_number?: string;
+    updated_at?: string;
 };
 
 export const addOrganization = async (organization: OrganizationPayload) => {
@@ -84,7 +93,7 @@ export const getOrganizations = async () => {
 
 export const editOrganization = async (
     organizationId: string,
-    organization: OrganizationUpdatePayload
+    organization: OrganizationUpdatePayload | Record<string, unknown>
 ) => {
     try {
         const res = await api.put(`/Organization/${organizationId}`, organization, {
@@ -100,5 +109,38 @@ export const editOrganization = async (
             err?.message ||
             "Unable to edit organization";
         throw new Error(msg);
+    }
+};
+
+export const disableOrganization = async (orgName: string) => {
+    try {
+        const res = await api.patch(`/Organization/${encodeURIComponent(orgName)}/disable`, null, {
+            withCredentials: true,
+        });
+        return res.data;
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? "Unable to disable organization");
+    }
+};
+
+export const enableOrganization = async (orgName: string) => {
+    try {
+        const res = await api.patch(`/Organization/${encodeURIComponent(orgName)}/enable`, null, {
+            withCredentials: true,
+        });
+        return res.data;
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? "Unable to enable organization");
+    }
+};
+
+export const deleteOrganization = async (orgName: string) => {
+    try {
+        const res = await api.delete(`/Organization/${encodeURIComponent(orgName)}`, {
+            withCredentials: true,
+        });
+        return res.data;
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? "Unable to delete organization");
     }
 };

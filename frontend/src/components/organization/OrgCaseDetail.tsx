@@ -6,7 +6,7 @@ import {
   orgGetCaseDetail, orgUpdateCase, orgCloseCase, orgDeleteCase,
   orgGetAgents, orgAssignAgent,
   orgCreateNote, orgUpdateNote, orgDeleteNote,
-  orgUploadEvidence, orgConfirmEvidence, orgDeleteEvidence,
+  orgUploadEvidence, orgDeleteEvidence,
   getActorsForCase,
   type OrgCaseDetailResponse, type OrgAgent, type Actor,
 } from '../../helpers/org/Cases'
@@ -46,7 +46,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForEvidence, fetchSignalsForCase } = useSignals()
+  const { fetchSignalsForEvidence } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 

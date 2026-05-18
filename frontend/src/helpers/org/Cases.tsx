@@ -1,5 +1,6 @@
-import type { UUID } from 'crypto'
 import { api } from '../../context/AuthContext'
+
+type UUID = string
 
 export type OrgCaseListItem = {
     case_id: number
@@ -308,14 +309,6 @@ export const orgCreateEvidenceItem = async (case_id: string, title: string, desc
     return res.data
   } catch (err: any) {
     throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to create evidence item')
-  }
-}
-export const orgCreateEvidenceItem = async (case_id: UUID, title: string, description: string) => {
-  try{
-    const formData = new FormData()
-
-  }catch(err:any){
-
   }
 }
 
