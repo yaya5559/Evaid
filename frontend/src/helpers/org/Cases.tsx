@@ -1,7 +1,5 @@
 import { api } from '../../context/AuthContext'
 
-type UUID = string
-
 export type OrgCaseListItem = {
     case_id: number
     CaseNumber: string

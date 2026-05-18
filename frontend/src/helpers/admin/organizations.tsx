@@ -36,6 +36,11 @@ export type OrganizationListItem = {
     // legacy aliases kept for compatibility
     id?: string;
     name?: string;
+    // camelCase owner fields
+    ownerFirstName?: string;
+    ownerLastName?: string;
+    ownerEmail?: string;
+    ownerPhoneNumber?: string;
     // snake_case aliases from older API responses
     company_name?: string;
     company_email?: string;
