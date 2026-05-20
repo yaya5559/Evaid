@@ -318,3 +318,98 @@
   background: rgba(59, 130, 246, 0.85);
   border-color: rgba(59, 130, 246, 0.3);
 }
+/* ── Light Mode ── */
+[data-theme="light"] .admin-shell {
+  --admin-bg-0: #f1f5f9;
+  --admin-bg-1: #ffffff;
+  --admin-panel: #ffffff;
+  --admin-panel-soft: #e2e8f0;
+  --admin-border: rgba(0, 0, 0, 0.08);
+  --admin-border-soft: rgba(0, 0, 0, 0.06);
+  --admin-text: #0f172a;
+  --admin-muted: #475569;
+  --admin-muted-2: #94a3b8;
+  --admin-accent: #2563eb;
+  --admin-accent-soft: rgba(37, 99, 235, 0.1);
+  --admin-success: #059669;
+  --admin-warning: #d97706;
+  --admin-danger: #dc2626;
+  --admin-shadow: 0 16px 34px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .admin-shell {
+  background: var(--admin-bg-0);
+  color: var(--admin-text);
+}
+
+[data-theme="light"] .admin-sidebar {
+  background: var(--admin-bg-1);
+  border-right-color: var(--admin-border);
+}
+
+[data-theme="light"] .admin-topbar {
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom-color: var(--admin-border);
+}
+
+[data-theme="light"] .admin-content {
+  background: var(--admin-bg-0);
+}
+
+[data-theme="light"] .admin-panel-card {
+  background: var(--admin-panel);
+  border-color: var(--admin-border);
+}
+
+[data-theme="light"] .admin-card {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border-color: var(--admin-border);
+}
+
+[data-theme="light"] .admin-input,
+[data-theme="light"] .admin-select,
+[data-theme="light"] .admin-textarea {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: var(--admin-text);
+}
+
+[data-theme="light"] .admin-btn-secondary {
+  background: #e2e8f0;
+  color: var(--admin-text);
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .admin-btn-secondary:hover {
+  background: #cbd5e1;
+}
+
+/* ── Theme Toggle ── */
+.themeToggle {
+  background: none;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.themeToggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .themeToggle {
+  border-color: var(--admin-border);
+}
+
+[data-theme="light"] .themeToggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+ 
