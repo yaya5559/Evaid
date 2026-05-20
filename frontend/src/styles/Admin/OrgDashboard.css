@@ -205,6 +205,7 @@
   min-width: 860px;
 }
 
+
 .orgdash-table thead th {
   text-align: left;
   color: var(--admin-muted-2);
@@ -212,14 +213,15 @@
   letter-spacing: 0.11em;
   text-transform: uppercase;
   border-bottom: 1px solid var(--admin-border-soft);
-  padding: 10px 8px;
+  padding: 12px 16px;
 }
 
 .orgdash-table tbody td {
-  padding: 10px 8px;
+  padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   color: var(--admin-muted);
   font-size: 13px;
+  vertical-align: middle;
 }
 
 .orgdash-case-link {

@@ -7,14 +7,14 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --text: #e9eeff;
-  --muted: #a6b1d9;
-  --hint: #9bb1ff;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --hint: #a8b2d1;
   --danger: #f87171;
-  --bg-hi: #11182e;
-  --card: #0f1628;
-  --brand: #4da3ff;
-  --brand2: #2563eb;
+  --bg-hi: #1e293b;
+  --card: #0f172a;
+  --brand: #3b82f6;
+  --brand2: #4f46e5;
 }
 
 *,
@@ -34,7 +34,7 @@ body {
   margin: 0;
   min-width: 320px;
   color: var(--text);
-  background: #05060a;
+  background: #0b111e;
 }
 
 a {
