@@ -4,11 +4,12 @@ from services.evidence_service import _ensure_evidence_exists
 
 CONFIDENCE_THRESHOLD = 0.7
 
-
 def get_pending_signals(evidence_id):
     conn = get_db_connection()
     cursor = conn.cursor()
+
     try:
+
         cursor.execute(
             """
                 SELECT Id, signal_type, raw_value, normalized_value,
@@ -17,7 +18,9 @@ def get_pending_signals(evidence_id):
                 WHERE evidence_id = ? AND triage_status = 'pending'
                 ORDER BY confidence DESC
             """, (evidence_id,))
+
         rows = cursor.fetchall()
+
         return [
             {
                 "id": str(row[0]),
@@ -30,65 +33,45 @@ def get_pending_signals(evidence_id):
             }
             for row in rows
         ]
-    except Exception:
+
+    except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
         conn.close()
 
 
-def get_signal_history(evidence_id):
+def get_pending_signals_for_case(case_id):
     conn = get_db_connection()
     cursor = conn.cursor()
+
     try:
         cursor.execute(
             """
-                SELECT 
-                    CAST(s.Id AS NVARCHAR(36)) AS id,
-                    s.signal_type,
-                    s.raw_value,
-                    s.normalized_value,
-                    s.confidence,
-                    s.source_locator,
-                    'confirmed' AS status,
-                    NULL AS triage_reason,
-                    NULL AS reviewed_at
-                FROM Signal s
-                WHERE s.evidence_id = ?
-                ORDER BY s.confidence DESC
-            """, (evidence_id,))
+                SELECT ps.Id, ps.signal_type, ps.raw_value, ps.normalized_value,
+                       ps.confidence, ps.source_locator, ps.triage_reason, ps.evidence_id
+                FROM PendingSignal ps
+                JOIN EvidenceItem ei ON ps.evidence_id = ei.Id
+                WHERE ei.case_id = ? AND ps.triage_status = 'pending'
+                ORDER BY ps.confidence DESC
+            """, (case_id,))
 
-        confirmed_rows = cursor.fetchall()
-        confirmed_cols = [col[0] for col in cursor.description]
-        confirmed = [dict(zip(confirmed_cols, row)) for row in confirmed_rows]
+        rows = cursor.fetchall()
 
-        cursor.execute(
-            """
-                SELECT 
-                    CAST(Id AS NVARCHAR(36)) AS id,
-                    signal_type,
-                    raw_value,
-                    normalized_value,
-                    confidence,
-                    source_locator,
-                    'rejected' AS status,
-                    triage_reason,
-                    CAST(reviewed_at AS NVARCHAR(50)) AS reviewed_at
-                FROM PendingSignal
-                WHERE evidence_id = ? AND triage_status = 'rejected'
-                ORDER BY confidence DESC
-            """, (evidence_id,))
+        return [
+            {
+                "id": str(row[0]),
+                "signal_type": row[1],
+                "raw_value": row[2],
+                "normalized_value": row[3],
+                "confidence": row[4],
+                "source_locator": row[5],
+                "triage_reason": row[6],
+                "evidence_id": str(row[7]),
+            }
+            for row in rows
+        ]
 
-        rejected_rows = cursor.fetchall()
-        rejected_cols = [col[0] for col in cursor.description]
-        rejected = [dict(zip(rejected_cols, row)) for row in rejected_rows]
-
-        return {
-            "message": "Success",
-            "confirmed": confirmed,
-            "rejected": rejected,
-        }
-
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
         conn.close()
@@ -97,6 +80,7 @@ def get_signal_history(evidence_id):
 def reject_pending_signals(pending_signal_id):
     conn = get_db_connection()
     cursor = conn.cursor()
+
     try:
         cursor.execute("SELECT 1 FROM PendingSignal WHERE Id = ?", (pending_signal_id,))
         if cursor.fetchone() is None:
@@ -104,11 +88,9 @@ def reject_pending_signals(pending_signal_id):
 
         cursor.execute(
             """
-                UPDATE PendingSignal
-                SET triage_status = 'rejected',
-                    reviewed_at = SYSDATETIMEOFFSET()
-                WHERE Id = ?
-            """, (pending_signal_id,))
+                DELETE FROM PendingSignal WHERE Id = ?
+            """,(pending_signal_id,)
+        )
         conn.commit()
 
     except HTTPException:
@@ -123,6 +105,7 @@ def reject_pending_signals(pending_signal_id):
 def confirm_pending_signal(pending_signal_id):
     conn = get_db_connection()
     cursor = conn.cursor()
+
     try:
         cursor.execute(
             """
@@ -137,8 +120,8 @@ def confirm_pending_signal(pending_signal_id):
 
         _ensure_evidence_exists(cursor, row[0])
 
-        normalized = row[5].lower().strip() if row[5] else row[4].lower().strip()
-        source_locator = row[7]
+        normalized = row[5] or ''
+        source_locator = (row[7] or '')[:200]
 
         cursor.execute(
             """
@@ -148,14 +131,15 @@ def confirm_pending_signal(pending_signal_id):
                     OUTPUT INSERTED.Id
                     VALUES (?,?,?,?,?,?,?,?)
             """, (row[0], row[1], row[2], row[3], row[4], normalized, row[6], source_locator))
+        
 
         signal_id = cursor.fetchone()
+        #cross-case correlation: find other cases with the same confirmed signal
 
-        # Cross-case correlation
         new_evidence_id = row[0]
         new_signal_type = row[3]
-        new_raw_value = row[4]
-        new_confidence = row[6]
+        new_raw_value   = row[4]
+        new_confidence  = row[6]
 
         cursor.execute(
             """
@@ -185,17 +169,15 @@ def confirm_pending_signal(pending_signal_id):
              new_signal_type, new_raw_value, new_evidence_id, new_raw_value)
         )
 
-        # Soft-delete from PendingSignal by marking confirmed
         cursor.execute(
             """
-                UPDATE PendingSignal
-                SET triage_status = 'confirmed',
-                    reviewed_at = SYSDATETIMEOFFSET()
-                WHERE Id = ?
-            """, (pending_signal_id,))
+                DELETE FROM PendingSignal WHERE Id = ?
+            """, (pending_signal_id,)
+        )
 
         conn.commit()
         return {"signal_id": str(signal_id[0])}
+
 
     except HTTPException:
         raise

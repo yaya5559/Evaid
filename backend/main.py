@@ -5,13 +5,11 @@ from contextlib import asynccontextmanager
 import threading, time, os
 from services.run_analysis import claim_next_analysis_run, run_analysis
 
-
 origins = ["http://localhost:5173"]
 extra = os.getenv("ALLOWED_ORIGIN")
 if extra:
     for origin in extra.split(","):
         origins.append(origin.strip())
-
 
 def worker_loop():
     while True:
@@ -26,13 +24,11 @@ def worker_loop():
             print(f"[Worker] Error: {e}")
             time.sleep(5)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     thread = threading.Thread(target=worker_loop, daemon=True)
     thread.start()
     yield
-
 
 app = FastAPI(lifespan=lifespan)
 
