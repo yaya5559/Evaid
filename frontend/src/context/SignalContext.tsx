@@ -61,11 +61,6 @@ async function getPendingSignals(evidenceId: string): Promise<BackendSignal[]> {
   return Array.isArray(res.data) ? res.data : []
 }
 
-async function getPendingSignalsForCase(caseId: string): Promise<(BackendSignal & { evidence_id: string })[]> {
-  const res = await api.get<(BackendSignal & { evidence_id: string })[]>(`/evidence/pending-signals/case/${caseId}`)
-  return Array.isArray(res.data) ? res.data : []
-}
-
 // ── Provider ───────────────────────────────────────────────
 
 export function SignalProvider({ children }: { children: React.ReactNode }) {
@@ -93,6 +88,10 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     if (pendingNew.length > 0) {
       setToastQueue((prev) => [...prev, ...pendingNew])
     }
+  }, [])
+
+  const fetchSignalsForCase = useCallback(async (_caseId: string) => {
+    // placeholder — wire to a case-level signals endpoint when available
   }, [])
 
   // Fetch pending signals for a specific evidence item and start watching it
@@ -146,23 +145,14 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
   const closePanel = useCallback(() => setIsPanelOpen(false), [])
 
   const confirmSignal = useCallback(async (id: string) => {
-    await api.patch(`/evidence/pending-signals/${id}/confirm`)
-    setSignals((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: 'confirmed' as const } : s))
-    )
-    setOpenSignal(null)
-  }, [])
-
-  const fetchSignalsForCase = useCallback(async (caseId: string) => {
     try {
-      const raw = await getPendingSignalsForCase(caseId)
-      const mapped: Signal[] = raw.map((s) => ({
-        ...s,
-        status: 'pending' as const,
-      }))
-      processIncoming(mapped)
+      await api.patch(`/evidence/pending-signals/${id}/confirm`)
+      setSignals((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: 'confirmed' as const } : s))
+      )
+      setOpenSignal(null)
     } catch { /* silent */ }
-  }, [processIncoming])
+  }, [])
 
   const denySignal = useCallback(async (id: string) => {
     try {

@@ -142,6 +142,19 @@ export const agentUpdateNote = async (noteId: number, agentId: number, content: 
     }
 }
 
+export const agentDeleteNote = async (noteId: number, agentId: number) => {
+    try {
+        const res = await api.delete(`/agent/notes/${noteId}`, {
+            params: { agent_id: agentId },
+            withCredentials: true,
+        })
+        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to delete note')
+        return res.data
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete note')
+    }
+}
+
 export type AgentCreateCasePayload = {
     title: string
     description?: string
@@ -167,7 +180,7 @@ export const agentCreateCase = async (agentId: number, orgId: number, data: Agen
     }
 }
 
-export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number, note?:string) => {
+export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number, note?: string) => {
     try {
         const itemRes = await api.post('/evidence/EvidenceItem', {
             case_id: caseId,

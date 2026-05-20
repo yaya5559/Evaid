@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   agentGetCaseDetail, agentUpdateCase,
-  agentCreateNote, agentUpdateNote,
+  agentCreateNote, agentUpdateNote, agentDeleteNote,
   agentUploadEvidence, agentDeleteEvidence,
   getActorsForCase,
   type AgentCaseDetailResponse, type Actor,
@@ -60,12 +60,14 @@ function AgentCaseDetail() {
   const [newNoteContent, setNewNoteContent] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
-  const [notesCollapsed, setNotesCollapsed] = useState<Boolean>(false)
+  const [notesCollapsed, setNotesCollapsed] = useState(true)
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
 
   // evidence
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
   const [uploadNote, setUploadNote] = useState('')
   const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
+  const [showUploadConfirm, setShowUploadConfirm] = useState(false)
 
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
@@ -131,6 +133,14 @@ function AgentCaseDetail() {
       await agentUpdateNote(noteId, agentId, editNoteContent)
       setSuccess('Note updated'); setEditingNoteId(null); setEditNoteContent(''); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to update note') } finally { setLoading(false) }
+  }
+
+  const handleDeleteNote = async (noteId: number) => {
+    setLoading(true); setError(null)
+    try {
+      await agentDeleteNote(noteId, agentId)
+      setSuccess('Note deleted'); setConfirmDeleteNoteId(null); void loadDetail()
+    } catch (err: any) { setError(err?.message ?? 'Failed to delete note') } finally { setLoading(false) }
   }
 
   const handleUploadEvidence = async () => {
@@ -282,85 +292,124 @@ function AgentCaseDetail() {
                 )}
               </div>
             ))}
-            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input type="file" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} style={{ flex: 1, color: 'inherit' }} />
-              </div>
-              <textarea
-                className="edit-org-input"
-                rows={2}
-                placeholder="Add context for the AI (optional)..."
-                value={uploadNote}
-                onChange={(e) => setUploadNote(e.target.value)}
-                style={{ width: '100%', boxSizing: 'border-box', fontSize: '13px' }}
-              />
-              <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
+              <label htmlFor="agent-case-evidence-upload" className="edit-org-input" style={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <span style={{ opacity: evidenceFile ? 1 : 0.5 }}>{evidenceFile ? evidenceFile.name : 'Choose file to upload...'}</span>
+                <input id="agent-case-evidence-upload" type="file" style={{ display: 'none' }} onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} />
+              </label>
+              <button type="button" className="admin-btn primary" onClick={() => setShowUploadConfirm(true)} disabled={loading || !evidenceFile}>Upload</button>
             </div>
-
-
+            {showUploadConfirm && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(10, 18, 36, 0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                <div style={{ background: '#010b3d', borderRadius: '14px', padding: '28px', minWidth: '340px', maxWidth: '400px', boxShadow: '0 20px 50px rgba(0, 2, 5, 0.22)', borderTop: '3px solid #2f4161' }}>
+                  {loading ? (
+                    <>
+                      <h3 style={{ margin: '0 0 16px', fontSize: '17px', fontWeight: 650, color: '#f1f1f1' }}>Uploading...</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#cad0df', fontSize: '14px' }}>
+                        <div style={{ width: '20px', height: '20px', border: '2px solid #2f4161', borderTop: '2px solid #5b8dee', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        Uploading...
+                      </div>
+                    </>
+                  ) : success ? (
+                    <>
+                      <div style={{ fontSize: '32px', marginBottom: '10px' }}>✓</div>
+                      <h3 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 650, color: '#4ade80' }}>Upload Successful</h3>
+                      <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#616b79' }}>{success}</p>
+                      <button className="admin-btn primary" onClick={() => { setShowUploadConfirm(false); setSuccess(null) }}>Done</button>
+                    </>
+                  ) : error ? (
+                    <>
+                      <div style={{ fontSize: '32px', marginBottom: '10px' }}>✗</div>
+                      <h3 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 650, color: '#f87171' }}>Upload Failed</h3>
+                      <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#616b79' }}>{error}</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="admin-btn primary" onClick={() => { setError(null); void handleUploadEvidence() }}>Retry</button>
+                        <button className="admin-btn" onClick={() => { setShowUploadConfirm(false); setError(null); setEvidenceFile(null) }}>Cancel</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h3 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 650, color: '#f1f1f1' }}>Confirm Upload</h3>
+                      <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#616b79' }}>
+                        Upload <strong style={{ color: '#cad0df' }}>{evidenceFile?.name}</strong>?
+                      </p>
+                      <textarea
+                        className="edit-org-input"
+                        rows={3}
+                        placeholder="Add context for the AI (optional)..."
+                        value={uploadNote}
+                        onChange={(e) => setUploadNote(e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', marginBottom: '16px', fontSize: '13px' }}
+                      />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="admin-btn primary" onClick={() => { void handleUploadEvidence() }}>Confirm</button>
+                        <button className="admin-btn" onClick={() => { setShowUploadConfirm(false); setEvidenceFile(null); setUploadNote('') }}>Cancel</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
           
           {/* Notes */}
-          <section className="admin-card" style={{ marginBottom: '16px' }}>
+          <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #fa0000' }}>
             <h2
-              onClick={()=>setNotesCollapsed(p=>!p)}
+              onClick={() => setNotesCollapsed(p => !p)}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
             >
               <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length} Notes</span>
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                <svg
-                  width="16" height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{
-                    transform: notesCollapsed ? 'rotate(180deg)':'rotate(0deg)' ,
-                    transition: 'transform 0.2s ease'
-                  }}
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ transform: notesCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </span>
             </h2>
-            {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
-            
-            {(notesCollapsed && (
+            {notesCollapsed && (
               <>
-              {detail.notes.map((note) => (
-              <div key={note.note_id} className="orgdash-progress-row">
-                {editingNoteId === note.note_id ? (
-                  <div style={{ width: '100%' }}>
-                    <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
-                      <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(null); setEditNoteContent('') }}>Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0 }}>{note.content}</p>
-                      <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
-                    </div>
-                    {note.author_id === agentId && (
-                      <button type="button" className="admin-btn" style={{ marginLeft: '8px' }}
-                        onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content) }}>
-                        Edit
-                      </button>
+                {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
+                {detail.notes.map((note) => (
+                  <div key={note.note_id} className="orgdash-progress-row">
+                    {editingNoteId === note.note_id ? (
+                      <div style={{ width: '100%' }}>
+                        <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
+                          <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(null); setEditNoteContent('') }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : confirmDeleteNoteId === note.note_id ? (
+                      <div style={{ width: '100%' }}>
+                        <p style={{ margin: '0 0 8px' }}>{note.content}</p>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
+                          <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
+                          <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0 }}>{note.content}</p>
+                          <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
+                        </div>
+                        {note.author_id === agentId && (
+                          <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+                            <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
+                            <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
+                          </div>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-              ))}
+                  </div>
+                ))}
+                <div style={{ marginTop: '12px' }}>
+                  <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
+                  <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
+                </div>
               </>
-            ))}
-            <div style={{ marginTop: '12px' }}>
-              <textarea className="edit-org-input" rows={3} placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
-            </div>
+            )}
           </section>
 
           <PendingSignalsSection />

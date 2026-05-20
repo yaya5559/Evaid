@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useAIWarning } from '../../context/AIWarningContext'
 import { NotificationBell } from '../shared/NotificationBell'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
@@ -7,6 +8,7 @@ const navClassName = ({ isActive }: { isActive: boolean }) =>
 
 function OrgNav() {
   const { user, logout } = useAuth()
+  const { openWarning } = useAIWarning()
   const navigate = useNavigate()
 
   const initials = (user?.company || user?.name || 'Org')
@@ -26,7 +28,7 @@ function OrgNav() {
       <div className='admin-brand'>
         <div className='admin-brand-mark' />
         <div style={{ flex: 1 }}>
-          <div className='admin-brand-title'>Evaide</div>
+          <div className='admin-brand-title'>Evaid</div>
           <div className='admin-brand-sub'>Organization console</div>
         </div>
         <NotificationBell />
@@ -34,21 +36,14 @@ function OrgNav() {
 
       <nav className='admin-nav'>
         <div className='admin-nav-section'>
-          <div className='admin-nav-label'>My Work</div>
-          <NavLink className={navClassName} to='/OrgCaseProgress'>
-            <span className='admin-nav-dot' />
-            My Cases
-          </NavLink>
-          <NavLink className={navClassName} to='/OrgStartCase'>
-            <span className='admin-nav-dot' />
-            Start Case
-          </NavLink>
-        </div>
-        <div className='admin-nav-section'>
-          <div className='admin-nav-label'>Organization</div>
+          <div className='admin-nav-label'>Workspace</div>
           <NavLink className={navClassName} to='/Org_Dashboard'>
             <span className='admin-nav-dot' />
             Overview
+          </NavLink>
+          <NavLink className={navClassName} to='/OrgCaseProgress'>
+            <span className='admin-nav-dot' />
+            View Cases
           </NavLink>
           <NavLink className={navClassName} to='/OrgAgents'>
             <span className='admin-nav-dot' />
@@ -57,6 +52,10 @@ function OrgNav() {
           <NavLink className={navClassName} to='/OrgRegisterAgent'>
             <span className='admin-nav-dot' />
             Register Agent
+          </NavLink>
+          <NavLink className={navClassName} to='/OrgStartCase'>
+            <span className='admin-nav-dot' />
+            Start Case
           </NavLink>
         </div>
       </nav>
@@ -69,6 +68,27 @@ function OrgNav() {
         </div>
       </div>
 
+      <button
+        type='button'
+        onClick={openWarning}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '7px',
+          background: 'rgba(245, 158, 11, 0.1)',
+          border: '1px solid rgba(245, 158, 11, 0.35)',
+          borderRadius: '7px',
+          padding: '8px 12px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: '#f59e0b',
+          cursor: 'pointer',
+          width: '100%',
+          marginBottom: '8px',
+          letterSpacing: '0.01em',
+        }}
+      >
+        <span style={{ fontSize: '14px' }}>⚠️</span>
+        AI Use Policy
+      </button>
       <button className='admin-btn admin-btn-ghost org-nav-logout' onClick={() => void onLogout()} type='button'>
         Sign out
       </button>

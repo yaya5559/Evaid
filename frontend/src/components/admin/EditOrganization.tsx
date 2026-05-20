@@ -313,7 +313,7 @@ function EditOrganization() {
 
     try {
       if (!useDemoData) {
-        await editOrganization(selectedOrganization.org_id, {
+        await editOrganization(String(selectedOrganization.org_id), {
           org_id: selectedOrganization.org_id,
           companyName: cleanedForm.companyName,
           companyEmail: cleanedForm.companyEmail,

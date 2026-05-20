@@ -81,7 +81,7 @@ function Login() {
       } else if (user.role === "org_admin") {
         navigate("/Org_Dashboard");
       } else if (user.role === "agent") {
-        navigate("/AgentCases");
+        navigate("/AgentDashboard");
       } else {
         navigate("/")
       }

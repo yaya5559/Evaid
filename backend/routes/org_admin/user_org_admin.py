@@ -13,6 +13,7 @@ def register_org_agent(data: RegisterRequest, user: dict = Depends(require_roles
     if not org_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization not found")
     data.org_id = org_id
+    
     data.role_id = 3  # always AGENT
     success = register_user(data)
     if not success:
