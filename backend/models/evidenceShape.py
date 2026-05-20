@@ -7,8 +7,7 @@ from typing import Optional
 class EvidenceItemCreate(BaseModel):
     case_id: int
     title: str
-    description: str
-    agent_context: Optional[str] = None  # Note from agent to assist AI extraction
+    description:str
 
 
 class EvidenceItemResponse(BaseModel):
@@ -40,3 +39,7 @@ class ExtractedSignal(BaseModel):
     normalized_value: Optional[str] = None
     confidence: float
     source_locator: dict
+
+
+
+
