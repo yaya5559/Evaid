@@ -15,9 +15,9 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import OrgLayout from './OrgLayout'
-import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import '../../styles/Admin/AdminLayout.css'
 import Graph from './graph'
+import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
@@ -49,7 +49,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForEvidence, fetchSignalsForCase } = useSignals()
+  const { fetchSignalsForEvidence } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -217,11 +217,6 @@ function OrgCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [caseId, orgId])
-  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
-  useEffect(() => {
-    if (!caseId) return
-    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId])
 
   useEffect(() => {
     if (!caseId) return
@@ -429,6 +424,49 @@ function OrgCaseDetail() {
                 <small style={{ opacity: 0.7 }}>{a.email}</small>
               </div>
             ))}
+          </section>
+
+          {/* Notes */}
+          <section className="admin-card" style={{ marginBottom: '16px' }}>
+            <h2>Notes</h2>
+            {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
+            {detail.notes.map((note) => (
+              <div key={note.note_id} className="orgdash-progress-row">
+                {editingNoteId === note.note_id ? (
+                  <div style={{ width: '100%' }}>
+                    <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
+                      <button type="button" className="admin-btn" onClick={() => setEditingNoteId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : confirmDeleteNoteId === note.note_id ? (
+                  <div style={{ width: '100%' }}>
+                    <p style={{ margin: '0 0 8px' }}>{note.content}</p>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
+                      <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
+                      <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0 }}>{note.content}</p>
+                      <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+                      <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
+                      <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+            <div style={{ marginTop: '12px' }}>
+              <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
+              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
+            </div>
           </section>
 
           {/* Evidence */}

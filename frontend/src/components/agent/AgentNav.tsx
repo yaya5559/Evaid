@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useAIWarning } from '../../context/AIWarningContext'
 import { NotificationBell } from '../shared/NotificationBell'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
@@ -7,6 +8,7 @@ const navClassName = ({ isActive }: { isActive: boolean }) =>
 
 function AgentNav() {
   const { user, logout } = useAuth()
+  const { openWarning } = useAIWarning()
   const navigate = useNavigate()
 
   const onLogout = async () => {
@@ -50,6 +52,27 @@ function AgentNav() {
         </div>
       </div>
 
+      <button
+        type='button'
+        onClick={openWarning}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '7px',
+          background: 'rgba(245, 158, 11, 0.1)',
+          border: '1px solid rgba(245, 158, 11, 0.35)',
+          borderRadius: '7px',
+          padding: '8px 12px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: '#f59e0b',
+          cursor: 'pointer',
+          width: '100%',
+          marginBottom: '8px',
+          letterSpacing: '0.01em',
+        }}
+      >
+        <span style={{ fontSize: '14px' }}>⚠️</span>
+        AI Use Policy
+      </button>
       <button className='admin-btn admin-btn-ghost org-nav-logout' onClick={() => void onLogout()} type='button'>
         Sign out
       </button>
