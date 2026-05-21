@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/HomePage.css";
+import { AIWarningModal } from "./shared/AIWarningModal";
+
+const LS_LANDING_SHOWN = 'evaid_landing_warning_shown'
 
 function HomePage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeId, setActiveId] = useState("section1");
+  const [showWarning, setShowWarning] = useState(() =>
+    sessionStorage.getItem(LS_LANDING_SHOWN) !== 'true'
+  );
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   // Lock scroll when mobile menu is open (why: prevent background scroll bleed)
   useEffect(() => {
@@ -42,8 +49,15 @@ function HomePage() {
 
   const onNavClick = () => setMenuOpen(false);
 
+  const handleLandingAccept = () => {
+    sessionStorage.setItem(LS_LANDING_SHOWN, 'true')
+    setShowWarning(false)
+  }
+
   return (
     <div className="homePage">
+      <AIWarningModal isOpen={showWarning} onAccept={handleLandingAccept} />
+      <AIWarningModal isOpen={showDisclaimer} onAccept={() => setShowDisclaimer(false)} readOnly />
       {/* HEADER / NAV */}
       <header className="navBar" role="navigation" aria-label="Primary" data-cy="nav">
         <div className="navInner">
@@ -76,6 +90,14 @@ function HomePage() {
               data-cy="nav-learn-more"
             >
               Learn More
+            </button>
+            <button
+              className="linkGhost"
+              onClick={() => setShowDisclaimer(true)}
+              data-cy="nav-disclaimer"
+              style={{ color: '#f59e0b' }}
+            >
+              AI Disclaimer
             </button>
             <button
               className="loginButton"
@@ -120,6 +142,14 @@ function HomePage() {
             data-cy="mobile-login"
           >
             Login
+          </button>
+          <button
+            className="linkGhost"
+            onClick={() => { setShowDisclaimer(true); setMenuOpen(false) }}
+            data-cy="mobile-disclaimer"
+            style={{ color: '#f59e0b', width: '100%', textAlign: 'center' }}
+          >
+            AI Disclaimer
           </button>
         </div>
       </header>
@@ -241,6 +271,21 @@ function HomePage() {
               <a href="#" aria-label="GitHub">GH</a>
             </div>
             <p className="fine">(c) 2026 EVAIDE. All rights reserved.</p>
+            <button
+              onClick={() => setShowDisclaimer(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#f59e0b',
+                fontSize: '12px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: '4px 0',
+                marginTop: '6px',
+              }}
+            >
+              AI Disclaimer &amp; Terms of Use
+            </button>
           </footer>
         </section>
       </main>

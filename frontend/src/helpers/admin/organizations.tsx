@@ -12,46 +12,40 @@ type OrganizationPayload = {
 };
 
 type OrganizationUpdatePayload = {
-    org_id: number;
-    companyName: string;
-    companyEmail: string;
-    companyPhoneNumber: string;
-    ownerFirstName: string;
-    ownerLastName: string;
-    ownerEmail: string;
-    ownerPhoneNumber: string;
+    name: string;
+    email: string;
+    phone_number: string;
+    region: string;
     status: string;
-    description?: string;
+    seat_limit: number;
+    primary_contact: string;
+    notes: string;
 };
 
 export type OrganizationListItem = {
-    id?: string;
-    org_id?: number | string;
-    name?: string;
-    companyName?: string;
-    company_name?: string;
+    org_id: string | number;
+    companyName: string;
     companyEmail?: string;
     company_email?: string;
     companyPhoneNumber?: string;
-    company_phone_number?: string;
-    ownerFirstName?: string;
-    owner_first_name?: string;
-    ownerLastName?: string;
-    owner_last_name?: string;
-    ownerEmail?: string;
-    owner_email?: string;
-    ownerPhoneNumber?: string;
-    owner_phone_number?: string;
-    phone_number?: string;
     description?: string;
     status?: string;
     updatedAt?: string;
+    user_count?: number;
+    case_count?: number;
+    id?: string;
+    name?: string;
+    ownerFirstName?: string;
+    ownerLastName?: string;
+    ownerEmail?: string;
+    ownerPhoneNumber?: string;
+    company_name?: string;
+    company_phone_number?: string;
+    owner_first_name?: string;
+    owner_last_name?: string;
+    owner_email?: string;
+    owner_phone_number?: string;
     updated_at?: string;
-    region?: string;
-    seat_limit?: number;
-    primary_contact?: string;
-    notes?: string;
-    open_cases?: number;
 };
 
 export const addOrganization = async (organization: OrganizationPayload) => {
@@ -98,33 +92,9 @@ export const getOrganizations = async () => {
     }
 };
 
-export const disableOrganization = async (orgName: string) => {
-    try {
-        await api.patch(`/Organization/disable_org?org_name=${encodeURIComponent(orgName)}`, null, { withCredentials: true });
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail || err?.message || 'Unable to disable organization');
-    }
-};
-
-export const enableOrganization = async (orgName: string) => {
-    try {
-        await api.patch(`/Organization/enable_org?org_name=${encodeURIComponent(orgName)}`, null, { withCredentials: true });
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail || err?.message || 'Unable to enable organization');
-    }
-};
-
-export const deleteOrganization = async (orgName: string) => {
-    try {
-        await api.delete(`/Organization/Delete?name=${encodeURIComponent(orgName)}`, { withCredentials: true });
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail || err?.message || 'Unable to delete organization');
-    }
-};
-
 export const editOrganization = async (
-    organizationId: string | number,
-    organization: OrganizationUpdatePayload
+    organizationId: string,
+    organization: OrganizationUpdatePayload | Record<string, unknown>
 ) => {
     try {
         const res = await api.put(`/Organization/${organizationId}`, organization, {
@@ -140,5 +110,38 @@ export const editOrganization = async (
             err?.message ||
             "Unable to edit organization";
         throw new Error(msg);
+    }
+};
+
+export const disableOrganization = async (orgName: string) => {
+    try {
+        const res = await api.patch(`/Organization/${encodeURIComponent(orgName)}/disable`, null, {
+            withCredentials: true,
+        });
+        return res.data;
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? "Unable to disable organization");
+    }
+};
+
+export const enableOrganization = async (orgName: string) => {
+    try {
+        const res = await api.patch(`/Organization/${encodeURIComponent(orgName)}/enable`, null, {
+            withCredentials: true,
+        });
+        return res.data;
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? "Unable to enable organization");
+    }
+};
+
+export const deleteOrganization = async (orgName: string) => {
+    try {
+        const res = await api.delete(`/Organization/${encodeURIComponent(orgName)}`, {
+            withCredentials: true,
+        });
+        return res.data;
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? "Unable to delete organization");
     }
 };

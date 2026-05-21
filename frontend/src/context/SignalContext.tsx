@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { api } from './AuthContext'
 
-// ── Types ──────────────────────────────────────────────────
-
 export type SignalStatus = 'pending' | 'confirmed' | 'denied'
 
 export type Signal = {
@@ -26,8 +24,6 @@ type BackendSignal = {
   source_locator: string | null
   triage_reason: string | null
 }
-
-// ── Context shape ──────────────────────────────────────────
 
 type SignalContextValue = {
   signals: Signal[]
@@ -54,19 +50,10 @@ export function useSignals() {
   return ctx
 }
 
-// ── API helpers ────────────────────────────────────────────
-
 async function getPendingSignals(evidenceId: string): Promise<BackendSignal[]> {
   const res = await api.get<BackendSignal[]>(`/evidence/${evidenceId}/pending-signals`)
   return Array.isArray(res.data) ? res.data : []
 }
-
-async function getPendingSignalsForCase(caseId: string): Promise<(BackendSignal & { evidence_id: string })[]> {
-  const res = await api.get<(BackendSignal & { evidence_id: string })[]>(`/evidence/pending-signals/case/${caseId}`)
-  return Array.isArray(res.data) ? res.data : []
-}
-
-// ── Provider ───────────────────────────────────────────────
 
 export function SignalProvider({ children }: { children: React.ReactNode }) {
   const [signals, setSignals] = useState<Signal[]>([])
@@ -77,7 +64,6 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
   const knownIds = useRef<Set<string>>(new Set())
   const watchedEvidenceIds = useRef<Set<string>>(new Set())
 
-  // Clears all signal state — call this when navigating to a new case
   const clearSignals = useCallback(() => {
     setSignals([])
     setSeenIds(new Set())
@@ -105,6 +91,10 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const fetchSignalsForCase = useCallback(async (_caseId: string) => {
+    // placeholder — wire to a case-level signals endpoint when available
+  }, [])
+
   const fetchSignalsForEvidence = useCallback(async (evidenceId: string) => {
     watchedEvidenceIds.current.add(evidenceId)
     try {
@@ -118,7 +108,6 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     } catch { /* silent */ }
   }, [processIncoming])
 
-  // Poll all watched evidence IDs every 30s
   useEffect(() => {
     const poll = async () => {
       for (const evidenceId of watchedEvidenceIds.current) {
@@ -155,23 +144,14 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
   const closePanel = useCallback(() => setIsPanelOpen(false), [])
 
   const confirmSignal = useCallback(async (id: string) => {
-    await api.patch(`/evidence/pending-signals/${id}/confirm`)
-    setSignals((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: 'confirmed' as const } : s))
-    )
-    setOpenSignal(null)
-  }, [])
-
-  const fetchSignalsForCase = useCallback(async (caseId: string) => {
     try {
-      const raw = await getPendingSignalsForCase(caseId)
-      const mapped: Signal[] = raw.map((s) => ({
-        ...s,
-        status: 'pending' as const,
-      }))
-      processIncoming(mapped)
+      await api.patch(`/evidence/pending-signals/${id}/confirm`)
+      setSignals((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: 'confirmed' as const } : s))
+      )
+      setOpenSignal(null)
     } catch { /* silent */ }
-  }, [processIncoming])
+  }, [])
 
   const denySignal = useCallback(async (id: string) => {
     try {

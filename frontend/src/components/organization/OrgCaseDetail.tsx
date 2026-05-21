@@ -1,5 +1,3 @@
-// Abenezer Abraham
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
@@ -7,10 +5,9 @@ import {
   orgGetAgents, orgAssignAgent,
   orgCreateNote, orgUpdateNote, orgDeleteNote,
   orgUploadEvidence, orgDeleteEvidence,
-  getActorsForCase, getConfirmedSignals,
-  type OrgCaseDetailResponse, type OrgAgent, type Actor, type ConfirmedSignal,
-  type CaseCorrelation,
-  getCaseCorrelation,
+  getActorsForCase,
+  getCaseCorrelation, getConfirmedSignals,
+  type OrgCaseDetailResponse, type OrgAgent, type Actor, type CaseCorrelation, type ConfirmedSignal,
 } from '../../helpers/org/Cases'
 import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
@@ -49,7 +46,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForEvidence, fetchSignalsForCase } = useSignals()
+  const { fetchSignalsForCase, fetchSignalsForEvidence } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -72,18 +69,19 @@ function OrgCaseDetail() {
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
   const [notesCollapsed, setNotesCollapsed] = useState(true)
   const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
+  const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
   const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
+  const [correlations, setCorrelation] = useState<CaseCorrelation[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [correlations, setCorrelation] = useState<CaseCorrelation[]>([])
-  const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
 
   useEffect(() => {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelation).catch(() => setCorrelation([]))
+    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
   }, [caseId])
 
   const loadDetail = async () => {
@@ -195,10 +193,6 @@ function OrgCaseDetail() {
   useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
   useEffect(() => {
     if (!caseId) return
-    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId])
-  useEffect(() => {
-    if (!caseId) return
     setActorsLoading(true)
     getActorsForCase(caseId).then(setActors).catch(() => setActors([])).finally(() => setActorsLoading(false))
   }, [caseId])
@@ -210,7 +204,7 @@ function OrgCaseDetail() {
 
   return (
     <OrgLayout>
-      <GraphFAB graphPath={`/OrgCases/${caseId}/graph`} />
+      <GraphFAB graphPath={`/OrgCase/${caseId}/graph`} />
 
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -224,6 +218,8 @@ function OrgCaseDetail() {
         </div>
       </header>
 
+      {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
+      {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
       {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
       {detail && (
@@ -241,7 +237,7 @@ function OrgCaseDetail() {
                 setShowDeleteConfirm((p) => !p)
                 setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Delete</button>
-              <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)} >Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)}>Signal Graph</button>
             </div>
 
             {showEditForm && (
@@ -383,7 +379,6 @@ function OrgCaseDetail() {
             previewRoute="/org/evidence/preview"
           />
 
-          {/* Notes */}
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #fa0000' }}>
             <h2
               onClick={() => setNotesCollapsed(p => !p)}
@@ -441,7 +436,6 @@ function OrgCaseDetail() {
             )}
           </section>
 
-          {/* Confirmed Signals */}
           {confirmedSignals.length > 0 && (
             <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
               <h2
@@ -478,7 +472,6 @@ function OrgCaseDetail() {
             </section>
           )}
 
-          {/* Related Cases */}
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
             <h2
               onClick={() => setCorrelationsCollapsed(p => !p)}

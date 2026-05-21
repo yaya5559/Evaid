@@ -5,7 +5,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 const roleHome: Record<string, string> = {
     evaide_admin: "/Dashboard",
     org_admin:"/Org_Dashboard",
-    agent: "/Org_Dashboard"
+    agent: "/AgentDashboard"
 }
 
 export default function AuthGate({roles}: {roles?:string[]}) {

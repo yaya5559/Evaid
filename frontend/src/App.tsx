@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { SignalProvider } from './context/SignalContext'
+import { AIWarningProvider } from './context/AIWarningContext'
 import { SignalToast } from './components/shared/SignalToast'
 import { SignalModal } from './components/shared/SignalModal'
 import { SignalPanel } from './components/shared/SignalPanel'
@@ -54,6 +55,15 @@ function App() {
       <SignalModal />
       <SignalPanel />
       <FloatingSignalButton />
+    </>
+  )
+}
+
+function App() {
+  return (
+    <SignalProvider>
+      <AIWarningProvider>
+      <AuthenticatedSignals />
       <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/Login" element={<Login />} />
@@ -83,9 +93,13 @@ function App() {
       <Route path="/AgentCase/:caseId/graph" element={<ProtectedRoute allowedRoles={['agent']}><AgentCaseGraph /></ProtectedRoute>} />
       <Route path="/AgentOrgCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentOrgCases /></ProtectedRoute>} />
 
+      {/* Agent only */}
+      <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
+
       {/* Any authenticated user */}
       <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
     </Routes>
+      </AIWarningProvider>
     </SignalProvider>
   )
 }

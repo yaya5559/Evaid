@@ -125,7 +125,6 @@ export const getOrganizations = async () => {
         const msg =
             err?.response?.data?.error ||
             err?.response?.data?.message ||
-            err?.response?.data?.detail ||
             err?.message ||
             "Unable to load organizations";
         throw new Error(msg);

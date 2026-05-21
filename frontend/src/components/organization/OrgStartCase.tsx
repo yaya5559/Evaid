@@ -129,7 +129,7 @@ function OrgStartCase() {
             onClick={() => void handleSubmit()}
             disabled={loading || !title.trim()}
           >
-            {loading ? 'Starting...' : 'Start Case'}
+            {loading ? 'Creating...' : 'Create Case'}
           </button>
           <button
             type="button"

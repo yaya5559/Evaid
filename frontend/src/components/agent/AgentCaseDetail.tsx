@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   agentGetCaseDetail, agentUpdateCase,
-  agentCreateNote, agentUpdateNote,
+  agentCreateNote, agentUpdateNote, agentDeleteNote,
   agentUploadEvidence, agentDeleteEvidence,
   getActorsForCase,
   type AgentCaseDetailResponse, type Actor,
@@ -57,7 +57,8 @@ function AgentCaseDetail() {
   const [newNoteContent, setNewNoteContent] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
-  const [notesCollapsed, setNotesCollapsed] = useState<boolean>(false)
+  const [notesCollapsed, setNotesCollapsed] = useState(true)
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -119,6 +120,14 @@ function AgentCaseDetail() {
     } catch (err: any) { setError(err?.message ?? 'Failed to update note') } finally { setLoading(false) }
   }
 
+  const handleDeleteNote = async (noteId: number) => {
+    setLoading(true); setError(null)
+    try {
+      await agentDeleteNote(noteId, agentId)
+      setSuccess('Note deleted'); setConfirmDeleteNoteId(null); void loadDetail()
+    } catch (err: any) { setError(err?.message ?? 'Failed to delete note') } finally { setLoading(false) }
+  }
+
   const handleUploadEvidence = async (file: File, agentContext: string) => {
     await agentUploadEvidence(caseId, file, agentId, agentContext)
     setSuccess('Evidence uploaded')
@@ -173,7 +182,7 @@ function AgentCaseDetail() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
               <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>
-              <button type="button" className="admin-btn" onClick={() => navigate(`/AgentCase/${caseId}/graph`)} >Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => navigate(`/AgentCase/${caseId}/graph`)}>Signal Graph</button>
             </div>
             {showEditForm && (
               <div className="admin-card" style={{ marginTop: '16px' }}>
@@ -237,7 +246,7 @@ function AgentCaseDetail() {
             previewRoute="/agent/evidence/preview"
           />
 
-          <section className="admin-card" style={{ marginBottom: '16px' }}>
+          <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #fa0000' }}>
             <h2
               onClick={() => setNotesCollapsed(p => !p)}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
@@ -250,9 +259,9 @@ function AgentCaseDetail() {
                 </svg>
               </span>
             </h2>
-            {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
             {notesCollapsed && (
               <>
+                {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
                 {detail.notes.map((note) => (
                   <div key={note.note_id} className="orgdash-progress-row">
                     {editingNoteId === note.note_id ? (
@@ -263,6 +272,15 @@ function AgentCaseDetail() {
                           <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(null); setEditNoteContent('') }}>Cancel</button>
                         </div>
                       </div>
+                    ) : confirmDeleteNoteId === note.note_id ? (
+                      <div style={{ width: '100%' }}>
+                        <p style={{ margin: '0 0 8px' }}>{note.content}</p>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
+                          <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
+                          <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
+                        </div>
+                      </div>
                     ) : (
                       <>
                         <div style={{ flex: 1 }}>
@@ -270,24 +288,23 @@ function AgentCaseDetail() {
                           <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
                         </div>
                         {note.author_id === agentId && (
-                          <button type="button" className="admin-btn" style={{ marginLeft: '8px' }}
-                            onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content) }}>
-                            Edit
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+                            <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
+                            <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
+                          </div>
                         )}
                       </>
                     )}
                   </div>
                 ))}
+                <div style={{ marginTop: '12px' }}>
+                  <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
+                  <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
+                </div>
               </>
             )}
-            <div style={{ marginTop: '12px' }}>
-              <textarea className="edit-org-input" rows={3} placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-              <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
-            </div>
           </section>
 
-          {/* Confirmed Signals */}
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
             <h2
               onClick={() => setConfirmedCollapsed(p => !p)}
@@ -322,7 +339,6 @@ function AgentCaseDetail() {
             )}
           </section>
 
-          {/* Related Cases */}
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
             <h2
               onClick={() => setCorrelationsCollapsed(p => !p)}
