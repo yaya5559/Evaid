@@ -64,7 +64,7 @@ export const loginUser = async (email: string, password: string) => {
 
 export const addAgent = async (agent: AgentPayload) => {
   try {
-    const res = await api.post(`/RegisterAgent`, agent)
+    const res = await api.post(`/Register`, agent)
     return res.data
   } catch (err: any) {
     const msg = 
@@ -121,7 +121,7 @@ export const getOrganizations = async () => {
 
 export const getCases = async () => {
     try {
-        const res = await api.get("/cases/all", {
+        const res = await api.get("/admin/cases/", {
             withCredentials: true,
         });
         return res.data as CaseListItem[];

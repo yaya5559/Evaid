@@ -1,10 +1,7 @@
 from datetime import datetime, timezone
-from fastapi import Depends, Request, status, APIRouter, UploadFile, File, Form, Response, HTTPException
+from fastapi import Depends, Request, status, APIRouter, UploadFile, File, Response, HTTPException
 from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals, get_pending_signals_for_case
 from services.evidence_service import (
-    analyze_and_stage_evidence,
-    confirm_evidence,
-    get_evidence_file,
     _hash_uploadfile_sha256, 
     _ensure_evidence_exists,
     _insert_analysis_run,
@@ -18,7 +15,6 @@ from dependencies.auth import get_current_user, get_user_org_id, case_belong_to_
 from models.evidenceShape import AttachmentUploadResponse, EvidenceItemCreate, EvidenceItemResponse
 from services.database import get_db_connection
 from uuid import UUID
-import hashlib
 from typing import Final
 from limiter import limiter
 

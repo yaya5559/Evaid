@@ -87,9 +87,6 @@ function App() {
       <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
       <Route path="/AgentCase/:caseId" element={<ProtectedRoute allowedRoles={['agent']}><AgentCaseDetail /></ProtectedRoute>} />
 
-      {/* Agent only */}
-      <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
-
       {/* Any authenticated user */}
       <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
