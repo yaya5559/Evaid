@@ -58,23 +58,36 @@ export type AgentCaseDetailResponse = {
     evidence: AgentEvidence[]
 }
 
-// Stub — connect to /cases/{case_id}/actors when backend is available
-export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
-}
-
 export type Actor = {
-  id: string
-  primaryName: string
-  aliases: string[]
-  role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
-  confidenceScore: number | null
-  source: 'AI' | 'User'
-  createdAt: string
-  evidenceCount: number
-  casesCount: number
+    id: string
+    primaryName: string
+    aliases: string[]
+    role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
+    confidenceScore: number | null
+    source: 'AI' | 'User'
+    createdAt: string
+    evidenceCount: number
+    casesCount: number
 }
 
+export type LinkedCase = {
+    case_id: number
+    CaseNumber: string
+    title: string
+    status: string
+    priority: string
+    severity_level: string | number
+    created_at: string
+    due_date: string | null
+    link_reason: string
+    shared_signal_type: string
+    shared_signal_value: string
+    confidence: number
+}
+
+export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
+    return []
+}
 
 export const agentGetCases = async (agentId: number, orgId: number): Promise<AgentCaseListItem[]> => {
     try {
@@ -86,6 +99,31 @@ export const agentGetCases = async (agentId: number, orgId: number): Promise<Age
         return (res.data?.cases ?? []) as AgentCaseListItem[]
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to load cases')
+    }
+}
+
+export const agentGetOrgCases = async (orgId: number): Promise<AgentCaseListItem[]> => {
+    try {
+        const res = await api.get('/agent/cases/org', {
+            params: { org_id: orgId },
+            withCredentials: true,
+        })
+        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to load org cases')
+        return (res.data?.cases ?? []) as AgentCaseListItem[]
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to load org cases')
+    }
+}
+
+export const agentGetLinkedCases = async (caseId: string): Promise<LinkedCase[]> => {
+    try {
+        const res = await api.get(`/graph/cases/${caseId}/linked`, {
+            withCredentials: true,
+        })
+        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to load linked cases')
+        return (res.data?.linked_cases ?? []) as LinkedCase[]
+    } catch (err: any) {
+        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to load linked cases')
     }
 }
 
@@ -180,19 +218,23 @@ export const agentCreateCase = async (agentId: number, orgId: number, data: Agen
     }
 }
 
-export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number, note?: string) => {
+export const agentUploadEvidence = async (caseId: string, file: File, _agentId: number, agentContext?: string) => {
     try {
+        const fileName = file.name.replace(/\.[^/.]+$/, '')
         const itemRes = await api.post('/evidence/EvidenceItem', {
             case_id: caseId,
-            title: file.name,
-            description: note ?? '',
-        })
-        const evidenceItemId: string = itemRes.data.evidenceItem_id
+            description: fileName,
+            title: fileName,
+            agent_context: agentContext ?? null,
+        }, { withCredentials: true })
+
+        const evidenceItemId = itemRes.data.evidenceItem_id
 
         const formData = new FormData()
         formData.append('attachement', file)
-        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
-        return { ...(attachRes.data as { attachment_id: string; analysis_run_id: string }), evidenceItemId }
+        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData, { withCredentials: true })
+
+        return { ...attachRes.data, evidenceItemId }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to upload evidence')
     }

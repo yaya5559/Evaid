@@ -21,7 +21,7 @@ def get_organization_id(name:str):
     result = cursor.fetchone()
 
     if result:
-      return result[0]  # Extract the org_id value
+      return result[0]
     return None
   
   finally:
@@ -44,7 +44,6 @@ def check_organization(name: str):
   finally:
     conn.close()
 
-# Adds an organization to the database 
 def add_Organization(data: Organization):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -72,7 +71,6 @@ def add_Organization(data: Organization):
     user_id_row = cursor.fetchone()
     user_id = user_id_row[0] if user_id_row else None
 
-
     update_query = "UPDATE organizations SET owner_id = ? WHERE org_id = ?"
     cursor.execute(update_query, (user_id, org_id))
 
@@ -87,16 +85,13 @@ def add_Organization(data: Organization):
   finally:
     conn.close()
 
-# Disables an organization but does not delete it
 def disable_organization(name: str):
-
   conn = get_db_connection()
   cursor = conn.cursor()
 
   try:
     query = "UPDATE organizations SET is_active = 0 WHERE name = ?"
     cursor.execute(query, (name))
-
     conn.commit()
     return True
   
@@ -107,7 +102,6 @@ def disable_organization(name: str):
   finally:
     conn.close()
 
-# Enables a previously disabled organization
 def enable_organization(name: str):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -125,7 +119,6 @@ def enable_organization(name: str):
   finally:
     conn.close()
 
-# Soft deletes an organization (sets deleted_at + is_active=0) to avoid FK constraint failures
 def delete_organization(name: str):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -140,13 +133,11 @@ def delete_organization(name: str):
       return False
     org_id = row[0]
 
-    # Break the circular FK (organizations.owner_id → users) then soft-delete the org
     cursor.execute(
       "UPDATE organizations SET owner_id = NULL, is_active = 0, deleted_at = SYSDATETIMEOFFSET() WHERE org_id = ?",
       (org_id,)
     )
 
-    # Soft-delete all users in this org
     cursor.execute(
       "UPDATE users SET is_enabled = 0, deleted_at = SYSDATETIMEOFFSET() WHERE org_id = ? AND deleted_at IS NULL",
       (org_id,)
@@ -163,9 +154,6 @@ def delete_organization(name: str):
   finally:
     conn.close()
 
-# Changes the owner of an organization
-# Need to check if team wants to delete old owner, or do something else with them
-# Need to create a new user for new owner
 def change_owner(new_owner: int, old_owner: str):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -183,9 +171,7 @@ def change_owner(new_owner: int, old_owner: str):
   finally:
     conn.close()
 
-# Lists all active organizations 
 def list_active_organization():
-
   conn = get_db_connection()
   cursor = conn.cursor()
 
@@ -257,7 +243,6 @@ def list_active_organization():
   finally:
     conn.close()
 
-# Lists organizations that have been disabled but not deleted
 def list_disabled_organization():
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -282,7 +267,6 @@ def list_disabled_organization():
   finally:
     conn.close()
 
-# Lists active agents in an organization
 def list_active_agents(name: str):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -306,7 +290,6 @@ def list_active_agents(name: str):
   finally:
     conn.close()
     
-# List disabled agents in an organization    
 def list_disabled_agents(name: str):
   conn = get_db_connection()
   cursor = conn.cursor()
@@ -404,36 +387,3 @@ def edit_organization(org_id: int, data: editedOrg):
 
   finally:
     conn.close()
-    
-
-
-
-
-
-# def disable_agent(org: str, agent: int):
-#   conn = get_db_connection()
-#   cursor = conn.cursor()
-
-#   query = "SELECT org_id FROM organizations WHERE name = ? AND deleted_at IS NULL"
-#   cursor.execute(query, (org))
-#   org_id = cursor.fetchone()
-
-#   try:
-#     query = "UPDATE users SET is_active = 0 WHERE org_id = ? AND user_id = ? "
-#     cursor.execute(query, (org_id, agent))
-
-# Displays all the information needed for an organization
-# Still need to add the following
-# Cases, Evidence, Agents, Owner, Phone Number, Email, 
-# Add ability to view dashboard from organization perspective
-# def organization_details(org_name: str):
-#   conn = get_db_connection()
-#   cursor = conn.cursor()
-
-#   try: 
-
-    
-
-
-# def change_name(new_name: str, org_id: int)
-

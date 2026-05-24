@@ -13,6 +13,12 @@ def list_my_cases(current_user=Depends(get_current_user)):
     return services.list_my_cases(agent_id, org_id)
 
 
+@router.get("/org")
+def list_org_cases_for_agent(current_user=Depends(get_current_user)):
+    """Read-only: all cases in the agent's org, regardless of assignment."""
+    org_id = current_user.get("claims", {}).get("org_id")
+    return services.list_org_cases_for_agent(org_id)
+
 @router.post("/")
 def create_case(data: AgentCreateCase, current_user=Depends(get_current_user)):
     agent_id = current_user.get("user_id")

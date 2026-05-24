@@ -165,9 +165,7 @@ def update_user(user_id: int, data: UsersUpdate):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    ALLOWED = {"first_name", "last_name", "email", "role_id", "org_id", "is_active"}
-    updates = {k: v for k, v in data.model_dump(exclude_unset=True).items() if k in ALLOWED}
-
+    updates = data.model_dump(exclude_unset=True)
 
     if not updates:
       return {"message": "No fields to update"}
