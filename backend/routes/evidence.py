@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
+import threading
 from fastapi import Depends, Request, status, APIRouter, UploadFile, File, Response, HTTPException
+from services.run_analysis import run_analysis
 from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals, get_pending_signals_for_case
 from services.evidence_service import (
     _hash_uploadfile_sha256, 
@@ -140,6 +142,7 @@ async def upload_attachement(
         )
 
         conn.commit()
+        threading.Thread(target=run_analysis, args=(analysis_run_id,), daemon=True).start()
         return AttachmentUploadResponse(
             attachment_id= attachment_id,
             analysis_run_id= analysis_run_id,

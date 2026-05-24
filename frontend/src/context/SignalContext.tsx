@@ -61,6 +61,11 @@ async function getPendingSignals(evidenceId: string): Promise<BackendSignal[]> {
   return Array.isArray(res.data) ? res.data : []
 }
 
+async function getPendingSignalsForCase(caseId: string): Promise<BackendSignal[]> {
+  const res = await api.get(`/evidence/pending-signals/case/${caseId}`)
+  return Array.isArray(res.data) ? res.data : []
+}
+
 // ── Provider ───────────────────────────────────────────────
 
 export function SignalProvider({ children }: { children: React.ReactNode }) {
@@ -90,9 +95,17 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const fetchSignalsForCase = useCallback(async (_caseId: string) => {
-    // placeholder — wire to a case-level signals endpoint when available
-  }, [])
+  const fetchSignalsForCase = useCallback(async (caseId: string) => {
+    try {
+      const raw = await getPendingSignalsForCase(caseId)
+      const mapped: Signal[] = raw.map((s) => ({
+        ...s,
+        status: 'pending' as const,
+        evidence_id: caseId,
+      }))
+      processIncoming(mapped)
+    } catch { /* silent */ }
+  }, [processIncoming])
 
   // Fetch pending signals for a specific evidence item and start watching it
   const fetchSignalsForEvidence = useCallback(async (evidenceId: string) => {
