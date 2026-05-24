@@ -25,6 +25,10 @@ from .evaide_admin.user_evaide_admin import router as admin_user_router
 from .evaide_admin.evidence_evaide_admin import router as admin_evidence_router
 from .evaide_admin.note_evaide_admin import router as admin_note_router
 
+#Actors
+from .actors import router as actors_router
+
+
 router = APIRouter(prefix="/Evaide")
 
 # Shared / auth
@@ -54,3 +58,6 @@ router.include_router(admin_case_router)
 router.include_router(admin_user_router)
 router.include_router(admin_evidence_router)
 router.include_router(admin_note_router)
+
+#actors
+router.include_router(actors_router)

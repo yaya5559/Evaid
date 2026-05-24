@@ -85,9 +85,15 @@ export type LinkedCase = {
     confidence: number
 }
 
-export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
+export const getActorsForCase = async (caseId: string): Promise<Actor[]> => {
+  try {
+    const res = await api.get(`/actors/case/${caseId}`)
+    return Array.isArray(res.data) ? res.data : []
+  } catch {
     return []
+  }
 }
+
 
 export const agentGetCases = async (agentId: number, orgId: number): Promise<AgentCaseListItem[]> => {
     try {

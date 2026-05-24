@@ -95,7 +95,12 @@ export type Actor = {
 }
 
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
+  try {
+    const res = await api.get(`/actors/case/${_caseId}`)
+    return Array.isArray(res.data) ? res.data : []
+  } catch {
+    return []
+  }
 }
 
 export type ConfirmedSignal = {
@@ -337,4 +342,9 @@ export const getCaseCorrelation = async (caseId: string): Promise<CaseCorrelatio
     } catch {
         return []
     }
+}
+
+export const createActor = async (caseId: string, name: string, role: string): Promise<Actor> => {
+  const res = await api.post(`/actors/case/${caseId}`, { name, role })
+  return res.data
 }

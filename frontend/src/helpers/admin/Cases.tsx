@@ -91,9 +91,15 @@ export type Actor = {
 }
 
 // Stub — connect to /cases/{case_id}/actors when backend is available
-export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
+export const getActorsForCase = async (caseId: string): Promise<Actor[]> => {
+  try {
+    const res = await api.get(`/actors/case/${caseId}`)
+    return Array.isArray(res.data) ? res.data : []
+  } catch {
+    return []
+  }
 }
+
 
 export const adminGetOrgCases = async (orgId: string) => {
     try {
