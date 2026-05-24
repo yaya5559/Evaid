@@ -45,6 +45,16 @@ export type OrgAssignedAgent = {
     assigned_by_last_name: string
 }
 
+export type SearchResult = {
+  signal_type: string
+  raw_value: string
+  confidence: number
+  case_id: number
+  case_title: string
+  case_status: string
+  found_at: string
+}
+
 export type AssignedAgent = OrgAssignedAgent
 
 export type OrgCaseNote = {
@@ -347,4 +357,14 @@ export const getCaseCorrelation = async (caseId: string): Promise<CaseCorrelatio
 export const createActor = async (caseId: string, name: string, role: string): Promise<Actor> => {
   const res = await api.post(`/actors/case/${caseId}`, { name, role })
   return res.data
+}
+
+export const searchEvidence = async (q: string): Promise<SearchResult[]> => {
+    if (q.trim().length < 2) return []
+    try {
+        const res = await api.get(`/evidence/search`, { params: { q } })
+        return Array.isArray(res.data) ? res.data : []
+    } catch {
+        return []
+    }
 }

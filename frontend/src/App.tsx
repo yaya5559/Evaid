@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { SignalProvider } from './context/SignalContext'
 import { AIWarningProvider } from './context/AIWarningContext'
-import { SignalToast } from './components/shared/SignalToast'
 import { SignalModal } from './components/shared/SignalModal'
 import { SignalPanel } from './components/shared/SignalPanel'
 import { FloatingSignalButton } from './components/shared/FloatingSignalButton'
@@ -51,7 +50,6 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
 function AuthenticatedSignals() {
   return (
     <>
-      <SignalToast />
       <SignalModal />
       <SignalPanel />
       <FloatingSignalButton />

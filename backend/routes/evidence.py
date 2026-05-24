@@ -263,3 +263,48 @@ async def get_case_correaltion(case_id: str):
 @router.get("/confirmedSignals/{case_id}")
 async def get_confirmed_signals_for_case(case_id: str):
     return get_confirmed_signals(case_id)
+
+
+@router.get('/search')
+def search_evidence(q:str):
+    if not q or len(q.strip()) < 2:
+        return []
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT
+                s.signal_type,
+                s.raw_value,
+                s.confidence,
+                ei.case_id,
+                c.title AS case_title,
+                c.status AS case_status,
+                NULL AS found_at
+            FROM Signal s
+            JOIN EvidenceItem ei ON ei.Id = s.evidence_id
+            JOIN Cases c ON c.case_id = ei.case_id
+            WHERE s.raw_value LIKE ?
+              AND c.deleted_at IS NULL
+            ORDER BY s.confidence DESC
+        """, (f'%{q.strip()}%',))
+
+        rows = cursor.fetchall()
+        return [
+            {
+                "signal_type": row[0],
+                "raw_value": row[1],
+                "confidence": row[2],
+                "case_id": row[3],
+                "case_title": row[4],
+                "case_status": row[5],
+                "found_at": row[6],
+            }
+            for row in rows
+        ]
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    finally:
+        conn.close()    
