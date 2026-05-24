@@ -29,7 +29,7 @@ from .evaide_admin.note_evaide_admin import router as admin_note_router
 #Graph
 from .Graph import router as graph_router
 
-router = APIRouter(prefix="/Evaide")
+router = APIRouter()
 
 # Shared / auth
 router.include_router(login_router)
