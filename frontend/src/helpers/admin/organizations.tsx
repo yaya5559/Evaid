@@ -22,28 +22,24 @@ type OrganizationUpdatePayload = {
     notes: string;
 };
 
-
 export type OrganizationListItem = {
     org_id: string | number;
     companyName: string;
     companyEmail?: string;
+    company_email?: string;
     companyPhoneNumber?: string;
-    status?: string;
     description?: string;
+    status?: string;
     updatedAt?: string;
     user_count?: number;
     case_count?: number;
-    // legacy aliases kept for compatibility
     id?: string;
     name?: string;
-    // camelCase owner fields
     ownerFirstName?: string;
     ownerLastName?: string;
     ownerEmail?: string;
     ownerPhoneNumber?: string;
-    // snake_case aliases from older API responses
     company_name?: string;
-    company_email?: string;
     company_phone_number?: string;
     owner_first_name?: string;
     owner_last_name?: string;

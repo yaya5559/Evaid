@@ -3,8 +3,7 @@ from .auth import router as login_router
 from .Organization import router as organization_router
 from .evidence import router as evidence_router
 from .register import router as register_router
-
-from .Graph import router as Graph_router
+from .Graph import router as graph_router
 
 # Agent routes
 from .agent.case_agent import router as agent_case_router
@@ -26,19 +25,15 @@ from .evaide_admin.user_evaide_admin import router as admin_user_router
 from .evaide_admin.evidence_evaide_admin import router as admin_evidence_router
 from .evaide_admin.note_evaide_admin import router as admin_note_router
 
-#Graph
-from .Graph import router as graph_router
-
 router = APIRouter(prefix="/Evaide")
 
 # Shared / auth
 router.include_router(login_router)
 router.include_router(organization_router)
 router.include_router(evidence_router)
-router.include_router(register_router)
 
-
-
+#Graph
+router.include_router(graph_router)
 
 # Agent
 router.include_router(agent_case_router)
@@ -52,14 +47,9 @@ router.include_router(org_user_router)
 router.include_router(org_evidence_router)
 router.include_router(org_note_router)
 router.include_router(org_assignment_router)
-router.include_router(org_dashboard_router)
-router.include_router(admin_dashboard_router)
 
 # Evaide Admin
 router.include_router(admin_case_router)
 router.include_router(admin_user_router)
 router.include_router(admin_evidence_router)
 router.include_router(admin_note_router)
-
-#Graph
-router.include_router(graph_router)

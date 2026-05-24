@@ -14,6 +14,8 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import Nav from './Nav'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
+import { EvidenceSection } from '../shared/EvidenceSection'
+import { GraphFAB } from '../shared/GraphDrawer'
 import '../../styles/Admin/AdminLayout.css'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded'
@@ -48,41 +50,25 @@ function AdminCaseDetail() {
   const navigate = useNavigate()
 
   const [detail, setDetail] = useState<CaseDetailResponse | null>(null)
-
-  // update form
   const [showUpdateForm, setShowUpdateForm] = useState(false)
   const [updateTitle, setUpdateTitle] = useState('')
   const [updateDescription, setUpdateDescription] = useState('')
   const [updatePriority, setUpdatePriority] = useState('')
   const [updateSeverity, setUpdateSeverity] = useState('')
   const [updateDueDate, setUpdateDueDate] = useState('')
-
-  // resolve
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [showCloseForm, setShowCloseForm] = useState(false)
   const [closeResolution, setCloseResolution] = useState('')
-
-  // delete
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-
-  // assign agent
   const [showAssignForm, setShowAssignForm] = useState(false)
   const [orgAgents, setOrgAgents] = useState<OrgAgent[]>([])
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null)
-
-  // notes
   const [newNoteContent, setNewNoteContent] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
-
-  // evidence
-  const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
-  const [confirmDeleteEvidenceId, setConfirmDeleteEvidenceId] = useState<string | null>(null)
-
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -180,35 +166,25 @@ function AdminCaseDetail() {
     } catch (err: any) { setError(err?.message ?? 'Failed to delete note') } finally { setLoading(false) }
   }
 
-  const handleUploadEvidence = async () => {
-    if (!evidenceFile || !detail) return
-    setLoading(true); setError(null)
-    try {
-      await uploadEvidence(caseId, evidenceFile, Number((user as any)?.user_id ?? 0))
-      setSuccess('Evidence uploaded'); setEvidenceFile(null); void loadDetail()
-    } catch (err: any) { setError(err?.message ?? 'Failed to upload evidence') } finally { setLoading(false) }
+  const handleUploadEvidence = async (file: File, _agentContext: string) => {
+    await uploadEvidence(caseId, file, Number((user as any)?.user_id ?? 0))
+    setSuccess('Evidence uploaded')
+    void loadDetail()
   }
 
   const handleDeleteEvidence = async (fileId: string) => {
-    setLoading(true); setError(null)
-    try {
-      await deleteEvidence(fileId)
-      setSuccess('Evidence deleted'); setConfirmDeleteEvidenceId(null); void loadDetail()
-    } catch (err: any) { setError(err?.message ?? 'Failed to delete evidence') } finally { setLoading(false) }
+    await deleteEvidence(fileId)
+    setSuccess('Evidence deleted')
+    void loadDetail()
   }
 
   useEffect(() => { void loadDetail() }, [orgId, caseId])
   useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
-
   useEffect(() => {
     if (!caseId) return
     setActorsLoading(true)
-    getActorsForCase(caseId)
-      .then(setActors)
-      .catch(() => setActors([]))
-      .finally(() => setActorsLoading(false))
+    getActorsForCase(caseId).then(setActors).catch(() => setActors([])).finally(() => setActorsLoading(false))
   }, [caseId])
-
   useEffect(() => {
     if (!success && !error) return
     const t = setTimeout(() => { setSuccess(null); setError(null) }, 4000)
@@ -218,6 +194,7 @@ function AdminCaseDetail() {
   return (
     <div className="admin-shell">
       <aside className="admin-left"><Nav /></aside>
+      <GraphFAB graphPath={`/Cases/${orgId}/${caseId}/graph`} />
       <main className="admin-main">
         <header className="admin-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -231,12 +208,10 @@ function AdminCaseDetail() {
 
         {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
         {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
-
         {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
         {detail && (
           <>
-            {/* Actions */}
             <section className="admin-card" style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
@@ -251,20 +226,45 @@ function AdminCaseDetail() {
                 }}>Edit</button>
                 <button type="button" className="admin-btn primary" onClick={() => {
                   setShowCloseConfirm((p) => !p)
-                  setShowCloseForm(false); setShowUpdateForm(false); setShowDeleteConfirm(false); setShowAssignForm(false)
+                  setShowUpdateForm(false); setShowCloseForm(false); setShowDeleteConfirm(false); setShowAssignForm(false)
                 }}>Resolve</button>
                 <button type="button" className="admin-btn" onClick={() => void openAssignForm()}>Assign Agent</button>
                 <button type="button" className="admin-btn critical" onClick={() => {
                   setShowDeleteConfirm((p) => !p)
-                  setShowUpdateForm(false); setShowCloseForm(false); setShowAssignForm(false); setShowCloseConfirm(false)
+                  setShowUpdateForm(false); setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false)
                 }}>Delete</button>
               </div>
+
+              {showUpdateForm && (
+                <div className="admin-card" style={{ marginTop: '16px' }}>
+                  <h3>Edit Case</h3>
+                  <div className="edit-org-controls">
+                    <label className="edit-org-control"><span>Title</span><input className="edit-org-input" type="text" value={updateTitle} onChange={(e) => setUpdateTitle(e.target.value)} /></label>
+                    <label className="edit-org-control"><span>Description</span><textarea className="edit-org-input" rows={3} value={updateDescription} onChange={(e) => setUpdateDescription(e.target.value)} /></label>
+                    <label className="edit-org-control"><span>Priority</span>
+                      <select className="edit-org-input" value={updatePriority} onChange={(e) => setUpdatePriority(e.target.value)}>
+                        <option value="">—</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+                      </select>
+                    </label>
+                    <label className="edit-org-control"><span>Severity</span>
+                      <select className="edit-org-input" value={updateSeverity} onChange={(e) => setUpdateSeverity(e.target.value)}>
+                        <option value="">—</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+                      </select>
+                    </label>
+                    <label className="edit-org-control"><span>Due Date</span><input className="edit-org-input" type="date" value={updateDueDate} onChange={(e) => setUpdateDueDate(e.target.value)} /></label>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <button type="button" className="admin-btn primary" onClick={() => void handleUpdate()} disabled={loading}>Save</button>
+                    <button type="button" className="admin-btn" onClick={() => setShowUpdateForm(false)}>Cancel</button>
+                  </div>
+                </div>
+              )}
 
               {showAssignForm && (
                 <div className="admin-card" style={{ marginTop: '16px' }}>
                   <h3>Assign Agent</h3>
                   {orgAgents.length === 0 ? <p style={{ opacity: 0.7 }}>No agents found.</p> : (
-                    <div className="edit-org-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                       {orgAgents.map((a) => (
                         <button key={a.user_id} type="button" className={`edit-org-item ${selectedAgentId === a.user_id ? 'active' : ''}`} onClick={() => setSelectedAgentId(a.user_id)}>
                           <strong>{a.first_name} {a.last_name}</strong>
@@ -276,31 +276,6 @@ function AdminCaseDetail() {
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                     <button type="button" className="admin-btn primary" onClick={() => void handleAssign()} disabled={loading || !selectedAgentId}>Assign</button>
                     <button type="button" className="admin-btn" onClick={() => { setShowAssignForm(false); setSelectedAgentId(null) }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-
-              {showUpdateForm && (
-                <div className="admin-card" style={{ marginTop: '16px' }}>
-                  <h3>Edit Case</h3>
-                  <div className="edit-org-controls">
-                    <label className="edit-org-control"><span>Title</span><input className="edit-org-input" type="text" value={updateTitle} onChange={(e) => setUpdateTitle(e.target.value)} /></label>
-                    <label className="edit-org-control"><span>Description</span><input className="edit-org-input" type="text" value={updateDescription} onChange={(e) => setUpdateDescription(e.target.value)} /></label>
-                    <label className="edit-org-control"><span>Priority</span>
-                      <select className="edit-org-input" value={updatePriority} onChange={(e) => setUpdatePriority(e.target.value)}>
-                        <option>Low</option><option>Medium</option><option>High</option>
-                      </select>
-                    </label>
-                    <label className="edit-org-control"><span>Severity</span>
-                      <select className="edit-org-input" value={updateSeverity} onChange={(e) => setUpdateSeverity(e.target.value)}>
-                        <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
-                      </select>
-                    </label>
-                    <label className="edit-org-control"><span>Due Date</span><input className="edit-org-input" type="date" value={updateDueDate} onChange={(e) => setUpdateDueDate(e.target.value)} /></label>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                    <button type="button" className="admin-btn primary" onClick={() => void handleUpdate()} disabled={loading}>Save</button>
-                    <button type="button" className="admin-btn" onClick={() => setShowUpdateForm(false)}>Cancel</button>
                   </div>
                 </div>
               )}
@@ -341,7 +316,6 @@ function AdminCaseDetail() {
               )}
             </section>
 
-            {/* Case Info */}
             <section className="admin-card" style={{ marginBottom: '16px' }}>
               <h2>Case Info</h2>
               <div className="orgdash-progress-meta">
@@ -355,7 +329,6 @@ function AdminCaseDetail() {
               {detail.case.description && <p style={{ marginTop: '12px' }}>{detail.case.description}</p>}
             </section>
 
-            {/* Actors */}
             <section className="admin-card" style={{ marginBottom: '16px' }}>
               <h2>Actors ({actors.length})</h2>
               {actorsLoading && <p style={{ opacity: 0.6 }}>Loading actors...</p>}
@@ -377,7 +350,6 @@ function AdminCaseDetail() {
               ))}
             </section>
 
-            {/* Active Agents */}
             <section className="admin-card" style={{ marginBottom: '16px' }}>
               <h2>Active Agents ({detail.assigned_agents.length})</h2>
               {detail.assigned_agents.length === 0 && <p style={{ opacity: 0.7 }}>No agents assigned.</p>}
@@ -389,7 +361,6 @@ function AdminCaseDetail() {
               ))}
             </section>
 
-            {/* Notes */}
             <section className="admin-card" style={{ marginBottom: '16px' }}>
               <h2>Notes</h2>
               {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
@@ -434,37 +405,13 @@ function AdminCaseDetail() {
 
             <PendingSignalsSection />
 
-            {/* Evidence */}
-            <section className="admin-card">
-              <h2>Evidence</h2>
-              {detail.evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
-              {detail.evidence.map((item) => (
-                <div key={item.file_id} className="orgdash-progress-row">
-                  <div className="orgdash-progress-meta" style={{ justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <span>{item.file_name}</span>
-                      <span style={{ opacity: 0.6 }}>{item.processing_status}</span>
-                      <span>{formatDate(item.upload_date)}</span>
-                    </div>
-                    <button type="button" className="admin-btn critical" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => setConfirmDeleteEvidenceId(item.file_id)} disabled={loading}>Delete</button>
-                  </div>
-                  {confirmDeleteEvidenceId === item.file_id && (
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem' }}>Delete this evidence?</span>
-                      <button type="button" className="admin-btn critical" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => void handleDeleteEvidence(item.file_id)} disabled={loading}>Yes, Delete</button>
-                      <button type="button" className="admin-btn" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => setConfirmDeleteEvidenceId(null)}>Cancel</button>
-                    </div>
-                  )}
-                </div>
-              ))}
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
-                <label htmlFor="admin-evidence-upload" className="edit-org-input" style={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                  <span style={{ opacity: evidenceFile ? 1 : 0.5 }}>{evidenceFile ? evidenceFile.name : 'Choose file to upload...'}</span>
-                  <input id="admin-evidence-upload" type="file" accept="image/*,.pdf,.txt,.csv,.json" style={{ display: 'none' }} onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} />
-                </label>
-                <button type="button" className="admin-btn primary" onClick={() => void handleUploadEvidence()} disabled={loading || !evidenceFile}>Upload</button>
-              </div>
-            </section>
+            <EvidenceSection
+              evidence={detail.evidence}
+              loading={loading}
+              onUpload={handleUploadEvidence}
+              onDelete={handleDeleteEvidence}
+              previewRoute="/admin/evidence/preview"
+            />
           </>
         )}
       </main>

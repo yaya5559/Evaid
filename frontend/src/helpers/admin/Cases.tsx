@@ -295,19 +295,14 @@ export const unassignAgent = async (_orgId: string, caseId: string, userId: numb
     }
 };
 
-export const uploadEvidence = async (caseId: string, file: File, _userId: number) => {
+export const uploadEvidence = async (caseId: string, file: File, userId: number) => {
     try {
-        const itemRes = await api.post('/evidence/EvidenceItem', {
-            case_id: caseId,
-            title: file.name,
-            description: '',
-        })
-        const evidenceItemId: string = itemRes.data.evidenceItem_id
-
         const formData = new FormData()
-        formData.append('attachement', file)
-        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
-        return { ...(attachRes.data as { attachment_id: string; analysis_run_id: string }), evidenceItemId }
+        formData.append('case_id', caseId)
+        formData.append('file', file)
+        formData.append('user_id', String(userId))
+        const res = await api.post('/evidence/upload', formData, { withCredentials: true })
+        return res.data as { file_id: string; filename: string; metadata: any; message: string }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Upload failed')
     }
