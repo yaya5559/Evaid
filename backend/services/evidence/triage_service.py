@@ -186,3 +186,27 @@ def confirm_pending_signal(pending_signal_id):
         raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
         conn.close()
+
+
+def get_signal_history(evidence_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+                SELECT
+                    CAST(Id AS NVARCHAR(36)) AS id,
+                    signal_type, raw_value, normalized_value,
+                    confidence, source_locator, created_at
+                FROM Signal
+                WHERE evidence_id = ?
+                ORDER BY confidence DESC
+            """, (str(evidence_id),)
+        )
+        rows = cursor.fetchall()
+        cols = [col[0] for col in cursor.description]
+        return [dict(zip(cols, row)) for row in rows]
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    finally:
+        conn.close()

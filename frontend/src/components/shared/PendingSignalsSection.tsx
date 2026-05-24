@@ -36,7 +36,7 @@ export function PendingSignalsSection() {
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
-              transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+              transform: collapsed ? 'rotate(0deg)':'rotate(180deg)',
               transition: 'transform 0.2s ease'
             }}
           >

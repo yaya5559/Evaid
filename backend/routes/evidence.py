@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import Depends, status, APIRouter, UploadFile, File, HTTPException
+import threading
+from services.run_analysis import run_analysis
 from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals, get_signal_history
 from services.evidence_service import (
     _hash_uploadfile_sha256,
@@ -117,6 +119,7 @@ async def upload_attachement(
             attachment_id=attachment_id,
         )
         conn.commit()
+        threading.Thread(target=run_analysis, args=(analysis_run_id,), daemon=True).start()
         return AttachmentUploadResponse(
             attachment_id=attachment_id,
             analysis_run_id=analysis_run_id,
@@ -231,7 +234,7 @@ async def get_case_correaltion(case_id: str):
                 cc.confidence,
                 cc.created_at
             FROM CaseCorrelation cc
-            JOIN Cases c ON CAST(c.case_id AS NVARCHAR(50)) = cc.case_id_b
+            JOIN Cases c ON CAST(c.case_id AS NVARCHAR(50)) = cc.case_id_a
             WHERE cc.case_id_b = ?
               AND c.deleted_at IS NULL
 
@@ -260,3 +263,48 @@ async def get_case_correaltion(case_id: str):
 @router.get("/confirmedSignals/{case_id}")
 async def get_confirmed_signals_for_case(case_id: str):
     return get_confirmed_signals(case_id)
+
+
+@router.get('/search')
+def search_evidence(q:str):
+    if not q or len(q.strip()) < 2:
+        return []
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT
+                s.signal_type,
+                s.raw_value,
+                s.confidence,
+                ei.case_id,
+                c.title AS case_title,
+                c.status AS case_status,
+                NULL AS found_at
+            FROM Signal s
+            JOIN EvidenceItem ei ON ei.Id = s.evidence_id
+            JOIN Cases c ON c.case_id = ei.case_id
+            WHERE s.raw_value LIKE ?
+              AND c.deleted_at IS NULL
+            ORDER BY s.confidence DESC
+        """, (f'%{q.strip()}%',))
+
+        rows = cursor.fetchall()
+        return [
+            {
+                "signal_type": row[0],
+                "raw_value": row[1],
+                "confidence": row[2],
+                "case_id": row[3],
+                "case_title": row[4],
+                "case_status": row[5],
+                "found_at": row[6],
+            }
+            for row in rows
+        ]
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    finally:
+        conn.close()    

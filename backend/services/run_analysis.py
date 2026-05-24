@@ -1,5 +1,4 @@
 from services.database import get_db_connection
-from fastapi import HTTPException, status
 from datetime import datetime, timezone
 from services.extractors import DocumentExtractor
 from services.evidence.signal_pipline import run_llm_extraction, run_universal_extraction, detect_platform
@@ -180,9 +179,6 @@ def run_analysis(analysis_run_id):
             (str(e), analysis_run_id)
         )
         conn.commit()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {str(e)}"
-        )
+        print(f"[run_analysis] failed for run {analysis_run_id}: {e}")
     finally:
         conn.close()

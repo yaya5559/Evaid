@@ -145,6 +145,18 @@ CREATE TABLE audit_logs (
     timestamp DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
 );
 
+CREATE TABLE CaseCorrelation (
+    correlation_id INT IDENTITY(1,1) PRIMARY KEY,
+    case_id_a NVARCHAR(50) NOT NULL,
+    case_id_b NVARCHAR(50) NOT NULL,
+    signal_type NVARCHAR(100) NOT NULL,
+    shared_value NVARCHAR(900) NOT NULL,
+    confidence FLOAT NOT NULL,
+    created_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
+);
+
+
+
 ALTER TABLE organizations
 ADD CONSTRAINT FK_organizations_owner
 FOREIGN KEY (owner_id) REFERENCES users(user_id);

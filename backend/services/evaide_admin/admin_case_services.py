@@ -290,7 +290,7 @@ def delete_case(case_id: int, user: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(""""
+        cursor.execute("""
           UPDATE Cases
           SET 
           deleted_at = SYSDATETIMEOFFSET(),

@@ -1,0 +1,33 @@
+CREATE TABLE ActorProfile (
+    actor_id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+    actor_name NVARCHAR(255) NOT NULL UNIQUE,
+    created_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
+);
+
+-- "Who is involved in this case?"
+CREATE TABLE CaseActor (
+    case_actor_id INT IDENTITY(1,1) PRIMARY KEY,
+    case_id INT NOT NULL FOREIGN KEY REFERENCES Cases(case_id) ON DELETE CASCADE,
+    actor_id UNIQUEIDENTIFIER NOT NULL FOREIGN KEY REFERENCES ActorProfile(actor_id),
+    role NVARCHAR(50) DEFAULT 'Person of Interest' NOT NULL,
+    confidence_score FLOAT NULL,
+    source NVARCHAR(10) DEFAULT 'User' NOT NULL,
+    created_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET(),
+    UNIQUE (case_id, actor_id)
+);
+
+CREATE TABLE ActorAlias (
+    alias_id INT IDENTITY(1,1) PRIMARY KEY,
+    actor_id UNIQUEIDENTIFIER NOT NULL FOREIGN KEY REFERENCES ActorProfile(actor_id),
+    alias_value NVARCHAR(255) NOT NULL,
+    created_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
+);
+
+CREATE TABLE ActorNote (
+    note_id INT IDENTITY(1,1) PRIMARY KEY,
+    actor_id UNIQUEIDENTIFIER NOT NULL FOREIGN KEY REFERENCES ActorProfile(actor_id),
+    content NVARCHAR(MAX) NOT NULL,
+    created_by INT NOT NULL FOREIGN KEY REFERENCES users(user_id),
+    created_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET(),
+    updated_at DATETIMEOFFSET DEFAULT SYSDATETIMEOFFSET()
+);

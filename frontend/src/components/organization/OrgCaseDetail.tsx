@@ -5,7 +5,7 @@ import {
   orgGetAgents, orgAssignAgent,
   orgCreateNote, orgUpdateNote, orgDeleteNote,
   orgUploadEvidence, orgDeleteEvidence,
-  getActorsForCase,
+  getActorsForCase, createActor,
   getCaseCorrelation, getConfirmedSignals,
   type OrgCaseDetailResponse, type OrgAgent, type Actor, type CaseCorrelation, type ConfirmedSignal,
 } from '../../helpers/org/Cases'
@@ -43,6 +43,8 @@ function formatDate(d: string | undefined | null) {
   return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+
+
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
@@ -77,12 +79,30 @@ function OrgCaseDetail() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [showAddActor, setShowAddActor] = useState(false)
+  const [newActorName, setNewActorName] = useState('')
+  const [newActorRole, setNewActorRole] = useState('Person of Interest')
+
 
   useEffect(() => {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelation).catch(() => setCorrelation([]))
     getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
   }, [caseId])
+
+  const handleAddActor = async () => {
+    if (!newActorName.trim()) return
+    try {
+      const actor = await createActor(caseId!, newActorName.trim(), newActorRole)
+      setActors(prev => [...prev, actor])
+      setNewActorName('')
+      setNewActorRole('Person of Interest')
+      setShowAddActor(false)
+    } catch {
+      alert('Failed to add actor.')
+    }
+  }
+
 
   const loadDetail = async () => {
     setLoading(true)
@@ -338,7 +358,31 @@ function OrgCaseDetail() {
           </section>
 
           <section className="admin-card" style={{ marginBottom: '16px' }}>
-            <h2>Actors ({actors.length})</h2>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              Actors ({actors.length})
+              <button className="admin-btn primary" style={{ fontSize: '0.75rem', marginLeft: 'auto' }} onClick={() => setShowAddActor(p => !p)}>
+                + Add Actor
+              </button>
+            </h2>
+            {showAddActor && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                <input
+                  className="edit-org-input"
+                  placeholder="Full name"
+                  value={newActorName}
+                  onChange={e => setNewActorName(e.target.value)}
+                  style={{ flex: 1, minWidth: '160px' }}
+                />
+                <select className="edit-org-input" value={newActorRole} onChange={e => setNewActorRole(e.target.value)}>
+                  <option>Person of Interest</option>
+                  <option>Suspect</option>
+                  <option>Witness</option>
+                  <option>Victim</option>
+                </select>
+                <button className="admin-btn primary" onClick={() => void handleAddActor()}>Save</button>
+                <button className="admin-btn" onClick={() => setShowAddActor(false)}>Cancel</button>
+              </div>
+            )}
             {actorsLoading && <p style={{ opacity: 0.6 }}>Loading actors...</p>}
             {!actorsLoading && actors.length === 0 && <p style={{ opacity: 0.7 }}>No actors linked to this case.</p>}
             {!actorsLoading && actors.map((actor) => (
@@ -350,7 +394,7 @@ function OrgCaseDetail() {
                 </div>
                 <div style={{ fontSize: '0.82rem', opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                   <span>Aliases: {actor.aliases.length > 0 ? actor.aliases.join(', ') : '—'}</span>
-                  {actor.confidenceScore !== null && <span>Confidence: {Math.round(actor.confidenceScore * 100)}%</span>}
+                  {actor.confidenceScore != null && <span>Confidence: {Math.round(actor.confidenceScore * 100)}%</span>}
                   <span>Added: {formatDate(actor.createdAt)}</span>
                   <span>{actor.evidenceCount} evidence · {actor.casesCount} cases</span>
                 </div>
@@ -368,9 +412,6 @@ function OrgCaseDetail() {
               </div>
             ))}
           </section>
-
-          <PendingSignalsSection />
-
           <EvidenceSection
             evidence={detail.evidence}
             loading={loading}
@@ -435,7 +476,7 @@ function OrgCaseDetail() {
               </>
             )}
           </section>
-
+          <PendingSignalsSection />
           {confirmedSignals.length > 0 && (
             <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
               <h2
@@ -505,8 +546,12 @@ function OrgCaseDetail() {
               </div>
             )}
           </section>
+
+
         </>
       )}
+
+      
     </OrgLayout>
   )
 }
