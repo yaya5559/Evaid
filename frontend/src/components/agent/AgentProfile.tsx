@@ -117,10 +117,10 @@ function AgentProfile() {
             )}
           </div>
           <div>
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: '600' }}>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: '600', color: '#f8fafc' }}>
               {firstName} {lastName}
             </h2>
-            <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>
               Agent ID: {userId}
             </p>
           </div>
@@ -128,37 +128,37 @@ function AgentProfile() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               First Name
             </label>
-            <p style={{ margin: 0, fontSize: '16px', color: '#1e293b' }}>
+            <p style={{ margin: 0, fontSize: '16px', color: '#e2e8f0' }}>
               {firstName || '—'}
             </p>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Last Name
             </label>
-            <p style={{ margin: 0, fontSize: '16px', color: '#1e293b' }}>
+            <p style={{ margin: 0, fontSize: '16px', color: '#e2e8f0' }}>
               {lastName || '—'}
             </p>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Email
             </label>
-            <p style={{ margin: 0, fontSize: '16px', color: '#1e293b' }}>
+            <p style={{ margin: 0, fontSize: '16px', color: '#e2e8f0' }}>
               {email || '—'}
             </p>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Phone Number
             </label>
-            <p style={{ margin: 0, fontSize: '16px', color: '#1e293b' }}>
+            <p style={{ margin: 0, fontSize: '16px', color: '#e2e8f0' }}>
               {phoneNumber || '—'}
             </p>
           </div>

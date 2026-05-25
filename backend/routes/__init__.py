@@ -10,6 +10,7 @@ from .agent.case_agent import router as agent_case_router
 from .agent.evidence_agent import router as agent_evidence_router
 from .agent.note_agent import router as agent_note_router
 from .agent.agent_dashboard import router as agent_dashboard_router
+from .agent.profile_agent import router as agent_profile_router
 
 # Org Admin routes
 from .org_admin.case_org_admin import router as org_case_router
@@ -44,6 +45,7 @@ router.include_router(agent_case_router)
 router.include_router(agent_evidence_router)
 router.include_router(agent_note_router)
 router.include_router(agent_dashboard_router)
+router.include_router(agent_profile_router)
 
 # Org Admin
 router.include_router(org_case_router)
@@ -52,6 +54,7 @@ router.include_router(org_evidence_router)
 router.include_router(org_note_router)
 router.include_router(org_assignment_router)
 router.include_router(org_dashboard_router)
+router.include_router(admin_dashboard_router)
 
 # Evaide Admin
 router.include_router(admin_case_router)

@@ -70,7 +70,7 @@ function toCaseRecord(item: CaseListItem): CaseRecord {
 }
 
 function AdminCases() {
-  const { user } = useAuth()
+  const { user, api } = useAuth()
   const navigate = useNavigate()
 
   const [organizations, setOrganizations] = useState<Organization[]>([])
@@ -94,6 +94,12 @@ function AdminCases() {
   const [actorsMap, setActorsMap] = useState<Record<string, Actor[]>>({})
   const [actorsLoading, setActorsLoading] = useState<Record<string, boolean>>({})
   const [expandedActors, setExpandedActors] = useState<Record<string, boolean>>({})
+  const [aliasModalActor, setAliasModalActor] = useState<Actor | null>(null)
+  const [aliasModalCaseId, setAliasModalCaseId] = useState<string | null>(null)
+  const [newAlias, setNewAlias] = useState<string>('')
+  const [aliasLoading, setAliasLoading] = useState(false)
+  const [aliasError, setAliasError] = useState<string | null>(null)
+  const [aliasSuccess, setAliasSuccess] = useState<string | null>(null)
 
   const loadOrganizations = async () => {
     setLoading(true); setError(null)
@@ -163,6 +169,27 @@ function AdminCases() {
       } finally {
         setActorsLoading((prev) => ({ ...prev, [caseId]: false }))
       }
+    }
+  }
+
+  const addAlias = async (actorId: string, caseId: string) => {
+    if (!newAlias.trim()) return
+    setAliasLoading(true); setAliasError(null); setAliasSuccess(null)
+    try {
+      await api.post(`/actors/${actorId}/aliases`, { alias_value: newAlias }, { withCredentials: true })
+      // update local actorsMap
+      setActorsMap((prev) => {
+        const list = prev[caseId] ?? []
+        const updated = list.map((a) => (a.id === actorId ? { ...a, aliases: [...a.aliases, newAlias] } : a))
+        return { ...prev, [caseId]: updated }
+      })
+      setAliasSuccess('Alias added')
+      setNewAlias('')
+      if (aliasModalActor) setAliasModalActor({ ...aliasModalActor, aliases: [...aliasModalActor.aliases, newAlias] })
+    } catch (err: any) {
+      setAliasError(err?.response?.data?.error ?? err?.message ?? 'Failed to add alias')
+    } finally {
+      setAliasLoading(false)
     }
   }
 
@@ -337,8 +364,16 @@ function AdminCases() {
                               <span className={`admin-pill ${roleColor(actor.role)}`}>{actor.role}</span>
                               <span className={`admin-pill ${actor.source === 'AI' ? 'info' : 'neutral'}`}>{actor.source}</span>
                             </div>
-                            <div style={{ fontSize: '0.82rem', opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                            <div style={{ fontSize: '0.82rem', opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
                               <span>Aliases: {actor.aliases.length > 0 ? actor.aliases.join(', ') : '—'}</span>
+                              <button
+                                type="button"
+                                className="admin-btn"
+                                style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                                onClick={() => { setAliasModalActor(actor); setAliasModalCaseId(c.id); setAliasError(null); setAliasSuccess(null); setNewAlias('') }}
+                              >
+                                View aliases
+                              </button>
                               {actor.confidenceScore !== null && <span>Confidence: {Math.round(actor.confidenceScore * 100)}%</span>}
                               <span>Added: {formatDate(actor.createdAt)}</span>
                               <span>{actor.evidenceCount} evidence · {actor.casesCount} cases</span>
@@ -361,6 +396,34 @@ function AdminCases() {
             </div>
           </section>
         </section>
+        {aliasModalActor && (
+          <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(2,6,23,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 80 }}
+            onClick={() => setAliasModalActor(null)}
+          >
+            <div style={{ width: '520px', maxWidth: '94%', background: '#0b1220', borderRadius: '8px', padding: '16px', boxShadow: '0 8px 24px rgba(2,6,23,0.6)' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <h3 style={{ margin: 0 }}>{aliasModalActor.primaryName} — Aliases</h3>
+                <button type="button" className="admin-btn" onClick={() => setAliasModalActor(null)}>Close</button>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                {aliasModalActor.aliases.length === 0 ? (
+                  <div style={{ color: '#94a3b8' }}>No aliases</div>
+                ) : (
+                  <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                    {aliasModalActor.aliases.map((a, i) => <li key={`${a}-${i}`}>{a}</li>)}
+                  </ul>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input value={newAlias} onChange={(e) => setNewAlias(e.target.value)} placeholder="Add new alias" style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#e6eef8' }} />
+                <button type="button" className="admin-btn primary" onClick={() => { if (aliasModalActor && aliasModalCaseId) void addAlias(aliasModalActor.id, aliasModalCaseId) }} disabled={aliasLoading}>Add</button>
+              </div>
+              {aliasError && <div style={{ marginTop: '8px', color: '#ef4444' }}>{aliasError}</div>}
+              {aliasSuccess && <div style={{ marginTop: '8px', color: '#16a34a' }}>{aliasSuccess}</div>}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )
