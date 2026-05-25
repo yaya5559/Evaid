@@ -48,20 +48,6 @@ export type OrganizationListItem = {
     updated_at?: string;
 };
 
-const normalizeOrganization = (item: any): OrganizationListItem => ({
-    id: String(item.id ?? item.org_id),
-    name: item.name ?? item.companyName,
-    email: item.email ?? item.companyEmail,
-    phone_number: item.phone_number ?? item.companyPhoneNumber,
-    status: item.status,
-    region: item.region,
-    seat_limit: item.seat_limit,
-    primary_contact: item.primary_contact,
-    notes: item.notes,
-    updated_at: item.updated_at,
-    open_cases: item.open_cases,
-});
-
 export const addOrganization = async (organization: OrganizationPayload) => {
     try {
         const res = await api.post(`/Organization/Add`, organization, {
@@ -90,9 +76,9 @@ export const getOrganizations = async () => {
             | OrganizationListItem[]
             | { data?: OrganizationListItem[]; organizations?: OrganizationListItem[] };
 
-        if (Array.isArray(payload)) return payload.map(normalizeOrganization);
-        if (Array.isArray(payload?.data)) return payload.data.map(normalizeOrganization);
-        if (Array.isArray(payload?.organizations)) return payload.organizations.map(normalizeOrganization);
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.data)) return payload.data;
+        if (Array.isArray(payload?.organizations)) return payload.organizations;
 
         throw new Error("Organization list response has an invalid format.");
     } catch (err: any) {

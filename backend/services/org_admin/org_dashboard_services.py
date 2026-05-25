@@ -21,17 +21,17 @@ def get_org_dashboard_summary(org_id: int):
         if not org_row:
             return {"message": "Organization not found"}
 
-
-        # Count total agents (role_id = 3)
+        # Count total active agents (role_id = 3)
         cursor.execute("""
             SELECT COUNT(*) as agent_count
+            FROM users u
             JOIN roles r ON u.role_id = r.role_id
             WHERE u.org_id = ? AND UPPER(r.role_name) = 'AGENT'
               AND u.deleted_at IS NULL AND u.is_enabled = 1
-
         """, (org_id,))
         agent_row = cursor.fetchone()
         agent_count = agent_row[0] if agent_row else 0
+
         # Count total employees (all active users in org)
         cursor.execute("""
             SELECT COUNT(*) as employee_count
@@ -53,9 +53,14 @@ def get_org_dashboard_summary(org_id: int):
         }
 
     except pyodbc.Error as e:
+        return {
+            "message": "Error",
+            "error": str(e)
+        }
+
+    finally:
         cursor.close()
         conn.close()
-        return {"message": "Error", "error": str(e)}
 
 
 def get_org_dashboard_kpis(org_id: int):

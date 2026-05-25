@@ -32,7 +32,6 @@ CREATE TABLE users (
     email NVARCHAR(255) UNIQUE NOT NULL, -- used for login lookup
     password_hash NVARCHAR(255) NOT NULL, -- password verified by auth
     phone_number NVARCHAR(20),
-    profile_picture NVARCHAR(MAX) NULL,
     role_id INT NOT NULL FOREIGN KEY REFERENCES roles (role_id),
     org_id INT FOREIGN KEY REFERENCES organizations (org_id),
     is_enabled BIT DEFAULT 0 NOT NULL,

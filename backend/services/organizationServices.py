@@ -45,9 +45,6 @@ def check_organization(name: str):
     conn.close()
 
 def add_Organization(data: Organization):
-  if not check_owner_email(data.owner_email):
-    raise ValueError("Owner email already exists.")
-
   conn = get_db_connection()
   cursor = conn.cursor()
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Nav from './Nav'
 import { addAgent } from '../../helpers/admin/AddAgent'
@@ -30,7 +30,6 @@ const initialForm: AgentForm = {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const phoneRegex = /^[+]?[\d()\s-]{7,20}$/
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
 function validate(values: AgentForm): FormErrors {
   const errors: FormErrors = {}
@@ -39,10 +38,7 @@ function validate(values: AgentForm): FormErrors {
   if (!values.lastName.trim()) errors.lastName = 'Last name is required.'
   if (!emailRegex.test(values.email)) errors.email = 'Enter a valid email address.'
   if (!phoneRegex.test(values.phoneNumber)) errors.phoneNumber = 'Enter a valid phone number.'
-  if (values.organizationID === 0) errors.organizationID = 'Please select an organization.'
-  if (!passwordRegex.test(values.password)) {
-    errors.password = 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one digit.'
-  }
+  if (values.password.length < 8) errors.password = 'Password must be at least 8 characters.'
   if (values.confirmPassword !== values.password) {
     errors.confirmPassword = 'Passwords do not match.'
   }
@@ -59,7 +55,7 @@ function AddAgent() {
   const [formMessageType, setFormMessageType] = useState<'success' | 'error'>('success')
   const [orgs, setOrgs] = useState<OrganizationListItem[]>([])
 
-  const onFieldChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onFieldChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
     const fieldName = name as keyof AgentForm
     setForm((prev) => ({ ...prev, [fieldName]: value }))
@@ -73,7 +69,7 @@ function AddAgent() {
     setFormMessage('')
   }
 
-  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const validationErrors = validate(form)
@@ -183,16 +179,14 @@ function AddAgent() {
                   value={form.organizationID}
                   onChange={(e) => {
                     setForm((prev) => ({ ...prev, organizationID: Number(e.target.value) }))
-                    setErrors((prev) => ({ ...prev, organizationID: undefined }))
                     setFormMessage('')
                   }}
                 >
                   <option value={0} disabled>Select an organization</option>
                   {orgs.map((org) => (
-                    <option key={org.id} value={Number(org.id)}>{org.name}</option>
+                    <option key={org.org_id} value={org.org_id}>{org.companyName}</option>
                   ))}
                 </select>
-                {errors.organizationID && <span className='agent-field-error'>{errors.organizationID}</span>}
               </div>
 
               <Field

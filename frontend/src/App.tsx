@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { SignalProvider } from './context/SignalContext'
@@ -25,15 +24,13 @@ import OrgCaseDetail from './components/organization/OrgCaseDetail'
 import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import AgentCaseGraph from './components/agent/AgentCaseGraph'
 import AgentDashboard from './components/agent/AgentDashboard'
-import AgentProfile from './components/agent/AgentProfile'
-import AgentEditProfile from './components/agent/AgentEditProfile'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
 import AgentOrgCases from './components/agent/AgentOrgCases'
 
 type ProtectedRouteProps = {
   allowedRoles: string[]
-  children: ReactNode
+  children: React.ReactNode
 }
 
 function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {

@@ -15,13 +15,6 @@ def register_user(data: RegisterRequest):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Check if org_id is valid (exists and active)
-    if data.org_id is not None:
-        cursor.execute("SELECT 1 FROM organizations WHERE org_id = ? AND is_active = 1 AND deleted_at IS NULL", (data.org_id,))
-        if not cursor.fetchone():
-            conn.close()
-            raise ValueError("Invalid organization ID.")
-    
     # securely hash the password before storing
     hashed_password = pwd_context.hash(data.password)
     
@@ -33,12 +26,9 @@ def register_user(data: RegisterRequest):
         cursor.execute(query, (data.first_name, data.last_name, data.email, data.phone_number, hashed_password, data.role_id, data.org_id))
         conn.commit()
         return True
-    except pyodbc.IntegrityError as e:
-        # Check if it's email duplicate
-        if 'idx_users_email_active' in str(e) or 'UNIQUE' in str(e):
-            raise ValueError("Email already registered.")
-        else:
-            raise ValueError("Registration failed due to data integrity issue.")
+    except pyodbc.IntegrityError:
+        # happens when email already exists in evaide_db
+        return False
     finally:
         conn.close()
 

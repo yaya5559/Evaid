@@ -17,13 +17,7 @@ function AgentNav() {
   }
 
   const email = (user as any)?.email ?? ''
-  const firstName = (user as any)?.first_name ?? 'Agent'
-  const lastName = (user as any)?.last_name ?? ''
   const initials = email.slice(0, 2).toUpperCase()
-
-  const handleProfileClick = () => {
-    navigate('/AgentProfile')
-  }
 
   return (
     <>
@@ -54,32 +48,13 @@ function AgentNav() {
         </div>
       </nav>
 
-      <button
-        type='button'
-        onClick={handleProfileClick}
-        style={{
-          width: '100%',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          borderRadius: '8px',
-          transition: 'background 0.2s',
-          marginBottom: '8px',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(100, 116, 139, 0.1)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-        className='admin-user-panel'
-      >
+      <div className='admin-user-panel'>
         <div className='admin-user-avatar'>{initials || 'AG'}</div>
-        <div style={{ flex: 1, textAlign: 'left' }}>
-          <div className='admin-user-name'>{firstName} {lastName}</div>
+        <div>
+          <div className='admin-user-name'>Agent</div>
           <div className='admin-user-role'>{email}</div>
         </div>
-      </button>
+      </div>
 
       <button
         type='button'

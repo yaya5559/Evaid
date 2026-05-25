@@ -95,44 +95,6 @@ function OrgDashboard() {
     void fetchDashboardData()
   }, [api, user])
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [summaryRes, casesRes] = await Promise.allSettled([
-          api.get('/org/dashboard/summary'),
-          api.get('/org/cases')
-        ])
-
-        if (summaryRes.status === 'fulfilled') {
-          setOrgSummary(summaryRes.value.data.organization)
-        }
-
-        if (casesRes.status === 'fulfilled') {
-          const cases = casesRes.value.data.cases || []
-          const mappedCases = cases.map((c: any) => ({
-            id: c.id || c.CaseNumber,
-            title: c.title,
-            assignedAgent: c.assignedAgent || 'Unassigned',
-            evidenceCount: c.evidenceCount || 0,
-            status: c.status === 'Closed' ? 'Solved' : c.status === 'Open' ? 'Pending' : 'Discarded',
-            progress: c.progress || 0,
-            openedOn: c.openedOn || c.created_at,
-            lastUpdate: c.lastUpdate || c.created_at
-          }))
-          setCaseRecords(mappedCases)
-        }
-      } catch (err) {
-        console.error('Failed to fetch dashboard data', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (user?.org_id) {
-      fetchDashboardData()
-    }
-  }, [api, user?.org_id])
-
   const accountAge = useMemo(() => {
     if (!orgSummary?.created_at) return null
     const created = new Date(orgSummary.created_at)
