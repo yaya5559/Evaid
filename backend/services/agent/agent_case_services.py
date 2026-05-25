@@ -1,0 +1,283 @@
+from dotenv import load_dotenv
+from services.database import get_db_connection
+import pyodbc
+import time
+
+load_dotenv()
+
+
+def list_my_cases(agent_id: int, org_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Direct cases: created by or assigned to the agent
+        cursor.execute("""
+            SELECT DISTINCT
+                c.case_id,
+                c.CaseNumber,
+                c.title,
+                c.description,
+                c.status,
+                c.priority,
+                c.severity_level,
+                CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
+                CAST(c.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
+                0 AS ai_linked,
+                NULL AS linked_from_case_id,
+                NULL AS linked_from_title
+            FROM Cases c
+            LEFT JOIN case_assignments ca ON c.case_id = ca.case_id
+            WHERE c.deleted_at IS NULL
+              AND c.org_id = ?
+              AND (c.created_by_user_id = ? OR ca.user_id = ?)
+        """, (org_id, agent_id, agent_id))
+
+        direct_rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+        direct_cases = [dict(zip(columns, row)) for row in direct_rows]
+        direct_ids = {c["case_id"] for c in direct_cases}
+
+        # AI-bridged cases via EvidenceLink graph edges
+        # Uses old Evidence table which is a graph NODE table
+        cursor.execute("""
+            SELECT DISTINCT
+                c_target.case_id,
+                c_target.CaseNumber,
+                c_target.title,
+                c_target.description,
+                c_target.status,
+                c_target.priority,
+                c_target.severity_level,
+                CAST(c_target.due_date   AS NVARCHAR(50)) AS due_date,
+                CAST(c_target.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(c_target.closed_at  AS NVARCHAR(50)) AS closed_at,
+                1 AS ai_linked,
+                c_source.case_id   AS linked_from_case_id,
+                c_source.title     AS linked_from_title
+            FROM Evidence         AS e_source
+            JOIN case_assignments AS ca
+                ON ca.case_id = e_source.case_id AND ca.user_id = ?
+            JOIN Cases            AS c_source
+                ON e_source.case_id = c_source.case_id
+            JOIN EvidenceLink     AS el
+                ON el.$from_id = e_source.$node_id
+                OR el.$to_id   = e_source.$node_id
+            JOIN Evidence         AS e_target
+                ON (
+                      (el.$to_id   = e_target.$node_id AND el.$from_id = e_source.$node_id)
+                   OR (el.$from_id = e_target.$node_id AND el.$to_id   = e_source.$node_id)
+                   )
+            JOIN Cases            AS c_target
+                ON e_target.case_id = c_target.case_id
+            WHERE c_target.deleted_at IS NULL
+              AND c_source.deleted_at IS NULL
+        """, (agent_id,))
+
+        bridge_rows = cursor.fetchall()
+        bridge_cols = [col[0] for col in cursor.description]
+        bridge_cases = [
+            dict(zip(bridge_cols, row))
+            for row in bridge_rows
+            if row[0] not in direct_ids
+        ]
+
+        all_cases = direct_cases + bridge_cases
+        all_cases.sort(key=lambda c: c["created_at"] or "", reverse=True)
+
+        return {"message": "Success", "cases": all_cases}
+
+    except pyodbc.Error as e:
+        return {"message": "Error", "error": str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def get_my_case(case_id: int, agent_id: int, org_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT DISTINCT
+                c.case_id,
+                c.CaseNumber,
+                c.title,
+                c.description,
+                c.status,
+                c.priority,
+                c.severity_level,
+                CAST(c.due_date   AS NVARCHAR(50)) AS due_date,
+                CAST(c.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(c.closed_at  AS NVARCHAR(50)) AS closed_at,
+                c.resolution,
+                u.user_id       AS creator_id,
+                u.first_name    AS creator_first_name,
+                u.last_name     AS creator_last_name
+            FROM Cases c
+            JOIN users u ON c.created_by_user_id = u.user_id
+            LEFT JOIN case_assignments ca ON c.case_id = ca.case_id
+            WHERE c.case_id = ?
+              AND c.deleted_at IS NULL
+              AND c.org_id = ?
+        """, (case_id, org_id))
+
+        row = cursor.fetchone()
+        if not row:
+            return {"message": "Case not found or access denied"}
+
+        case_cols = [col[0] for col in cursor.description]
+        case_data = dict(zip(case_cols, row))
+
+        # Notes
+        cursor.execute("""
+            SELECT
+                cn.note_id,
+                cn.content,
+                CAST(cn.created_at AS NVARCHAR(50)) AS created_at,
+                CAST(cn.updated_at AS NVARCHAR(50)) AS updated_at,
+                u.user_id       AS author_id,
+                u.first_name    AS author_first_name,
+                u.last_name     AS author_last_name
+            FROM case_notes cn
+            JOIN users u ON cn.created_by_user_id = u.user_id
+            WHERE cn.case_id = ?
+            ORDER BY cn.created_at ASC
+        """, (case_id,))
+
+        note_rows = cursor.fetchall()
+        note_cols = [col[0] for col in cursor.description]
+        notes = [dict(zip(note_cols, r)) for r in note_rows]
+
+        # Evidence display from EvidenceItem + Attachment (new upload flow)
+        cursor.execute("""
+            SELECT
+                CAST(ei.Id AS NVARCHAR(36))         AS file_id,
+                ei.title                            AS file_name,
+                a.attachment_kind                   AS content_type,
+                CAST(ei.created_at AS NVARCHAR(50)) AS upload_date,
+                ei.created_by_user_id               AS uploaded_by,
+                ei.agent_context,
+                ar.analysisrun_status               AS processing_status
+            FROM EvidenceItem ei
+            LEFT JOIN Attachment a  ON a.evidence_id = ei.Id
+            LEFT JOIN AnalysisRun ar ON ar.evidence_id = ei.Id
+            WHERE ei.case_id = ?
+            ORDER BY ei.created_at DESC
+        """, (case_id,))
+
+        evidence_rows = cursor.fetchall()
+        evidence_cols = [col[0] for col in cursor.description]
+        evidence = [dict(zip(evidence_cols, r)) for r in evidence_rows]
+
+        return {
+            "message": "Success",
+            "case": case_data,
+            "notes": notes,
+            "evidence": evidence,
+        }
+
+    except pyodbc.Error as e:
+        return {"message": "Error", "error": str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_my_case(case_id: int, agent_id: int, org_id: int, title: str = None, due_date: str = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    fields = []
+    values = []
+
+    if title is not None:
+        fields.append("title = ?")
+        values.append(title)
+    if due_date is not None:
+        fields.append("due_date = ?")
+        values.append(due_date if due_date != '' else None)
+
+    if not fields:
+        return {"message": "No fields to update"}
+
+    values += [case_id, org_id, agent_id, agent_id]
+
+    try:
+        cursor.execute(f"""
+            UPDATE Cases
+            SET {', '.join(fields)}, updated_at = SYSDATETIMEOFFSET()
+            WHERE case_id = ?
+              AND org_id = ?
+              AND deleted_at IS NULL
+              AND (created_by_user_id = ? OR case_id IN (
+                  SELECT case_id FROM case_assignments WHERE user_id = ?
+              ))
+        """, values)
+
+        if cursor.rowcount == 0:
+            return {"message": "Case not found or access denied"}
+
+        conn.commit()
+        return {"message": "Success"}
+
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {"message": "Error", "error": str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def create_case(org_id: int, agent_id: int, title: str, description: str = None, priority: str = None, severity_level: str = None, due_date: str = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        case_number = f"CASE-{int(time.time() * 1000)}"
+        cursor.execute("""
+            INSERT INTO Cases
+            (CaseNumber, org_id, created_by_user_id, title,
+             description, status, priority, severity_level, due_date)
+            VALUES (?, ?, ?, ?, ?, 'Open', ?, ?, ?)
+        """, (case_number, org_id, agent_id, title, description, priority, severity_level, due_date))
+        conn.commit()
+        return {"message": "Success"}
+
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {"message": "Error", "error": str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def list_org_cases_for_agent(org_id: int):
+    """Returns all cases in the org - read-only view for agents."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT case_id, CaseNumber, title, description, status,
+                priority, severity_level,
+                CAST(created_at AS NVARCHAR(50)) AS created_at,
+                CAST(due_date AS NVARCHAR(50)) AS due_date
+            FROM Cases
+            WHERE org_id = ?
+            ORDER BY created_at DESC
+            """,
+            (org_id,)
+        )
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+        cases = [dict(zip(columns, row)) for row in rows]
+        return {"message": "Success", "cases": cases}
+    finally:
+        conn.close()

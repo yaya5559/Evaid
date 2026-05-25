@@ -1,0 +1,39 @@
+# IDE
+.vs/
+.vscode/
+
+# Vite
+dist/
+build/
+frontend/.vite/
+
+# Environment
+.env
+.env.*
+.env*.local
+frontend/.env
+backend/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+backend/venv/
+
+# Env files
+.env
+.env.*
+frontend/.env
+backend/.env
+
+# Node
+node_modules/
+
+.vs/
+.db
+
+.vs/
+.vs/**

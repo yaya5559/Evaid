@@ -1,0 +1,447 @@
+/* ── KPI strip ─────────────────────────────────────────────────── */
+.agentdash-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.agentdash-kpi {
+  border-radius: 11px;
+  border: 1px solid var(--admin-border-soft);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.agentdash-kpi__label {
+  color: var(--admin-muted-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.agentdash-kpi__value {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.agentdash-kpi__value--warn    { color: #f59e0b; }
+.agentdash-kpi__value--danger  { color: #ef4444; }
+.agentdash-kpi__value--good    { color: #22c55e; }
+.agentdash-kpi__value--neutral { color: var(--admin-text); }
+
+/* ── Two-column grid ───────────────────────────────────────────── */
+.agentdash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.agentdash-grid--equal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ── Card header row ───────────────────────────────────────────── */
+.agentdash-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.agentdash-card-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* ── Priority queue ────────────────────────────────────────────── */
+.agentdash-queue {
+  display: grid;
+  gap: 8px;
+}
+
+.agentdash-queue-row {
+  border-radius: 10px;
+  border: 1px solid var(--admin-border-soft);
+  background: var(--admin-panel-soft);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.agentdash-queue-row:hover {
+  border-color: var(--admin-accent);
+}
+
+.agentdash-queue-score {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--admin-accent);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.agentdash-queue-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agentdash-queue-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agentdash-queue-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--admin-muted-2);
+  flex-wrap: wrap;
+}
+
+/* ── Stats grid ────────────────────────────────────────────────── */
+.agentdash-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.agentdash-stat {
+  border-radius: 10px;
+  border: 1px solid var(--admin-border-soft);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.agentdash-stat__label {
+  color: var(--admin-muted-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+}
+
+.agentdash-stat__pair {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.agentdash-stat__week {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.agentdash-stat__month {
+  font-size: 12px;
+  color: var(--admin-muted);
+}
+
+/* ── Evidence pipeline ─────────────────────────────────────────── */
+.agentdash-pipeline {
+  display: grid;
+  gap: 10px;
+}
+
+.agentdash-pipeline-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 32px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.agentdash-pipeline-label {
+  color: var(--admin-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.agentdash-pipeline-track {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--admin-border-soft);
+  overflow: hidden;
+}
+
+.agentdash-pipeline-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.agentdash-pipeline-fill--pending    { background: #f59e0b; }
+.agentdash-pipeline-fill--processing { background: #0ea5e9; }
+.agentdash-pipeline-fill--processed  { background: #a855f7; }
+.agentdash-pipeline-fill--confirmed  { background: #22c55e; }
+
+.agentdash-pipeline-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text);
+  text-align: right;
+}
+
+/* ── Case health list ──────────────────────────────────────────── */
+.agentdash-health-list {
+  display: grid;
+  gap: 8px;
+}
+
+.agentdash-health-row {
+  border-radius: 10px;
+  border: 1px solid var(--admin-border-soft);
+  background: var(--admin-panel-soft);
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.agentdash-health-row:hover {
+  border-color: var(--admin-accent);
+}
+
+.agentdash-health-title {
+  font-size: 13px;
+  color: var(--admin-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agentdash-health-sub {
+  font-size: 11px;
+  color: var(--admin-muted-2);
+  margin-top: 2px;
+}
+
+/* ── AI linked clusters ────────────────────────────────────────── */
+.agentdash-cluster {
+  border-radius: 10px;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  background: rgba(14, 165, 233, 0.04);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.agentdash-cluster-head {
+  font-size: 12px;
+  color: var(--admin-accent);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.agentdash-cluster-cases {
+  display: grid;
+  gap: 4px;
+}
+
+.agentdash-cluster-case {
+  font-size: 12px;
+  color: var(--admin-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.agentdash-cluster-case a {
+  color: var(--admin-text);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.agentdash-cluster-case a:hover {
+  color: var(--admin-accent);
+  text-decoration: underline;
+}
+
+/* ── Pending signals ───────────────────────────────────────────── */
+.agentdash-signal-list {
+  display: grid;
+  gap: 7px;
+}
+
+.agentdash-signal-row {
+  border-radius: 9px;
+  border: 1px solid var(--admin-border-soft);
+  background: var(--admin-panel-soft);
+  padding: 8px 11px;
+  display: grid;
+  gap: 3px;
+}
+
+.agentdash-signal-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--admin-muted-2);
+}
+
+.agentdash-signal-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--admin-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agentdash-signal-meta {
+  font-size: 11px;
+  color: var(--admin-muted-2);
+}
+
+/* ── Activity timeline ─────────────────────────────────────────── */
+.agentdash-activity {
+  display: grid;
+  gap: 0;
+}
+
+.agentdash-activity-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.agentdash-activity-item:last-child {
+  border-bottom: none;
+}
+
+.agentdash-activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--admin-accent);
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.agentdash-activity-dot--audit {
+  background: #a855f7;
+}
+
+.agentdash-activity-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.agentdash-activity-text {
+  font-size: 13px;
+  color: var(--admin-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agentdash-activity-meta {
+  font-size: 11px;
+  color: var(--admin-muted-2);
+  margin-top: 2px;
+}
+
+.agentdash-activity-time {
+  font-size: 11px;
+  color: var(--admin-muted-2);
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-top: 3px;
+}
+
+/* ── Assignment list ───────────────────────────────────────────── */
+.agentdash-assignment-list {
+  display: grid;
+  gap: 8px;
+}
+
+.agentdash-assignment-row {
+  border-radius: 10px;
+  border: 1px solid var(--admin-border-soft);
+  background: var(--admin-panel-soft);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.agentdash-assignment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agentdash-assignment-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--admin-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agentdash-assignment-meta {
+  font-size: 11px;
+  color: var(--admin-muted-2);
+  margin-top: 2px;
+}
+
+/* ── Empty / loading states ────────────────────────────────────── */
+.agentdash-empty {
+  color: var(--admin-muted-2);
+  font-size: 13px;
+  padding: 8px 0;
+  opacity: 0.7;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .agentdash-kpi-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .agentdash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agentdash-grid--equal {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .agentdash-kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .agentdash-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
