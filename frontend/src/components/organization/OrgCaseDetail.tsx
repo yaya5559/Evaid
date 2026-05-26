@@ -60,7 +60,6 @@ function OrgCaseDetail() {
   const [editSeverity, setEditSeverity] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
-  const [showCloseForm, setShowCloseForm] = useState(false)
   const [closeResolution, setCloseResolution] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showAssignForm, setShowAssignForm] = useState(false)
@@ -169,7 +168,7 @@ function OrgCaseDetail() {
     setEditSeverity(String(detail.case.severity_level ?? '2'))
     setEditDueDate(detail.case.due_date ? detail.case.due_date.slice(0, 10) : '')
     setShowEditForm((p) => !p)
-    setShowCloseForm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowAssignForm(false)
+    setShowCloseConfirm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowAssignForm(false)
   }
 
   const handleEditCase = async () => {
@@ -186,7 +185,7 @@ function OrgCaseDetail() {
     setLoading(true); setError(null)
     try {
       await orgCloseCase(caseId, orgId, Number((user as any)?.user_id ?? 0), closeResolution)
-      setSuccess('Case resolved'); setShowCloseForm(false); void loadDetail()
+      setSuccess('Case resolved'); setShowCloseConfirm(false); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to resolve case') } finally { setLoading(false) }
   }
 
@@ -200,7 +199,7 @@ function OrgCaseDetail() {
 
   const openAssignForm = async () => {
     setShowAssignForm((p) => !p)
-    setShowCloseForm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowEditForm(false)
+    setShowCloseConfirm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowEditForm(false)
     if (orgAgents.length === 0) {
       try { setOrgAgents(await orgGetAgents(orgId)) } catch { setError('Failed to load agents') }
     }
@@ -294,7 +293,7 @@ function OrgCaseDetail() {
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
               <button type="button" className="admin-btn primary" onClick={() => {
                 setShowCloseConfirm((p) => !p)
-                setShowCloseForm(false); setShowDeleteConfirm(false); setShowAssignForm(false); setShowEditForm(false)
+                setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Resolve</button>
               <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)}>Signal Graph</button>
               <div ref={moreMenuRef} style={{ position: 'relative' }}>
@@ -313,7 +312,7 @@ function OrgCaseDetail() {
                     {[
                       { label: 'Edit Case', action: () => { openEditForm(); setShowMoreMenu(false) } },
                       { label: 'Assign Agent', action: () => { void openAssignForm(); setShowMoreMenu(false) } },
-                      { label: 'Delete', action: () => { setShowDeleteConfirm(p => !p); setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false); setShowMoreMenu(false) }, danger: true },
+                      { label: 'Delete', action: () => { setShowDeleteConfirm(p => !p); setShowCloseConfirm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false); setShowMoreMenu(false) }, danger: true },
                     ].map(item => (
                       <button key={item.label} type="button" onClick={item.action} style={{
                         width: '100%', textAlign: 'left', padding: '10px 14px',
