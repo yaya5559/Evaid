@@ -49,7 +49,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, fetchSignalsForEvidence } = useSignals()
+  const { fetchSignalsForCase, fetchSignalsForEvidence, clearSignals } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -254,7 +254,11 @@ function OrgCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [caseId, orgId])
-  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    clearSignals()
+    void fetchSignalsForCase(caseId)
+  }, [caseId])
   useEffect(() => {
     if (!caseId) return
     setActorsLoading(true)
