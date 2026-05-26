@@ -24,9 +24,9 @@ import OrgCaseDetail from './components/organization/OrgCaseDetail'
 import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import AgentCaseGraph from './components/agent/AgentCaseGraph'
 import AgentDashboard from './components/agent/AgentDashboard'
-import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
 import AgentOrgCases from './components/agent/AgentOrgCases'
+import EvidenceUpload from './components/Evidence/EvidenceUpload'
 
 type ProtectedRouteProps = {
   allowedRoles: string[]
