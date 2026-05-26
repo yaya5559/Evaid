@@ -32,6 +32,7 @@
       <list>
         <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
+        <option value="CSS File" />
       </list>
     </option>
   </component>
@@ -58,6 +59,7 @@
     "cidr.known.project.marker": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "junie.onboarding.icon.badge.shown": "true",
+    "list.type.of.created.stylesheet": "CSS",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -68,6 +70,11 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/frontend/src/components/admin" />
+    </key>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="1228841d-8333-4cbe-a871-663dcb9c64a8" name="Changes" comment="" />
@@ -76,7 +83,7 @@
       <option name="presentableId" value="Default" />
       <updated>1779254908681</updated>
       <workItem from="1779254911067" duration="1363000" />
-      <workItem from="1779256538885" duration="19293000" />
+      <workItem from="1779256538885" duration="25237000" />
     </task>
     <servers />
   </component>

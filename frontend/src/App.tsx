@@ -24,7 +24,7 @@ import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import AgentDashboard from './components/agent/AgentDashboard'
 import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
-import Profile from './components/profile/profile.tsx';
+import AdminProfile from './components/admin/AdminProfile'
 
 type ProtectedRouteProps = {
   allowedRoles: string[]
@@ -92,10 +92,11 @@ function App() {
       <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
 
       {/* Any authenticated user */}
-          <Route path="/Profile"         element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><Profile /></ProtectedRoute>} />
-      <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+          <Route path="/Profile" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><AdminProfile /></ProtectedRoute>} />
+          <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
       </AIWarningProvider>
     </SignalProvider>
   )

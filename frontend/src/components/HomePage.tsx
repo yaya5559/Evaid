@@ -2,80 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/HomePage.css";
 
-interface TriviaQuestion {
-  question: string;
-  options: { text: string; isCorrect: boolean }[];
-}
-
 function HomePage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeId, setActiveId] = useState("section1");
-  const [showWarning, setShowWarning] = useState(false);
 
-  // Mascot Game State
-  const [bubbleText, setBubbleText] = useState("Aha! A fresh lead. Click me to test your investigator wits! 🕵️‍♂️");
-  const [bubbleVisible, setBubbleVisible] = useState(true);
-  const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(null);
-  const [isWalking, setIsWalking] = useState(true);
-  const [feedbackMode, setFeedbackMode] = useState<"none" | "correct" | "wrong">("none");
+  // Displays only your Welcome Role Modal on mount
+  const [showRoleModal, setShowRoleModal] = useState(true);
 
-  const investigatorTrivia: TriviaQuestion[] = useMemo(() => [
-    {
-      question: "Case Brief: Who built the famous Eiffel Tower structure in 1889?",
-      options: [
-        { text: "A) Alexandre-Gustave Eiffel", isCorrect: true },
-        { text: "B) Sir Christopher Wren", isCorrect: false }
-      ]
-    },
-    {
-      question: "Forensics Riddle: I have three hearts, blue blood, and zero bones. Who am I?",
-      options: [
-        { text: "A) A Starfish", isCorrect: false },
-        { text: "B) An Octopus", isCorrect: true }
-      ]
-    },
-    {
-      question: "Evidence Ledger: This sweet substance found in Egyptian tombs never spoils. What is it?",
-      options: [
-        { text: "A) Pure Honey", isCorrect: true },
-        { text: "B) Preserved Olive Oil", isCorrect: false }
-      ]
-    },
-    {
-      question: "Night Patrol: I am the only mammal capable of true, sustained flight. What am I?",
-      options: [
-        { text: "A) A Flying Squirrel", isCorrect: false },
-        { text: "B) A Bat", isCorrect: true }
-      ]
-    }
-  ], []);
-
-  // Trigger modal warning popup on mount smoothly
+  // Handle locking scroll when the mobile menu or welcome modal is active
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowWarning(true);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Initial greeting auto-timeout
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!currentQuestion) setBubbleVisible(false);
-    }, 6000);
-    return () => clearTimeout(timer);
-  }, [currentQuestion]);
-
-  // Handle locking scroll ONLY when mobile menu or popup modal is open
-  useEffect(() => {
-    document.body.style.overflow = (menuOpen || showWarning) ? "hidden" : "";
+    document.body.style.overflow = (menuOpen || showRoleModal) ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [menuOpen, showWarning]);
+  }, [menuOpen, showRoleModal]);
 
-  // Intersection Observer for highlighting active nav
+  // Intersection Observer for highlighting active nav links
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll("section.snap-section"));
     if (sections.length === 0) return;
@@ -102,38 +45,11 @@ function HomePage() {
       []
   );
 
-  const handleRobotClick = () => {
-    if (feedbackMode !== "none") return;
-    setIsWalking(false);
-    const rand = Math.floor(Math.random() * investigatorTrivia.length);
-    const selected = investigatorTrivia[rand];
-    setCurrentQuestion(selected);
-    setBubbleText(selected.question);
-    setBubbleVisible(true);
-  };
-
-  const handleAnswerSelection = (isCorrect: boolean) => {
-    if (isCorrect) {
-      setFeedbackMode("correct");
-      setBubbleText("Correct! Outstanding deduction, Agent. 🟢");
-    } else {
-      setFeedbackMode("wrong");
-      setBubbleText("Incorrect. Let's look closer at the evidence file. 🔴");
-    }
-    setCurrentQuestion(null);
-
-    setTimeout(() => {
-      setFeedbackMode("none");
-      setBubbleVisible(false);
-      setIsWalking(true);
-    }, 3000);
-  };
-
   return (
       <div className="homePage">
 
-        {/* ── DYNAMIC ROLE-BASED AI DISCLAIMER POPUP MODAL ── */}
-        {showWarning && (
+        {/* ── YOUR STRUCTURAL ROLE-BASED WELCOME MODAL ── */}
+        {showRoleModal && (
             <div className="warning-overlay">
               <div className="warning-modal animate-slide-up">
                 <div className="warning-icon">🤖</div>
@@ -160,14 +76,14 @@ function HomePage() {
                   *Disclaimer: This intelligence tool serves as an administrative assistant module. Final human assessment is required for verification.
                 </div>
 
-                <button className="warning-close-btn" onClick={() => setShowWarning(false)}>
+                <button className="warning-close-btn" onClick={() => setShowRoleModal(false)}>
                   Launch Dashboard
                 </button>
               </div>
             </div>
         )}
 
-        {/* ── STYLED GLOBAL NAVIGATION HEADER ── */}
+        {/* ── GLOBAL NAVIGATION HEADER ── */}
         <header className="navBar" role="navigation" aria-label="Primary">
           <div className="navInner">
             <a className="brand" href="#section1">
@@ -222,13 +138,12 @@ function HomePage() {
           </div>
         </header>
 
-        {/* ── MAIN SCROLL LAYOUT ── */}
+        {/* ── MAIN SCROLL CONTAINER LAYOUT ── */}
         <main className="scroll-container" id="main">
+
+          {/* WELCOME HERO SECTION */}
           <section id="section1" className="snap-section welcome-hero">
             <div className="hero">
-              <div className="ai-disclaimer-banner">
-                ⚠️ AI Disclaimer: This intelligence tool serves as an administrative assistant module. Final human assessment is required for legal documentation validation.
-              </div>
 
               <div className="badge">AI EVIDENCE ASSISTANT</div>
               <h1 className="welcome-title">
@@ -258,6 +173,7 @@ function HomePage() {
             </div>
           </section>
 
+          {/* SYSTEM FEATURES SECTION */}
           <section id="section2" className="snap-section section2">
             <div className="features-card">
               <h1 className="section-title">What is EVAIDE?</h1>
@@ -301,11 +217,11 @@ function HomePage() {
             </div>
           </section>
 
-          {/* Section 4: Contact Container & Form Grid */}
+          {/* TWO-COLUMN CONTACT GRID SECTION */}
           <section id="section4" className="snap-section section4">
             <div className="contact-container">
 
-              {/* Left Side: Company Contact details */}
+              {/* Left Column: Footer Context Information */}
               <footer className="contact-card" role="contentinfo">
                 <h1>Contact</h1>
                 <h2>EVAIDE</h2>
@@ -319,7 +235,7 @@ function HomePage() {
                 <p className="fine">© {new Date().getFullYear()} EVAIDE. All rights reserved.</p>
               </footer>
 
-              {/* Right Side: Interactive Request Form */}
+              {/* Right Column: Two-Column Verification & Transmission Input Form */}
               <div className="contact-form-wrapper">
                 <form className="contact-form" onSubmit={(e) => { e.preventDefault(); alert('Operational request transmitted successfully.'); }}>
                   <h3>Transmit Operational Request</h3>
@@ -359,37 +275,6 @@ function HomePage() {
             </div>
           </section>
         </main>
-
-        {/* ── WALKING INVESTIGATOR MASCOT WIDGET SYSTEM ── */}
-        <div
-            className={`mascot-widget-container ${isWalking ? "is-patrolling" : "is-talking"}`}
-            role="complementary"
-        >
-          <div className={`mascot-speech-bubble ${bubbleVisible ? "is-visible" : ""} ${feedbackMode}`}>
-            <div>{bubbleText}</div>
-            {currentQuestion && (
-                <div className="mascot-options-row">
-                  {currentQuestion.options.map((opt, i) => (
-                      <button
-                          key={i}
-                          className="mascot-opt-btn"
-                          onClick={() => handleAnswerSelection(opt.isCorrect)}
-                      >
-                        {opt.text}
-                      </button>
-                  ))}
-                </div>
-            )}
-          </div>
-
-          <button
-              className="mascot-investigator-trigger"
-              onClick={handleRobotClick}
-              aria-label="Ask Mascot Trivia"
-          >
-            🕵️‍♂️🤖
-          </button>
-        </div>
       </div>
   );
 }
