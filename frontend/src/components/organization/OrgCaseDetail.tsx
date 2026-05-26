@@ -16,6 +16,7 @@ import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import { EvidenceSection } from '../shared/EvidenceSection'
 import '../../styles/Admin/AdminLayout.css'
 import { GraphFAB } from '../shared/GraphDrawer'
+import { Modal } from '../shared/Modal'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
 
@@ -135,7 +136,11 @@ function OrgCaseDetail() {
   const handleAddActorNote = async (actorId: string) => {
     if (!newActorNote.trim()) return
     try {
-      await addActorNote(actorId, newActorNote.trim())
+      const result = await addActorNote(actorId, newActorNote.trim())
+      const newNote = { note_id: result.note_id, content: newActorNote.trim(), created_at: new Date().toISOString() }
+      setActors(prev => prev.map(a =>
+        a.id === actorId ? { ...a, notes: [newNote, ...(a.notes ?? [])] } : a
+      ))
       setNewActorNote('')
       setNoteInputActorId(null)
     } catch {
@@ -327,88 +332,6 @@ function OrgCaseDetail() {
               </div>
             </div>
 
-            {showEditForm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <h3>Edit Case</h3>
-                <div className="edit-org-controls">
-                  <label className="edit-org-control"><span>Description</span>
-                    <textarea className="edit-org-input" rows={3} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
-                  </label>
-                  <label className="edit-org-control"><span>Priority</span>
-                    <select className="edit-org-input" value={editPriority} onChange={(e) => setEditPriority(e.target.value)}>
-                      <option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option>
-                    </select>
-                  </label>
-                  <label className="edit-org-control"><span>Severity</span>
-                    <select className="edit-org-input" value={editSeverity} onChange={(e) => setEditSeverity(e.target.value)}>
-                      <option value="1">Low</option><option value="2">Medium</option><option value="3">High</option><option value="4">Critical</option>
-                    </select>
-                  </label>
-                  <label className="edit-org-control"><span>Due Date</span>
-                    <input className="edit-org-input" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
-                  </label>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => void handleEditCase()} disabled={loading}>Save</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowEditForm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
-
-            {showAssignForm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <h3>Assign Agent</h3>
-                {orgAgents.length === 0 ? <p style={{ opacity: 0.7 }}>No agents found.</p> : (
-                  <div className="edit-org-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {orgAgents.map((a) => (
-                      <button key={a.user_id} type="button" className={`edit-org-item ${selectedAgentId === a.user_id ? 'active' : ''}`} onClick={() => setSelectedAgentId(a.user_id)}>
-                        <strong>{a.first_name} {a.last_name}</strong>
-                        <small style={{ marginLeft: '8px', opacity: 0.7 }}>{a.email}</small>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => void handleAssign()} disabled={loading || !selectedAgentId}>Assign</button>
-                  <button type="button" className="admin-btn" onClick={() => { setShowAssignForm(false); setSelectedAgentId(null) }}>Cancel</button>
-                </div>
-              </div>
-            )}
-
-            {showCloseConfirm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <p>Resolve <strong>{detail.case.title}</strong>?</p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => { setShowCloseConfirm(false); setShowCloseForm(true) }} disabled={loading}>Yes, Resolve</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowCloseConfirm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
-
-            {showCloseForm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <h3>Resolve Case</h3>
-                <div className="edit-org-controls">
-                  <label className="edit-org-control"><span>Resolution notes</span>
-                    <input className="edit-org-input" type="text" placeholder="Describe the resolution..." value={closeResolution} onChange={(e) => setCloseResolution(e.target.value)} />
-                  </label>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => void handleClose()} disabled={loading || !closeResolution.trim()}>Confirm Resolve</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowCloseForm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
-
-            {showDeleteConfirm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <p>Delete <strong>{detail.case.title}</strong>? This cannot be undone.</p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn critical" onClick={() => void handleDelete()} disabled={loading}>Delete</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
           </section>
 
           <section className="admin-card" style={{ marginBottom: '16px' }}>
@@ -505,6 +428,19 @@ function OrgCaseDetail() {
                     </div>
                   </div>
                 )}
+                {actor.notes && actor.notes.length > 0 && (
+                  <div style={{ marginTop: '8px', width: '100%', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {actor.notes.map(n => (
+                      <div key={n.note_id} style={{
+                        background: 'rgba(255,255,255,0.04)', borderRadius: '6px',
+                        padding: '8px 10px', fontSize: '0.82rem', lineHeight: '1.5'
+                      }}>
+                        <p style={{ margin: 0 }}>{n.content}</p>
+                        <small style={{ opacity: 0.5 }}>{formatDate(n.created_at)}</small>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </section>
@@ -585,7 +521,7 @@ function OrgCaseDetail() {
             )}
           </section>
           <PendingSignalsSection />
-          {confirmedSignals.length > 0 && (
+          {(confirmedSignals.length > 0 )&& (
             <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
               <h2
                 onClick={() => setConfirmedCollapsed(p => !p)}
@@ -600,7 +536,7 @@ function OrgCaseDetail() {
                   </svg>
                 </span>
               </h2>
-              {!confirmedCollapsed && (
+              {confirmedCollapsed && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
                   {confirmedSignals.map((s) => (
                     <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
@@ -659,7 +595,75 @@ function OrgCaseDetail() {
         </>
       )}
 
-      
+      {showEditForm && (
+        <Modal title="Edit Case" onClose={() => setShowEditForm(false)}>
+          <div className="edit-org-controls">
+            <label className="edit-org-control"><span>Description</span>
+              <textarea className="edit-org-input" rows={3} value={editDescription} onChange={e => setEditDescription(e.target.value)} />
+            </label>
+            <label className="edit-org-control"><span>Priority</span>
+              <select className="edit-org-input" value={editPriority} onChange={e => setEditPriority(e.target.value)}>
+                <option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option>
+              </select>
+            </label>
+            <label className="edit-org-control"><span>Severity</span>
+              <select className="edit-org-input" value={editSeverity} onChange={e => setEditSeverity(e.target.value)}>
+                <option value="1">Low</option><option value="2">Medium</option><option value="3">High</option><option value="4">Critical</option>
+              </select>
+            </label>
+            <label className="edit-org-control"><span>Due Date</span>
+              <input className="edit-org-input" type="date" value={editDueDate} onChange={e => setEditDueDate(e.target.value)} />
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button type="button" className="admin-btn primary" onClick={() => void handleEditCase()} disabled={loading}>Save</button>
+            <button type="button" className="admin-btn" onClick={() => setShowEditForm(false)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
+      {showAssignForm && (
+        <Modal title="Assign Agent" onClose={() => { setShowAssignForm(false); setSelectedAgentId(null) }}>
+          {orgAgents.length === 0 ? <p style={{ opacity: 0.7 }}>No agents found.</p> : (
+            <div className="edit-org-list" style={{ maxHeight: '240px', overflowY: 'auto' }}>
+              {orgAgents.map(a => (
+                <button key={a.user_id} type="button" className={`edit-org-item ${selectedAgentId === a.user_id ? 'active' : ''}`} onClick={() => setSelectedAgentId(a.user_id)}>
+                  <strong>{a.first_name} {a.last_name}</strong>
+                  <small style={{ marginLeft: '8px', opacity: 0.7 }}>{a.email}</small>
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button type="button" className="admin-btn primary" onClick={() => void handleAssign()} disabled={loading || !selectedAgentId}>Assign</button>
+            <button type="button" className="admin-btn" onClick={() => { setShowAssignForm(false); setSelectedAgentId(null) }}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
+      {showCloseConfirm && (
+        <Modal title="Resolve Case" onClose={() => setShowCloseConfirm(false)} width="400px">
+          <p style={{ marginBottom: '16px' }}>Resolve <strong>{detail?.case.title}</strong>?</p>
+          <label className="edit-org-control"><span>Resolution notes</span>
+            <input className="edit-org-input" type="text" placeholder="Describe the resolution..." value={closeResolution} onChange={e => setCloseResolution(e.target.value)} />
+          </label>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button type="button" className="admin-btn primary" onClick={() => void handleClose()} disabled={loading || !closeResolution.trim()}>Confirm Resolve</button>
+            <button type="button" className="admin-btn" onClick={() => setShowCloseConfirm(false)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
+      {showDeleteConfirm && (
+        <Modal title="Delete Case" onClose={() => setShowDeleteConfirm(false)} width="400px">
+          <p style={{ marginBottom: '16px' }}>Delete <strong>{detail?.case.title}</strong>? This cannot be undone.</p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="button" className="admin-btn critical" onClick={() => void handleDelete()} disabled={loading}>Delete</button>
+            <button type="button" className="admin-btn" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
     </OrgLayout>
   )
 }

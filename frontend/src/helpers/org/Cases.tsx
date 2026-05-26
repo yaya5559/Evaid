@@ -92,10 +92,17 @@ export type OrgAgent = {
     email: string
 }
 
+export type ActorNote = {
+  note_id: number
+  content: string
+  created_at: string
+}
+
 export type Actor = {
   id: string
   primaryName: string
   aliases: string[]
+  notes: ActorNote[]
   role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
   confidenceScore: number | null
   source: 'AI' | 'User'
@@ -363,8 +370,9 @@ export const addActorAlias = async (actorId: string, alias: string): Promise<voi
   await api.post(`/actors/${actorId}/aliases`, { alias })
 }
 
-export const addActorNote = async (actorId: string, content: string): Promise<void> => {
-  await api.post(`/actors/${actorId}/notes`, { content })
+export const addActorNote = async (actorId: string, content: string): Promise<{ note_id: number; content: string }> => {
+  const res = await api.post(`/actors/${actorId}/notes`, { content })
+  return res.data
 }
 
 export const searchEvidence = async (q: string): Promise<SearchResult[]> => {
