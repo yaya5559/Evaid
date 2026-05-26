@@ -224,7 +224,7 @@ function OrgCaseDetail() {
 
   return (
     <OrgLayout>
-      <GraphFAB graphPath={`/OrgCase/${caseId}/graph`} />
+      <GraphFAB graphPath={`/OrgCases/${caseId}/graph`} />
 
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -257,7 +257,7 @@ function OrgCaseDetail() {
                 setShowDeleteConfirm((p) => !p)
                 setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Delete</button>
-              <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)}>Signal Graph</button>
+              <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)} >Signal Graph</button>
             </div>
 
             {showEditForm && (
