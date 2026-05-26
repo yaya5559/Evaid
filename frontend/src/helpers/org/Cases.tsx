@@ -359,6 +359,14 @@ export const createActor = async (caseId: string, name: string, role: string): P
   return res.data
 }
 
+export const addActorAlias = async (actorId: string, alias: string): Promise<void> => {
+  await api.post(`/actors/${actorId}/aliases`, { alias })
+}
+
+export const addActorNote = async (actorId: string, content: string): Promise<void> => {
+  await api.post(`/actors/${actorId}/notes`, { content })
+}
+
 export const searchEvidence = async (q: string): Promise<SearchResult[]> => {
     if (q.trim().length < 2) return []
     try {
