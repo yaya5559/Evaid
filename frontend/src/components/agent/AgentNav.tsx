@@ -41,6 +41,10 @@ function AgentNav() {
             <span className='admin-nav-dot' />
             My Cases
           </NavLink>
+          <NavLink className={navClassName} to='/AgentOrgCases'>
+            <span className='admin-nav-dot' />
+            Org Cases
+          </NavLink>
         </div>
       </nav>
 

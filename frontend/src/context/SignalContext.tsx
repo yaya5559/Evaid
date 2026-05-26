@@ -1,23 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { api } from './AuthContext'
 
-// ── Types ──────────────────────────────────────────────────
-
 export type SignalStatus = 'pending' | 'confirmed' | 'denied'
 
 export type Signal = {
   id: string
-  signal_type: string         // e.g. "email", "phone_number", "username", or open LLM type
-  raw_value: string           // exactly what was found in the document
+  signal_type: string
+  raw_value: string
   normalized_value: string | null
-  confidence: number          // 0.0 – 1.0
-  source_locator: string | null // JSON string: { method, platform?, reasoning?, char_start?, char_end? }
+  confidence: number
+  source_locator: string | null
   triage_reason: string | null
   status: SignalStatus
   evidence_id: string
 }
 
-// Shape returned by GET /evidence/{id}/pending-signals
 type BackendSignal = {
   id: string
   signal_type: string
@@ -27,8 +24,6 @@ type BackendSignal = {
   source_locator: string | null
   triage_reason: string | null
 }
-
-// ── Context shape ──────────────────────────────────────────
 
 type SignalContextValue = {
   signals: Signal[]
@@ -44,6 +39,7 @@ type SignalContextValue = {
   denySignal: (id: string) => Promise<void>
   fetchSignalsForEvidence: (evidenceId: string) => Promise<void>
   fetchSignalsForCase: (caseId: string) => Promise<void>
+  clearSignals: () => void
 }
 
 const SignalContext = createContext<SignalContextValue | null>(null)
@@ -54,10 +50,13 @@ export function useSignals() {
   return ctx
 }
 
-// ── API helpers ────────────────────────────────────────────
-
 async function getPendingSignals(evidenceId: string): Promise<BackendSignal[]> {
   const res = await api.get<BackendSignal[]>(`/evidence/${evidenceId}/pending-signals`)
+  return Array.isArray(res.data) ? res.data : []
+}
+
+async function getPendingSignalsForCase(caseId: string): Promise<BackendSignal[]> {
+  const res = await api.get(`/evidence/pending-signals/case/${caseId}`)
   return Array.isArray(res.data) ? res.data : []
 }
 
@@ -71,6 +70,15 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const knownIds = useRef<Set<string>>(new Set())
   const watchedEvidenceIds = useRef<Set<string>>(new Set())
+
+  const clearSignals = useCallback(() => {
+    setSignals([])
+    setSeenIds(new Set())
+    setToastQueue([])
+    setOpenSignal(null)
+    knownIds.current = new Set()
+    watchedEvidenceIds.current = new Set()
+  }, [])
 
   const processIncoming = useCallback((incoming: Signal[]) => {
     if (incoming.length === 0) return
@@ -90,11 +98,18 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const fetchSignalsForCase = useCallback(async (_caseId: string) => {
-    // placeholder — wire to a case-level signals endpoint when available
-  }, [])
+  const fetchSignalsForCase = useCallback(async (caseId: string) => {
+    try {
+      const raw = await getPendingSignalsForCase(caseId)
+      const mapped: Signal[] = raw.map((s) => ({
+        ...s,
+        status: 'pending' as const,
+        evidence_id: caseId,
+      }))
+      processIncoming(mapped)
+    } catch { /* silent */ }
+  }, [processIncoming])
 
-  // Fetch pending signals for a specific evidence item and start watching it
   const fetchSignalsForEvidence = useCallback(async (evidenceId: string) => {
     watchedEvidenceIds.current.add(evidenceId)
     try {
@@ -105,10 +120,9 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         evidence_id: evidenceId,
       }))
       processIncoming(mapped)
-    } catch { /* silent — backend may not have processed yet */ }
+    } catch { /* silent */ }
   }, [processIncoming])
 
-  // Poll all watched evidence IDs every 30s to pick up newly processed signals
   useEffect(() => {
     const poll = async () => {
       for (const evidenceId of watchedEvidenceIds.current) {
@@ -184,6 +198,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         denySignal,
         fetchSignalsForEvidence,
         fetchSignalsForCase,
+        clearSignals,
       }}
     >
       {children}

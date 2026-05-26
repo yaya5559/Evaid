@@ -1,0 +1,253 @@
+/**
+ * Shared EvidenceSection component
+ * Used by AgentCaseDetail, OrgCaseDetail, and AdminCaseDetail
+ * Provides: file preview, signal history, upload with AI note, delete
+ */
+import { useState } from 'react'
+import { useEffect } from 'react'
+import { api } from '../../context/AuthContext'
+import { SignalHistoryModal } from './SignalHistoryModal'
+
+export type EvidenceItem = {
+  file_id: string
+  file_name: string
+  content_type?: string
+  upload_date?: string
+  processing_status?: string
+  agent_context?: string | null
+}
+
+interface EvidenceSectionProps {
+  evidence: EvidenceItem[]
+  loading: boolean
+  onUpload: (file: File, agentContext: string) => Promise<void>
+  onDelete: (fileId: string) => Promise<void>
+  previewRoute: string // e.g. '/agent/evidence/preview' or '/org/evidence/preview'
+}
+
+function formatDate(d: string | undefined | null) {
+  if (!d) return '—'
+  const dt = new Date(d.slice(0, 10) + 'T00:00:00')
+  if (isNaN(dt.getTime())) return '—'
+  return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function FilePreviewModal({ evidenceId, fileName, previewRoute, onClose }: {
+  evidenceId: string
+  fileName: string
+  previewRoute: string
+  onClose: () => void
+}) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [contentType, setContentType] = useState<string>('')
+  const [loadingPreview, setLoadingPreview] = useState(true)
+  const [previewError, setPreviewError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let objectUrl: string | null = null
+    const load = async () => {
+      try {
+        const res = await api.get(`${previewRoute}/${evidenceId}`, {
+          responseType: 'blob',
+          withCredentials: true,
+        })
+        objectUrl = URL.createObjectURL(res.data)
+        setBlobUrl(objectUrl)
+        setContentType(res.data.type ?? '')
+      } catch {
+        setPreviewError('Failed to load file preview')
+      } finally {
+        setLoadingPreview(false)
+      }
+    }
+    void load()
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [evidenceId, previewRoute])
+
+  const isImage = contentType.startsWith('image/')
+  const isPdf = contentType === 'application/pdf'
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: '#1a1a1a', borderRadius: '12px', width: '90vw', height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <strong style={{ fontSize: '0.95rem', color: '#fff' }}>{fileName}</strong>
+          <button type="button" className="admin-btn" onClick={onClose} style={{ padding: '4px 10px' }}>✕ Close</button>
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
+          {loadingPreview && <p style={{ opacity: 0.6, color: '#fff' }}>Loading preview...</p>}
+          {previewError && <p style={{ color: '#f87171' }}>{previewError}</p>}
+          {blobUrl && isImage && (
+            <img src={blobUrl} alt={fileName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />
+          )}
+          {blobUrl && isPdf && (
+            <iframe src={blobUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />
+          )}
+          {blobUrl && !isImage && !isPdf && (
+            <div style={{ color: '#fff', textAlign: 'center', padding: '32px' }}>
+              <p style={{ marginBottom: '12px', opacity: 0.8 }}>Preview not available for this file type.</p>
+              <a href={blobUrl} download={fileName} className="admin-btn primary">Download File</a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function EvidenceSection({ evidence, loading, onUpload, onDelete, previewRoute }: EvidenceSectionProps) {
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
+  const [agentNote, setAgentNote] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [previewEvidence, setPreviewEvidence] = useState<{ id: string; name: string } | null>(null)
+  const [signalEvidence, setSignalEvidence] = useState<{ id: string; name: string } | null>(null)
+  const [noteEvidence, setNoteEvidence] = useState<{ name: string; note: string } | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  const handleUpload = async () => {
+    if (!evidenceFile) return
+    setUploading(true); setUploadError(null)
+    try {
+      await onUpload(evidenceFile, agentNote)
+      setEvidenceFile(null); setAgentNote('')
+    } catch (err: any) {
+      setUploadError(err?.message ?? 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <>
+      {previewEvidence && (
+        <FilePreviewModal
+          evidenceId={previewEvidence.id}
+          fileName={previewEvidence.name}
+          previewRoute={previewRoute}
+          onClose={() => setPreviewEvidence(null)}
+        />
+      )}
+      {signalEvidence && (
+        <SignalHistoryModal
+          evidenceId={signalEvidence.id}
+          evidenceName={signalEvidence.name}
+          onClose={() => setSignalEvidence(null)}
+        />
+      )}
+
+      {/* Agent note popup */}
+      {noteEvidence && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          onClick={() => setNoteEvidence(null)}
+        >
+          <div
+            style={{ background: '#1a1a1a', borderRadius: '12px', width: '100%', maxWidth: '480px', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', opacity: 0.5, color: '#fff', marginBottom: '2px' }}>Investigator Note</div>
+                <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{noteEvidence.name}</strong>
+              </div>
+              <button type="button" className="admin-btn" onClick={() => setNoteEvidence(null)} style={{ padding: '4px 10px' }}>✕</button>
+            </div>
+            <div style={{ padding: '20px', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6, opacity: 0.85 }}>
+              {noteEvidence.note}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <section className="admin-card" style={{ marginBottom: '16px' }}>
+        <h2>Evidence</h2>
+
+        {evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
+        {evidence.map((ev) => (
+          <div key={ev.file_id} className="orgdash-progress-row" style={{ alignItems: 'center' }}>
+            {/* Clickable file name */}
+            <button
+              type="button"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, flex: 1, minWidth: 0 }}
+              onClick={() => setPreviewEvidence({ id: ev.file_id, name: ev.file_name })}
+            >
+              <span style={{ fontWeight: 500, textDecoration: 'underline', color: 'var(--color-text-primary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {ev.file_name}
+              </span>
+              <small style={{ opacity: 0.6 }}>{ev.processing_status} · {formatDate(ev.upload_date)}</small>
+            </button>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '6px', flexShrink: 0, marginLeft: '12px' }}>
+              {ev.agent_context && (
+                <button
+                  type="button"
+                  className="admin-btn"
+                  style={{ fontSize: '0.8rem', padding: '3px 10px' }}
+                  onClick={() => setNoteEvidence({ name: ev.file_name, note: ev.agent_context! })}
+                >
+                  Note
+                </button>
+              )}
+              <button
+                type="button"
+                className="admin-btn"
+                style={{ fontSize: '0.8rem', padding: '3px 10px' }}
+                onClick={() => setSignalEvidence({ id: ev.file_id, name: ev.file_name })}
+              >
+                Signals
+              </button>
+              {confirmDeleteId === ev.file_id ? (
+                <>
+                  <button type="button" className="admin-btn critical" onClick={() => { void onDelete(ev.file_id); setConfirmDeleteId(null) }} disabled={loading}>Confirm</button>
+                  <button type="button" className="admin-btn" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                </>
+              ) : (
+                <button type="button" className="admin-btn critical" onClick={() => setConfirmDeleteId(ev.file_id)}>Delete</button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Upload section with AI note */}
+        <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border-tertiary)', paddingTop: '16px' }}>
+          <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', fontSize: '0.9rem' }}>
+            Note for AI <span style={{ opacity: 0.6, fontWeight: 400 }}>(optional — helps AI extract more relevant signals)</span>
+          </label>
+          <textarea
+            className="edit-org-input"
+            rows={2}
+            placeholder="e.g. 'This is a Discord log. Focus on usernames and server names.'"
+            value={agentNote}
+            onChange={(e) => setAgentNote(e.target.value)}
+            style={{ width: '100%', boxSizing: 'border-box', marginBottom: '8px' }}
+          />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="file"
+              accept="image/*,.pdf,.txt,.csv,.json"
+              onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)}
+              style={{ flex: 1, color: 'inherit' }}
+            />
+            <button
+              type="button"
+              className="admin-btn primary"
+              onClick={() => void handleUpload()}
+              disabled={uploading || !evidenceFile}
+            >
+              {uploading ? 'Uploading...' : 'Upload'}
+            </button>
+          </div>
+          {uploadError && <p style={{ color: '#991b1b', fontSize: '0.85rem', marginTop: '6px' }}>{uploadError}</p>}
+        </div>
+      </section>
+    </>
+  )
+}
