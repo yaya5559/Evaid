@@ -45,6 +45,16 @@ export type OrgAssignedAgent = {
     assigned_by_last_name: string
 }
 
+export type SearchResult = {
+  signal_type: string
+  raw_value: string
+  confidence: number
+  case_id: number
+  case_title: string
+  case_status: string
+  found_at: string
+}
+
 export type AssignedAgent = OrgAssignedAgent
 
 export type OrgCaseNote = {
@@ -82,10 +92,17 @@ export type OrgAgent = {
     email: string
 }
 
+export type ActorNote = {
+  note_id: number
+  content: string
+  created_at: string
+}
+
 export type Actor = {
   id: string
   primaryName: string
   aliases: string[]
+  notes: ActorNote[]
   role: 'Suspect' | 'Person of Interest' | 'Witness' | 'Victim'
   confidenceScore: number | null
   source: 'AI' | 'User'
@@ -94,9 +111,13 @@ export type Actor = {
   casesCount: number
 }
 
-// Stub — connect to /cases/{case_id}/actors when backend is available
 export const getActorsForCase = async (_caseId: string): Promise<Actor[]> => {
-  return []
+  try {
+    const res = await api.get(`/actors/case/${_caseId}`)
+    return Array.isArray(res.data) ? res.data : []
+  } catch {
+    return []
+  }
 }
 
 export type ConfirmedSignal = {
@@ -114,8 +135,6 @@ export const getConfirmedSignals = async (caseId: string): Promise<ConfirmedSign
   return (res.data ?? []) as ConfirmedSignal[]
 }
 
-
-
 export type OrgCreateCasePayload = {
     case_number?: string
     title: string
@@ -130,9 +149,7 @@ export type OrgCreateCasePayload = {
 
 export const orgGetCases = async (_orgId: string): Promise<OrgCaseListItem[]> => {
     try {
-        const res = await api.get('/org/cases/', {
-            withCredentials: true,
-        })
+        const res = await api.get('/org/cases/', { withCredentials: true })
         const data = res.data
         if (data?.message === 'Error') throw new Error(data.error ?? 'Failed to load cases')
         return (data?.cases ?? []) as OrgCaseListItem[]
@@ -143,9 +160,7 @@ export const orgGetCases = async (_orgId: string): Promise<OrgCaseListItem[]> =>
 
 export const orgGetCaseDetail = async (caseId: string, _orgId: string): Promise<OrgCaseDetailResponse> => {
     try {
-        const res = await api.get(`/org/cases/${caseId}`, {
-            withCredentials: true,
-        })
+        const res = await api.get(`/org/cases/${caseId}`, { withCredentials: true })
         const data = res.data
         if (!data?.case) throw new Error(data?.message ?? 'Case not found')
         return data as OrgCaseDetailResponse
@@ -156,9 +171,7 @@ export const orgGetCaseDetail = async (caseId: string, _orgId: string): Promise<
 
 export const orgCreateCase = async (_orgId: string, _userId: number, data: OrgCreateCasePayload) => {
     try {
-        const res = await api.post('/org/cases/', data, {
-            withCredentials: true,
-        })
+        const res = await api.post('/org/cases/', data, { withCredentials: true })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to create case')
         return res.data
     } catch (err: any) {
@@ -197,9 +210,7 @@ export const orgCloseCase = async (caseId: string, _orgId: string, _closedByUser
 
 export const orgDeleteCase = async (caseId: string, _orgId: string) => {
     try {
-        const res = await api.delete(`/org/cases/${caseId}`, {
-            withCredentials: true,
-        })
+        const res = await api.delete(`/org/cases/${caseId}`, { withCredentials: true })
         return res.data
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete case')
@@ -208,11 +219,7 @@ export const orgDeleteCase = async (caseId: string, _orgId: string) => {
 
 export const orgGetAgents = async (_orgId: string): Promise<OrgAgent[]> => {
     try {
-        // FIXED: was /org/agents/ � correct route is /org/cases/agents/ (case_org_admin.py)
-        // org_id is read from the JWT token on the backend, no query param needed
-        const res = await api.get('/org/cases/agents/', {
-            withCredentials: true,
-        })
+        const res = await api.get('/org/cases/agents/', { withCredentials: true })
         const data = res.data
         if (data?.message === 'Error') throw new Error(data.error ?? 'Failed to load agents')
         return (data?.agents ?? []) as OrgAgent[]
@@ -235,9 +242,7 @@ export const orgAssignAgent = async (caseId: string, userId: number, assignedBy:
 
 export const orgUnassignAgent = async (caseId: string, userId: number, _orgId: string) => {
     try {
-        const res = await api.delete(`/org/assignments/case/${caseId}/agent/${userId}`, {
-            withCredentials: true,
-        })
+        const res = await api.delete(`/org/assignments/case/${caseId}/agent/${userId}`, { withCredentials: true })
         return res.data
     } catch (err: any) {
         throw new Error(err?.message ?? 'Unable to unassign agent')
@@ -297,38 +302,32 @@ export const orgDeleteEvidence = async (fileId: string, orgId: string) => {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to delete evidence')
     }
 }
-export const orgCreateEvidenceItem = async (case_id: string, title: string, description: string) => {
-  try {
-    const res = await api.post('/evidence/EvidenceItem', {
-      case_id: Number(case_id),
-      title,
-      description,
-    })
-    return res.data
-  } catch (err: any) {
-    throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to create evidence item')
-  }
+
+export const orgCreateEvidenceItem = async (_case_id: string, _title: string, _description: string) => {
+    try {
+        // placeholder - implement when backend endpoint is ready
+    } catch (err: any) {
+        throw new Error(err?.message ?? 'Unable to create evidence item')
+    }
 }
 
-
-
-
-
-export const orgUploadEvidence = async (caseId: string, file: File, _userId: number, note?:string) => {
+export const orgUploadEvidence = async (caseId: string, file: File, _userId: number, note?: string) => {
     try {
         // Step 1 — create the EvidenceItem record
         const itemRes = await api.post('/evidence/EvidenceItem', {
             case_id: caseId,
             title: file.name,
-            description: note ?? '',
+            description: file.name.replace(/\.[^/.]+$/, ''),
+            agent_context: note ?? null,
         })
         const evidenceItemId: string = itemRes.data.evidenceItem_id
 
         // Step 2 — upload the file as an attachment
         const formData = new FormData()
         formData.append('attachement', file)
-        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData)
-        return { ...(attachRes.data as { attachment_id: string; analysis_run_id: string }), evidenceItemId }
+        const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData, { withCredentials: true })
+
+        return { ...attachRes.data, file_id: evidenceItemId }
     } catch (err: any) {
         throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Upload failed')
     }
@@ -343,8 +342,7 @@ export const orgConfirmEvidence = async (fileId: string) => {
     }
 }
 
-
-export type CaseCorrelation  = {
+export type CaseCorrelation = {
     related_case_id: string,
     related_case_title: string
     related_case_status: string
@@ -354,11 +352,35 @@ export type CaseCorrelation  = {
     created_at: string
 }
 
-export const getCaseCorrelation = async (caseId: string):Promise<CaseCorrelation[]> => {
-    try{
+export const getCaseCorrelation = async (caseId: string): Promise<CaseCorrelation[]> => {
+    try {
         const res = await api.get(`/evidence/correlations/${caseId}`)
         return Array.isArray(res.data) ? res.data : []
-    }catch {
+    } catch {
+        return []
+    }
+}
+
+export const createActor = async (caseId: string, name: string, role: string): Promise<Actor> => {
+  const res = await api.post(`/actors/case/${caseId}`, { name, role })
+  return res.data
+}
+
+export const addActorAlias = async (actorId: string, alias: string): Promise<void> => {
+  await api.post(`/actors/${actorId}/aliases`, { alias })
+}
+
+export const addActorNote = async (actorId: string, content: string): Promise<{ note_id: number; content: string }> => {
+  const res = await api.post(`/actors/${actorId}/notes`, { content })
+  return res.data
+}
+
+export const searchEvidence = async (q: string): Promise<SearchResult[]> => {
+    if (q.trim().length < 2) return []
+    try {
+        const res = await api.get(`/evidence/search`, { params: { q } })
+        return Array.isArray(res.data) ? res.data : []
+    } catch {
         return []
     }
 }

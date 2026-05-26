@@ -12,8 +12,8 @@ function AdminNav() {
   const navigate = useNavigate()
 
   const onLogout = async () => {
-    await logout()
-    navigate('/Login', { replace: true })
+  await logout()
+  navigate('/Login', { replace: true })
   }
 
   return (

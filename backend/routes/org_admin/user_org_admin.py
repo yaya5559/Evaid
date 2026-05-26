@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from dependencies.auth import require_roles
-from services.registerUser import register_user
 from models.register import RegisterRequest
+from services.registerUser import register_user
 import services.org_admin.org_user_services as services
 
 router = APIRouter(prefix="/org/agents", tags=["Org Admin - Agents"])

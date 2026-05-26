@@ -34,30 +34,32 @@ def addOrganization(data: Organization):
          status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
          detail = "Organization failed to be created"
        )
-    
+
+    return {"message": "Organization created successfully"}
+
 # @router.get("/Organization_Info")
 # def get_information(name:str):
 #    return services.organization_info(name)
     
-@router.patch("/disable_org")
-def disable(org_name: str):
+@router.patch("/{org_name}/disable")
+def disable_org(org_name: str):
    if services.disable_organization(org_name):
       return "Success"
-   else: 
+   else:
       return "Failed"
 
-@router.patch("/enable_org")
-def disable(org_name: str):
+@router.patch("/{org_name}/enable")
+def enable_org(org_name: str):
    if services.enable_organization(org_name):
       return "Success"
-   else: 
+   else:
       return "Failed"
-    
-@router.delete("/Delete")
+
+@router.delete("/{name}")
 def delete_organization(name: str):
    if services.delete_organization(name):
       return "Success"
-   else: 
+   else:
       return "Failed"
     
 
@@ -83,6 +85,5 @@ def Edit_organization(organization_id: int, organization: editedOrg):
       )
    
    return {"message":"Organization updated successfully"}
-
 
 

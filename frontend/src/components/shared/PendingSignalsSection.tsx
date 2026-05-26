@@ -13,7 +13,8 @@ function formatSignalType(type: string): string {
 
 export function PendingSignalsSection() {
   const { signals, setOpenSignal } = useSignals()
-  const [collapsed, setCollapsed] = useState<Boolean>(true)
+  const [collapsed, setCollapsed] = useState<boolean>(false)
+
   const pending = signals.filter((s) => s.status === 'pending')
 
   if (pending.length === 0) return null
@@ -35,7 +36,7 @@ export function PendingSignalsSection() {
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
-              transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+              transform: collapsed ? 'rotate(180deg)':'rotate(0deg)',
               transition: 'transform 0.2s ease'
             }}
           >
@@ -43,45 +44,48 @@ export function PendingSignalsSection() {
           </svg>
         </span>
       </h2>
-      {!collapsed && (
+      {collapsed && (
         <>
           <p style={{ opacity: 0.6, fontSize: '0.85rem', marginTop: 0, marginBottom: '12px' }}>
             These signals were extracted from uploaded evidence and need your review. Click a signal to review it.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '320px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
             {pending.map((signal) => (
               <button
                 key={signal.id}
                 type="button"
-                className="orgdash-progress-row"
-                style={{
-                  flexDirection: 'column', alignItems: 'flex-start', gap: '8px', padding: '12px',
-                  cursor: 'pointer', width: '100%', textAlign: 'left', background: 'none', border: 'none',
-                }}
                 onClick={() => setOpenSignal(signal)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  transition: 'background 0.15s',
+                  color: 'inherit',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span className="signal-type-badge small evidence">
-                      {formatSignalType(signal.signal_type)}
-                    </span>
-                    <span style={{ color: "#fff8f8", fontFamily: 'monospace', fontSize: '0.9rem', wordBreak: 'break-all' }}>
-                      {signal.raw_value}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{
-                      fontWeight: 700,
-                      color: confidenceColor(signal.confidence),
-                      fontSize: '0.85rem',
-                      minWidth: '36px',
-                      textAlign: 'right',
-                    }}>
-                      {Math.round(signal.confidence * 100)}%
-                    </span>
-                    <span style={{ fontSize: '0.8rem', color: '#5b8dee', fontWeight: 600 }}>Review →</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                  <span className="signal-type-badge small evidence" style={{ flexShrink: 0 }}>
+                    {formatSignalType(signal.signal_type)}
+                  </span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {signal.raw_value}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, marginLeft: '12px' }}>
+                  <span style={{ fontWeight: 700, color: confidenceColor(signal.confidence), fontSize: '0.85rem' }}>
+                    {Math.round(signal.confidence * 100)}%
+                  </span>
+                  <span style={{ opacity: 0.4, fontSize: '0.8rem' }}>Review →</span>
                 </div>
               </button>
             ))}

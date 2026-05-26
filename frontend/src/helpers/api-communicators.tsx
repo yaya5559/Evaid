@@ -30,26 +30,38 @@ type AgentPayload = {
 }
 
 export type OrganizationListItem = {
-    id: string;
-    name: string;
-    email?: string;
+    id?: string;
+    org_id?: number | string;
+    name?: string;
+    companyName?: string;
+    company_name?: string;
+    companyEmail?: string;
+    company_email?: string;
+    companyPhoneNumber?: string;
+    company_phone_number?: string;
+    ownerFirstName?: string;
+    owner_first_name?: string;
+    ownerLastName?: string;
+    owner_last_name?: string;
+    ownerEmail?: string;
+    owner_email?: string;
+    ownerPhoneNumber?: string;
+    owner_phone_number?: string;
     phone_number?: string;
+    description?: string;
     status?: string;
+    updatedAt?: string;
+    updated_at?: string;
     region?: string;
     seat_limit?: number;
     primary_contact?: string;
     notes?: string;
-    updated_at?: string;
     open_cases?: number;
 };
 
-
 export const loginUser = async (email: string, password: string) => {
     try {
-        const response = await api.post(
-            `/auth/login`,
-            { email, password }, // request body
-        );
+        const response = await api.post(`/auth/login`, { email, password });
         return response.data.accessToken ?? response.data.access_token;
     } catch (err: any) {
         const msg =
@@ -63,18 +75,18 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const addAgent = async (agent: AgentPayload) => {
-  try {
-    const res = await api.post(`/RegisterAgent`, agent)
-    return res.data
-  } catch (err: any) {
-    const msg = 
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      err?.response?.data?.detail ||
-      err?.message ||
-      "Unable to register agent";
-    throw new Error(msg);
-  }
+    try {
+        const res = await api.post(`/RegisterAgent`, agent)
+        return res.data
+    } catch (err: any) {
+        const msg =
+            err?.response?.data?.error ||
+            err?.response?.data?.message ||
+            err?.response?.data?.detail ||
+            err?.message ||
+            "Unable to register agent";
+        throw new Error(msg);
+    }
 }
 
 export const addOrganization = async (organization: OrganizationPayload) => {
@@ -121,42 +133,36 @@ export const getOrganizations = async () => {
 
 export const getCases = async () => {
     try {
-        const res = await api.get("/cases/all", {
-            withCredentials: true,
-        });
+        const res = await api.get("/cases/all", { withCredentials: true });
         return res.data as CaseListItem[];
     } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Could not load cases");
     }
 };
 
-export const getGraph =  async (case_id:string) => {
-    try{
+export const getGraph = async (case_id: string) => {
+    try {
         const res = await api.get(`/graph/cases/${case_id}`)
         return res
-
-    }catch(err: any){
+    } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Could not load cases");
     }
 }
 
 type OrganizationUpdatePayload = {
-  org_id: number;
-  companyName: string;
-  companyEmail: string;
-  companyPhoneNumber: string;
-  ownerFirstName: string;
-  ownerLastName: string;
-  ownerEmail: string;
-  ownerPhoneNumber: string;
-  status: string;
-  description?: string;
+    org_id: number;
+    companyName: string;
+    companyEmail: string;
+    companyPhoneNumber: string;
+    ownerFirstName: string;
+    ownerLastName: string;
+    ownerEmail: string;
+    ownerPhoneNumber: string;
+    status: string;
+    description?: string;
 };
 
-export const editOrganization = async(    
-    organization: OrganizationUpdatePayload
-
-) => {
+export const editOrganization = async (organization: OrganizationUpdatePayload) => {
     try {
         const organizationId = organization.org_id
         const res = await api.put(`/Organization/${organizationId}`, organization, {
@@ -174,19 +180,31 @@ export const editOrganization = async(
     }
 };
 
-export const uploadEvidence = async (caseId: number, file: File, description = '', title = file.name) => {
+// Step 1: Create EvidenceItem with agent context note
+// Step 2: Upload file as attachment
+export const uploadEvidence = async (
+    caseId: number,
+    file: File,
+    _description: string,
+    _title: string,
+    agentContext: string
+) => {
     try {
-        const itemRes = await api.post("/evidence/EvidenceItem", {
-            case_id: String(caseId),
-            title,
-            description,
-        });
-        const evidenceItemId: string = itemRes.data.evidenceItem_id;
+        const fileName = file.name.replace(/\.[^/.]+$/, '') // use filename without extension as title
 
-        // Step 2 — upload the file as an attachment to that item
+        const itemRes = await api.post(`/evidence/EvidenceItem`, {
+            case_id: caseId,
+            description: fileName,
+            title: fileName,
+            agent_context: agentContext || null,
+        });
+
+        const evidenceItemId = itemRes.data.evidenceItem_id;
+
         const formData = new FormData();
         formData.append("attachement", file);
         const attachRes = await api.post(`/evidence/${evidenceItemId}/attachments`, formData);
+
         return { ...attachRes.data, evidenceItemId };
     } catch (err: any) {
         throw new Error(err.response?.data?.detail || "Upload failed");
