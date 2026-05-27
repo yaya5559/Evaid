@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import OrgLayout from './OrgLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
-import { EvidenceSection } from '../shared/EvidenceSection'
+import { EvidenceSection, EvidenceUploadSection } from '../shared/EvidenceSection'
 import '../../styles/Admin/AdminLayout.css'
 import { GraphFAB } from '../shared/GraphDrawer'
 import { Modal } from '../shared/Modal'
@@ -49,7 +49,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, fetchSignalsForEvidence, clearSignals } = useSignals()
+  const { fetchSignalsForCase, fetchSignalsForEvidence, clearSignals, lastTriagedAt } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -103,7 +103,7 @@ function OrgCaseDetail() {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelation).catch(() => setCorrelation([]))
     getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId])
+  }, [caseId, lastTriagedAt])
 
   const handleAddActor = async () => {
     if (!newActorName.trim()) return
@@ -152,6 +152,7 @@ function OrgCaseDetail() {
     setLoading(true)
     try {
       const res = await orgGetCaseDetail(caseId, orgId)
+      console.log('evidence:', res.evidence)
       if (!res.case) { setError('Case not found'); return }
       setDetail(res)
     } catch (err: any) {
@@ -458,10 +459,10 @@ function OrgCaseDetail() {
               </div>
             ))}
           </section>
+          <EvidenceUploadSection onUpload={handleUploadEvidence} />
           <EvidenceSection
             evidence={detail.evidence}
             loading={loading}
-            onUpload={handleUploadEvidence}
             onDelete={handleDeleteEvidence}
             previewRoute="/org/evidence/preview"
           />

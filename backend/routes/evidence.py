@@ -272,6 +272,9 @@ def search_evidence(q:str):
 
     conn = get_db_connection()
     cursor = conn.cursor()
+    like = f'%{q.strip()}%'
+    results = []
+
     try:
         cursor.execute("""
             SELECT DISTINCT
@@ -280,31 +283,68 @@ def search_evidence(q:str):
                 s.confidence,
                 ei.case_id,
                 c.title AS case_title,
-                c.status AS case_status,
-                NULL AS found_at
+                c.status AS case_status
             FROM Signal s
             JOIN EvidenceItem ei ON ei.Id = s.evidence_id
             JOIN Cases c ON c.case_id = ei.case_id
             WHERE s.raw_value LIKE ?
               AND c.deleted_at IS NULL
             ORDER BY s.confidence DESC
-        """, (f'%{q.strip()}%',))
+        """, (like,))
 
-        rows = cursor.fetchall()
-        return [
-            {
+        for row in cursor.fetchall():
+            results.append({
+                "result_type": "signal",
                 "signal_type": row[0],
                 "raw_value": row[1],
                 "confidence": row[2],
                 "case_id": row[3],
                 "case_title": row[4],
                 "case_status": row[5],
-                "found_at": row[6],
-            }
-            for row in rows
-        ]
+            })
 
+        #--- Actors ---
+        cursor.execute("""
+            SELECT DISTINCT
+                CAST(ap.actor_id AS NVARCHAR(36)),
+                ap.actor_name,
+                ca.role,
+                ca.case_id
+            FROM ActorProfile ap
+            LEFT JOIN CaseActor ca ON ca.actor_id = ap.actor_id
+            WHERE ap.actor_name LIKE ?
+               OR ap.actor_id IN (
+                   SELECT actor_id FROM ActorAlias WHERE alias_value LIKE ?
+               )
+        """, (like, like))
+        for row in cursor.fetchall():
+            results.append({
+                "result_type": "actor",
+                "actor_id": row[0],
+                "actor_name": row[1],
+                "role": row[2],
+                "case_id": row[3],
+            })
+
+        # --- Cases ---
+        cursor.execute("""
+            SELECT case_id, CaseNumber, title, status
+            FROM Cases
+            WHERE (title LIKE ? OR CaseNumber LIKE ?)
+              AND deleted_at IS NULL
+        """, (like, like))
+
+        for row in cursor.fetchall():
+            results.append({
+                "result_type": "case",
+                "case_id": row[0],
+                "case_number": row[1],
+                "case_title": row[2],
+                "case_status": row[3],
+            })
+
+        return results
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
-        conn.close()    
+        conn.close()
