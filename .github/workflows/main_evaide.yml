@@ -15,7 +15,7 @@ jobs:
   build-and-deploy:
 
     runs-on: ubuntu-latest
- 
+
     permissions:
 
       contents: read
@@ -52,13 +52,13 @@ jobs:
  
       - name: Deploy to Azure Web App
 
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
 
         with:
 
           app-name: evaid
 
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_36D1B8FEFDC442A59A692852E5944CDB }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
 
           images: ghcr.io/${{ github.repository_owner }}/evaid-backend:latest
  
