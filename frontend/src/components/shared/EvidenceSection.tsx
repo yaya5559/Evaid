@@ -133,15 +133,18 @@ export function EvidenceSection({ evidence, loading, onUpload, onDelete, preview
   const [signalEvidence, setSignalEvidence] = useState<{ id: string; name: string } | null>(null)
   const [noteEvidence, setNoteEvidence] = useState<{ name: string; note: string } | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadDone, setUploadDone] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
 
   const handleUpload = async () => {
     if (!evidenceFile) return
-    setUploading(true); setUploadError(null)
+    setUploading(true); setUploadError(null); setUploadDone(false)
     try {
       await onUpload(evidenceFile, agentNote)
       setEvidenceFile(null); setAgentNote('')
+      setUploadDone(true)
+      setTimeout(() => setUploadDone(false), 3000)
     } catch (err: any) {
       setUploadError(err?.message ?? 'Upload failed')
     } finally {
@@ -272,7 +275,7 @@ export function EvidenceSection({ evidence, loading, onUpload, onDelete, preview
             <input
               type="file"
               accept="image/*,.pdf,.txt,.csv,.json"
-              onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => { setEvidenceFile(e.target.files?.[0] ?? null); setUploadDone(false) }}
               style={{ flex: 1, color: 'inherit' }}
             />
             <button
@@ -280,11 +283,28 @@ export function EvidenceSection({ evidence, loading, onUpload, onDelete, preview
               className="admin-btn primary"
               onClick={() => void handleUpload()}
               disabled={uploading || !evidenceFile}
+              style={{ minWidth: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                    style={{ animation: 'spin 0.8s linear infinite' }}>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                  Uploading...
+                </>
+              ) : uploadDone ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Done
+                </>
+              ) : 'Upload'}
             </button>
           </div>
-          {uploadError && <p style={{ color: '#991b1b', fontSize: '0.85rem', marginTop: '6px' }}>{uploadError}</p>}
+          {uploadError && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '6px' }}>{uploadError}</p>}
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
           </>
         )}

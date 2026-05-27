@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAIWarning } from '../../context/AIWarningContext'
@@ -15,7 +15,18 @@ function OrgNav() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showUserMenu) return
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setShowUserMenu(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showUserMenu])
 
   const handleSearch = useCallback((q: string) => {
     setSearchQuery(q)
@@ -116,14 +127,6 @@ function OrgNav() {
         </div>
       </nav>
 
-      <div className='admin-user-panel'>
-        <div className='admin-user-avatar'>{initials || 'OR'}</div>
-        <div>
-          <div className='admin-user-name'>{user?.company || 'Organization Team'}</div>
-          <div className='admin-user-role'>{user?.email || 'organization@evaide.local'}</div>
-        </div>
-      </div>
-
       <button
         type='button'
         onClick={openWarning}
@@ -138,16 +141,46 @@ function OrgNav() {
           color: '#f59e0b',
           cursor: 'pointer',
           width: '100%',
-          marginBottom: '8px',
           letterSpacing: '0.01em',
         }}
       >
         <span style={{ fontSize: '14px' }}>⚠️</span>
         AI Use Policy
       </button>
-      <button className='admin-btn admin-btn-ghost org-nav-logout' onClick={() => void onLogout()} type='button'>
-        Sign out
-      </button>
+
+      <div ref={userMenuRef} style={{ position: 'relative' }}>
+        <div
+          className='admin-user-panel'
+          onClick={() => setShowUserMenu(p => !p)}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className='admin-user-avatar'>{initials || 'OR'}</div>
+          <div style={{ flex: 1 }}>
+            <div className='admin-user-name'>{user?.company || 'Organization Team'}</div>
+            <div className='admin-user-role'>{user?.email || 'organization@evaide.local'}</div>
+          </div>
+        </div>
+        {showUserMenu && (
+          <div style={{
+            position: 'absolute', bottom: '110%', left: 0, right: 0,
+            background: 'var(--admin-card-bg, #1a1a2e)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '8px', overflow: 'hidden',
+            boxShadow: '0 -8px 24px rgba(0,0,0,0.4)'
+          }}>
+            <button type='button' onClick={() => void onLogout()} style={{
+              width: '100%', textAlign: 'left', padding: '10px 14px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '0.875rem', color: '#ef4444', fontFamily: 'inherit'
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              Sign out
+            </button>
+          </div>
+        )}
+      </div>
     </>
   )
 }
