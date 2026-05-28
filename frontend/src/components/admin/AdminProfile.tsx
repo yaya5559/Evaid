@@ -50,7 +50,7 @@ export default function Profile() {
 
         try {
             // Sending a PUT request to your FastAPI backend route
-            const response = await api.put("/user/profile/update", {
+            await api.put("/user/profile/update", {
                 name: formData.name,
                 company: formData.company
             });
@@ -79,7 +79,7 @@ export default function Profile() {
 
         setIsSubmitting(true);
         try {
-            const response = await api.put("/user/profile/password", {
+            await api.put("/user/profile/password", {
                 current_password: securityData.currentPassword,
                 new_password: securityData.newPassword,
             });
