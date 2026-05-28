@@ -19,29 +19,6 @@ function formatDate(d: string | undefined | null) {
   return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-function statusColor(status: string | undefined) {
-  const s = status?.toLowerCase()
-  if (s === 'confirmed' || s === 'processed' || s === 'complete') return '#16a34a'
-  if (s === 'processing' || s === 'initial_processing') return '#0ea5e9'
-  if (s === 'pending') return '#d97706'
-  return '#64748b'
-}
-
-function statusBg(status: string | undefined) {
-  const s = status?.toLowerCase()
-  if (s === 'confirmed' || s === 'processed' || s === 'complete') return 'rgba(22,163,74,0.12)'
-  if (s === 'processing' || s === 'initial_processing') return 'rgba(14,165,233,0.12)'
-  if (s === 'pending') return 'rgba(217,119,6,0.12)'
-  return 'rgba(100,116,139,0.10)'
-}
-
-function fileIcon(contentType: string | undefined) {
-  if (!contentType) return '📄'
-  if (contentType.startsWith('image/')) return '🖼'
-  if (contentType === 'application/pdf') return '📑'
-  if (contentType.includes('text')) return '📝'
-  return '📄'
-}
 
 function FilePreviewModal({ evidenceId, fileName, previewRoute, onClose }: {
   evidenceId: string

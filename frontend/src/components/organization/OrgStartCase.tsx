@@ -70,16 +70,7 @@ function OrgStartCase() {
           </div>
         </div>
 
-        {error && (
-          <div style={{
-            background: 'rgba(239,68,68,0.1)', color: '#fca5a5',
-            border: '1px solid rgba(239,68,68,0.25)',
-            padding: '12px 16px', borderRadius: '10px', marginBottom: '20px',
-            fontSize: '0.875rem',
-          }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="admin-alert error">{error}</div>}
 
         <div className="admin-card" style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 

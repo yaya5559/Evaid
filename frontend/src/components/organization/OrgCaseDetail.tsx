@@ -152,8 +152,7 @@ function OrgCaseDetail() {
     setLoading(true)
     try {
       const res = await orgGetCaseDetail(caseId, orgId)
-      console.log('evidence:', res.evidence)
-      if (!res.case) { setError('Case not found'); return }
+if (!res.case) { setError('Case not found'); return }
       setDetail(res)
     } catch (err: any) {
       setError(err?.message ?? 'Failed to load case')
@@ -287,8 +286,8 @@ function OrgCaseDetail() {
         </div>
       </header>
 
-      {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
-      {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
+      {error && <div className="admin-alert error">{error}</div>}
+      {success && <div className="admin-alert success">{success}</div>}
       {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
       {detail && (
@@ -577,7 +576,10 @@ function OrgCaseDetail() {
             {!correlationsCollapsed && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
                 {correlations.map((c, i) => (
-                  <div key={i} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <div key={i} className="orgdash-progress-row"
+                    onClick={() => navigate(`/OrgCase/${c.related_case_id}`)}
+                    style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px', cursor: 'pointer' }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
                       <strong style={{ fontSize: '0.95rem' }}>{c.related_case_title}</strong>
                       <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{c.related_case_status}</span>

@@ -345,6 +345,7 @@ export type CaseCorrelation = {
     shared_value: string
     confidence: number
     created_at: string
+    related_org_id?: string | null
 }
 
 export const getCaseCorrelation = async (caseId: string): Promise<CaseCorrelation[]> => {

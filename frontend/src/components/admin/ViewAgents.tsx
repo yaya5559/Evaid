@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import Nav from './Nav'
 import { api } from '../../context/AuthContext'
 import '../../styles/Admin/AdminLayout.css'
-import { GraphFAB } from '../shared/GraphDrawer'
 
 type Agent = {
   user_id: number
@@ -59,11 +58,7 @@ function ViewAgents() {
           </span>
         </header>
 
-        {error && (
-          <div style={{ background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.25)', padding: '12px 16px', borderRadius: '10px', marginBottom: '16px' }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="admin-alert error">{error}</div>}
 
         <section className="admin-card">
           <div style={{ marginBottom: '16px' }}>

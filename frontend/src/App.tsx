@@ -50,6 +50,8 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
 }
 
 function AuthenticatedSignals() {
+  const { user, loading } = useAuth()
+  if (loading || !user) return null
   return (
     <>
       <SignalModal />

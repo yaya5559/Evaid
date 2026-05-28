@@ -210,21 +210,22 @@ async def get_case_correaltion(case_id: str):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            SELECT 
+            SELECT
                 cc.case_id_b AS related_case_id,
                 c.title AS related_case_title,
                 c.status AS related_case_status,
                 cc.signal_type,
                 cc.shared_value,
                 cc.confidence,
-                cc.created_at
+                cc.created_at,
+                c.org_id AS related_org_id
             FROM CaseCorrelation cc
             JOIN Cases c ON CAST(c.case_id AS NVARCHAR(50)) = case_id_b
             WHERE cc.case_id_a = ?
                 AND c.deleted_at IS NULL
-                       
+
             UNION
-                       
+
             SELECT
                 cc.case_id_a AS related_case_id,
                 c.title      AS related_case_title,
@@ -232,14 +233,15 @@ async def get_case_correaltion(case_id: str):
                 cc.signal_type,
                 cc.shared_value,
                 cc.confidence,
-                cc.created_at
+                cc.created_at,
+                c.org_id     AS related_org_id
             FROM CaseCorrelation cc
             JOIN Cases c ON CAST(c.case_id AS NVARCHAR(50)) = cc.case_id_a
             WHERE cc.case_id_b = ?
               AND c.deleted_at IS NULL
 
-            ORDER BY cc.confidence DESC                 
-            """,(case_id, case_id)                       
+            ORDER BY cc.confidence DESC
+            """,(case_id, case_id)
         )
         rows = cursor.fetchall()
         return [
@@ -251,6 +253,7 @@ async def get_case_correaltion(case_id: str):
                 "shared_value": row[4],
                 "confidence": row[5],
                 "created_at": str(row[6]),
+                "related_org_id": str(row[7]) if row[7] is not None else None,
             }
             for row in rows
         ]

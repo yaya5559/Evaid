@@ -141,11 +141,7 @@ function OrgDashboard() {
           </div>
         </header>
 
-        {error && (
-          <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="admin-alert error">{error}</div>}
 
         {/* Org info + KPIs */}
         <section className='orgdash-summary-grid'>
