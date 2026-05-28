@@ -1,9 +1,10 @@
 /* ── KPI strip ─────────────────────────────────────────────────── */
 .agentdash-kpi-strip {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   margin-bottom: 14px;
+  width: 100%;
 }
 
 .agentdash-kpi {
@@ -13,6 +14,7 @@
   padding: 12px 14px;
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .agentdash-kpi__label {
@@ -20,6 +22,9 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .agentdash-kpi__value {
