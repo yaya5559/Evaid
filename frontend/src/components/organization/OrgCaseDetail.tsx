@@ -335,7 +335,6 @@ function OrgCaseDetail() {
                 )}
               </div>
             </div>
-
           </section>
 
           <section className="admin-card" style={{ marginBottom: '16px' }}>

@@ -33,53 +33,53 @@ function AgentNav() {
       <nav className='admin-nav'>
         <div className='admin-nav-section'>
           <div className='admin-nav-label'>Workspace</div>
+
           <NavLink className={navClassName} to='/AgentDashboard'>
-            <span className='admin-nav-dot' />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
             Dashboard
           </NavLink>
+
           <NavLink className={navClassName} to='/AgentCases'>
-            <span className='admin-nav-dot' />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+            </svg>
             My Cases
           </NavLink>
+
           <NavLink className={navClassName} to='/AgentOrgCases'>
-            <span className='admin-nav-dot' />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
             Org Cases
           </NavLink>
         </div>
       </nav>
 
-      <div className='admin-user-panel'>
-        <div className='admin-user-avatar'>{initials || 'AG'}</div>
-        <div>
-          <div className='admin-user-name'>Agent</div>
-          <div className='admin-user-role'>{email}</div>
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className='admin-user-panel' style={{ cursor: 'default' }}>
+          <div className='admin-user-avatar'>{initials || 'AG'}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className='admin-user-name'>Agent</div>
+            <div className='admin-user-role'>{email}</div>
+          </div>
+          <button type='button' className='admin-user-logout-btn' onClick={() => void onLogout()} title='Sign out'>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         </div>
-      </div>
 
-      <button
-        type='button'
-        onClick={openWarning}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '7px',
-          background: 'rgba(245, 158, 11, 0.1)',
-          border: '1px solid rgba(245, 158, 11, 0.35)',
-          borderRadius: '7px',
-          padding: '8px 12px',
-          fontSize: '12px',
-          fontWeight: 600,
-          color: '#f59e0b',
-          cursor: 'pointer',
-          width: '100%',
-          marginBottom: '8px',
-          letterSpacing: '0.01em',
-        }}
-      >
-        <span style={{ fontSize: '14px' }}>⚠️</span>
-        AI Use Policy
-      </button>
-      <button className='admin-btn admin-btn-ghost org-nav-logout' onClick={() => void onLogout()} type='button'>
-        Sign out
-      </button>
+        <button type='button' className='admin-nav-policy-link' onClick={openWarning}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          AI Use Policy
+        </button>
+      </div>
     </>
   )
 }

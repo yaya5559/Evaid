@@ -154,6 +154,60 @@
   box-shadow: 0 0 12px rgba(14, 165, 233, 0.8);
 }
 
+.admin-nav-item svg {
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity 0.22s;
+}
+
+.admin-nav-item:hover svg,
+.admin-nav-item.active svg {
+  opacity: 1;
+}
+
+.admin-nav-item.active svg {
+  stroke: var(--admin-accent);
+}
+
+.admin-nav-policy-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--admin-muted-2);
+  padding: 4px 2px;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+  width: 100%;
+}
+
+.admin-nav-policy-link:hover {
+  color: var(--admin-muted);
+}
+
+.admin-user-logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--admin-muted-2);
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+.admin-user-logout-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
 .admin-user-panel {
   margin-top: auto;
   padding: 12px;

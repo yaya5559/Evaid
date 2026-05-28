@@ -17,6 +17,7 @@ import OrgRegisterAgent from './components/organization/OrgRegisterAgent'
 import OrgStartCase from './components/organization/OrgStartCase'
 import OrgCaseGraph from './components/organization/OrgCaseGraph'
 import AddAgent from './components/admin/AddAgents'
+import ViewAgents from './components/admin/ViewAgents'
 import Cases from './components/admin/Cases'
 import AdminCaseDetail from './components/admin/CaseDetail'
 import AdminCaseGraph from './components/admin/AdminCaseGraph'
@@ -71,6 +72,7 @@ function App() {
           <Route path="/Add_Organization" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AddOrganization /></ProtectedRoute>} />
           <Route path="/Edit_Organization" element={<ProtectedRoute allowedRoles={['evaide_admin']}><EditOrganization /></ProtectedRoute>} />
           <Route path="/Register_Agent" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AddAgent /></ProtectedRoute>} />
+          <Route path="/View_Agents" element={<ProtectedRoute allowedRoles={['evaide_admin']}><ViewAgents /></ProtectedRoute>} />
           <Route path="/Cases" element={<ProtectedRoute allowedRoles={['evaide_admin']}><Cases /></ProtectedRoute>} />
           <Route path="/Cases/:orgId/:caseId" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AdminCaseDetail /></ProtectedRoute>} />
           <Route path="/Cases/:orgId/:caseId/graph" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AdminCaseGraph /></ProtectedRoute>} />

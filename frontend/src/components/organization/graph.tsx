@@ -525,7 +525,7 @@ function DetailPanel({ node, edges, nodes, onClose, previewRoute }: {
   const s = NODE_STYLE[node.type]
 
   return (
-    <div style={{ position: 'absolute', top: 12, right: 12, width: 272, background: 'var(--color-background-primary)', border: '0.5px solid var(--color-border-secondary)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.10)', zIndex: 10, maxHeight: 'calc(100% - 24px)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', top: 80, right: 16, width: 272, background: 'var(--color-background-primary)', border: '0.5px solid var(--color-border-secondary)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.10)', zIndex: 10, maxHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '10px 14px', background: s.fill, borderBottom: `1px solid ${s.stroke}22`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: s.stroke, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-sans)' }}>{node.type}</div>
@@ -759,7 +759,7 @@ function TopConnectionsSidebar({ nodes, edges, onSelectNode }: {
   edges: GraphEdge[]
   onSelectNode: (id: string) => void
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
 
   const TYPE_COLOR: Record<NodeType, string> = {
     person: '#7C3AED', event: '#D97706', location: '#059669', evidence: '#2563EB',
@@ -782,17 +782,33 @@ function TopConnectionsSidebar({ nodes, edges, onSelectNode }: {
   const maxConns = top5[0] ? (connCount[top5[0].id] ?? 0) : 1
 
   return (
-    <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 50, display: 'flex', alignItems: 'flex-start' }}>
-      {!collapsed && (
-        <div style={{ width: 220, background: 'var(--color-background-primary)', border: '0.5px solid var(--color-border-secondary)', borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.1)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '11px 14px', borderBottom: '0.5px solid var(--color-border-tertiary)', background: 'var(--color-background-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+    <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 50 }}>
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          style={{ background: '#111d27', border: '1px solid #213344', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.3)', color: '#9fb6ce', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500 }}
+        >
+          <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
+            <circle cx={3} cy={3.5} r={1.5} fill="currentColor" opacity={0.7} />
+            <rect x={6} y={2.5} width={7} height={2} rx={1} fill="currentColor" opacity={0.4} />
+            <circle cx={3} cy={7} r={1.5} fill="currentColor" opacity={0.7} />
+            <rect x={6} y={6} width={5} height={2} rx={1} fill="currentColor" opacity={0.4} />
+            <circle cx={3} cy={10.5} r={1.5} fill="currentColor" opacity={0.7} />
+            <rect x={6} y={9.5} width={3} height={2} rx={1} fill="currentColor" opacity={0.4} />
+          </svg>
+          Most connected
+        </button>
+      ) : (
+        <div style={{ width: 200, background: '#111d27', border: '1px solid #213344', borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid #213344', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#7e95ab', fontFamily: 'var(--font-sans)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Most connected
             </span>
-            <button type="button" onClick={() => setCollapsed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--color-text-tertiary)', fontSize: 16, lineHeight: 1 }}>‹</button>
+            <button type="button" onClick={() => setCollapsed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#7e95ab', fontSize: 16, lineHeight: 1 }}>✕</button>
           </div>
-          <div style={{ overflowY: 'auto', maxHeight: 340, scrollbarWidth: 'none' }}>
-            {top5.length === 0 && <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)', padding: '12px 14px' }}>No connections yet</div>}
+          <div style={{ overflowY: 'auto', maxHeight: 300, scrollbarWidth: 'none' }}>
+            {top5.length === 0 && <div style={{ fontSize: 12, color: '#7e95ab', fontFamily: 'var(--font-sans)', padding: '12px 14px' }}>No connections yet</div>}
             {top5.map((node, i) => {
               const count = connCount[node.id] ?? 0
               const barW = Math.round((count / maxConns) * 100)
@@ -800,19 +816,19 @@ function TopConnectionsSidebar({ nodes, edges, onSelectNode }: {
               const bgColor = TYPE_BG[node.type]
               return (
                 <button key={node.id} type="button" onClick={() => onSelectNode(node.id)}
-                  style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '10px 14px', textAlign: 'left', fontFamily: 'var(--font-sans)', borderBottom: '0.5px solid var(--color-border-tertiary)', display: 'flex', flexDirection: 'column', gap: 6 }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-background-secondary)' }}
+                  style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '9px 14px', textAlign: 'left', fontFamily: 'var(--font-sans)', borderBottom: '1px solid #1a2a39', display: 'flex', flexDirection: 'column', gap: 5 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#1e293b' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono, monospace)', flexShrink: 0, minWidth: 14 }}>{i + 1}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#7e95ab', fontFamily: 'var(--font-mono, monospace)', flexShrink: 0, minWidth: 14 }}>{i + 1}</span>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{node.label}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: dotColor, flexShrink: 0, fontFamily: 'var(--font-mono, monospace)' }}>{count}</span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: '#ebf3ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{node.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: dotColor, flexShrink: 0, fontFamily: 'var(--font-mono, monospace)' }}>{count}</span>
                   </div>
                   <div style={{ paddingLeft: 21 }}>
-                    <div style={{ height: 3, borderRadius: 2, background: 'var(--color-border-tertiary)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', borderRadius: 2, width: `${barW}%`, background: dotColor, opacity: 0.5 }} />
+                    <div style={{ height: 3, borderRadius: 2, background: '#1e293b', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 2, width: `${barW}%`, background: dotColor, opacity: 0.6 }} />
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 5, paddingLeft: 21 }}>
@@ -825,21 +841,10 @@ function TopConnectionsSidebar({ nodes, edges, onSelectNode }: {
               )
             })}
           </div>
-          <div style={{ padding: '7px 14px', borderTop: '0.5px solid var(--color-border-tertiary)', background: 'var(--color-background-secondary)' }}>
-            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' }}>Click to highlight</span>
+          <div style={{ padding: '6px 14px', borderTop: '1px solid #1a2a39' }}>
+            <span style={{ fontSize: 11, color: '#7e95ab', fontFamily: 'var(--font-sans)' }}>Click to highlight</span>
           </div>
         </div>
-      )}
-      {collapsed && (
-        <button type="button" onClick={() => setCollapsed(false)}
-          style={{ background: 'var(--color-background-primary)', border: '0.5px solid var(--color-border-secondary)', borderRadius: 10, padding: '10px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-        >
-          {top5.slice(0, 5).map((node, i) => (
-            <span key={node.id} title={`${i + 1}. ${node.label}`}
-              style={{ width: 22, height: 22, borderRadius: '50%', background: `${TYPE_COLOR[node.type]}22`, border: `1.5px solid ${TYPE_COLOR[node.type]}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: TYPE_COLOR[node.type], fontFamily: 'var(--font-mono, monospace)' }}
-            >{i + 1}</span>
-          ))}
-        </button>
       )}
     </div>
   )
