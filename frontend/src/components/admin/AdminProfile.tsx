@@ -55,7 +55,6 @@ export default function Profile() {
                 company: formData.company
             });
 
-            console.log("Profile Update Success:", response.data);
             setMessage({ type: "success", text: "Identity metadata synchronized successfully." });
         } catch (err: any) {
             console.error("Profile Update Error Details:", err);
@@ -85,7 +84,6 @@ export default function Profile() {
                 new_password: securityData.newPassword,
             });
 
-            console.log("Password Update Success:", response.data);
             setMessage({ type: "success", text: "Credential keys rotated successfully." });
             setSecurityData({ currentPassword: "", newPassword: "", confirmPassword: "" });
         } catch (err: any) {
