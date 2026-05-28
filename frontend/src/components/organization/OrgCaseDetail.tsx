@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import OrgLayout from './OrgLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
-import { EvidenceSection } from '../shared/EvidenceSection'
+import { EvidenceSection, EvidenceUploadSection } from '../shared/EvidenceSection'
 import '../../styles/Admin/AdminLayout.css'
 import { GraphFAB } from '../shared/GraphDrawer'
 import { Modal } from '../shared/Modal'
@@ -49,7 +49,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, fetchSignalsForEvidence } = useSignals()
+  const { fetchSignalsForCase, fetchSignalsForEvidence, clearSignals, lastTriagedAt } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -103,7 +103,7 @@ function OrgCaseDetail() {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelation).catch(() => setCorrelation([]))
     getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId])
+  }, [caseId, lastTriagedAt])
 
   const handleAddActor = async () => {
     if (!newActorName.trim()) return
@@ -152,7 +152,7 @@ function OrgCaseDetail() {
     setLoading(true)
     try {
       const res = await orgGetCaseDetail(caseId, orgId)
-      if (!res.case) { setError('Case not found'); return }
+if (!res.case) { setError('Case not found'); return }
       setDetail(res)
     } catch (err: any) {
       setError(err?.message ?? 'Failed to load case')
@@ -254,7 +254,11 @@ function OrgCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [caseId, orgId])
-  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    clearSignals()
+    void fetchSignalsForCase(caseId)
+  }, [caseId])
   useEffect(() => {
     if (!caseId) return
     setActorsLoading(true)
@@ -282,8 +286,8 @@ function OrgCaseDetail() {
         </div>
       </header>
 
-      {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
-      {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
+      {error && <div className="admin-alert error">{error}</div>}
+      {success && <div className="admin-alert success">{success}</div>}
       {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
       {detail && (
@@ -330,7 +334,6 @@ function OrgCaseDetail() {
                 )}
               </div>
             </div>
-
           </section>
 
           <section className="admin-card" style={{ marginBottom: '16px' }}>
@@ -454,10 +457,10 @@ function OrgCaseDetail() {
               </div>
             ))}
           </section>
+          <EvidenceUploadSection onUpload={handleUploadEvidence} />
           <EvidenceSection
             evidence={detail.evidence}
             loading={loading}
-            onUpload={handleUploadEvidence}
             onDelete={handleDeleteEvidence}
             previewRoute="/org/evidence/preview"
           />
@@ -573,7 +576,10 @@ function OrgCaseDetail() {
             {!correlationsCollapsed && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
                 {correlations.map((c, i) => (
-                  <div key={i} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <div key={i} className="orgdash-progress-row"
+                    onClick={() => navigate(`/OrgCase/${c.related_case_id}`)}
+                    style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px', cursor: 'pointer' }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
                       <strong style={{ fontSize: '0.95rem' }}>{c.related_case_title}</strong>
                       <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{c.related_case_status}</span>

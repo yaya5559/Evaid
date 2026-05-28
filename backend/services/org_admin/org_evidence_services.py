@@ -129,12 +129,13 @@ def get_evidence_file(file_id: str, org_id: int):
 
 
 def delete_evidence(file_id: str, org_id: int):
-    """Deletes an evidence file. Must belong to an org case."""
+    """Deletes an EvidenceItem and all child records."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT case_id FROM Evidence WHERE FileId = ?", (file_id,))
+        print(file_id)
+        cursor.execute("SELECT case_id FROM EvidenceItem WHERE Id = ?", (file_id,))
         row = cursor.fetchone()
         if not row:
             return {"message": "Evidence not found"}
@@ -142,7 +143,12 @@ def delete_evidence(file_id: str, org_id: int):
         if not _case_belongs_to_org(cursor, row[0], org_id):
             return {"message": "Access denied"}
 
-        cursor.execute("DELETE FROM Evidence WHERE FileId = ?", (file_id,))
+        # Delete child records before deleting EvidenceItem
+        cursor.execute("DELETE FROM Signal WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM PendingSignal WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM AnalysisRun WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM Attachment WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM EvidenceItem WHERE Id = ?", (file_id,))
         conn.commit()
 
         return {"message": "Success"}

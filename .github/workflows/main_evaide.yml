@@ -1,45 +1,67 @@
-name: Build and deploy backend to Azure Web App - evaide
-
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+ 
+name: Build and deploy Python app to Azure Web App - evaide
+ 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
+push:
+branches:
+- main
+workflow_dispatch:
+ 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Log in to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/evaid-backend:latest
-
-      - name: Deploy to Azure Web App
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            az webapp config container set \
-              --name evaid \
-              --resource-group EVAIDE_RG \
-              --container-image-name ghcr.io/${{ github.repository_owner }}/evaid-backend:latest
+build:
+runs-on: ubuntu-latest
+permissions:
+contents: read #This is required for actions/checkout
+ 
+steps:
+- uses: actions/checkout@v4
+ 
+- name: Set up Python version
+uses: actions/setup-python@v5
+with:
+python-version: '3.10'
+ 
+# 🛠️ Local Build Section (Optional)
+# The following section in your workflow is designed to catch build issues early on the client side, before deployment. This can be helpful for debugging and validation. However, if this step significantly increases deployment time and early detection is not critical for your workflow, you may remove this section to streamline the deployment process.
+- name: Create and Start virtual environment and Install dependencies
+run: |
+cd backend
+python -m venv antenv
+source antenv/bin/activate
+pip install -r requirements.txt
+ 
+- name: Upload artifact for deployment jobs
+uses: actions/upload-artifact@v4
+with:
+name: python-app
+path: |
+backend/
+!backend/antenv/
+!backend/venv/
+ 
+# 🚫 Opting Out of Oryx Build
+# If you prefer to disable the Oryx build process during deployment, follow these steps:
+# 1. Remove the SCM_DO_BUILD_DURING_DEPLOYMENT app setting from your Azure App Service Environment variables.
+# 2. Refer to sample workflows for alternative deployment strategies: https://github.com/Azure/actions-workflow-samples/tree/master/AppService
+ 
+ 
+deploy:
+runs-on: ubuntu-latest
+needs: build
+ 
+steps:
+- name: Download artifact from build job
+uses: actions/download-artifact@v4
+with:
+name: python-app
+ 
+- name: 'Deploy to Azure Web App'
+uses: azure/webapps-deploy@v3
+id: deploy-to-webapp
+with:
+app-name: 'evaide'
+slot-name: 'Production'
+publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_36D1B8FEFDC442A59A692852E5944CDB }}

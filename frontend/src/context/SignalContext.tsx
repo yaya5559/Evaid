@@ -40,6 +40,7 @@ type SignalContextValue = {
   fetchSignalsForEvidence: (evidenceId: string) => Promise<void>
   fetchSignalsForCase: (caseId: string) => Promise<void>
   clearSignals: () => void
+  lastTriagedAt: number
 }
 
 const SignalContext = createContext<SignalContextValue | null>(null)
@@ -68,6 +69,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
   const [toastQueue, setToastQueue] = useState<Signal[]>([])
   const [openSignal, setOpenSignal] = useState<Signal | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [lastTriagedAt, setLastTriagedAt] = useState(0)
   const knownIds = useRef<Set<string>>(new Set())
   const watchedEvidenceIds = useRef<Set<string>>(new Set())
 
@@ -165,6 +167,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         prev.map((s) => (s.id === id ? { ...s, status: 'confirmed' as const } : s))
       )
       setOpenSignal(null)
+      setLastTriagedAt(Date.now())
     } catch { /* silent */ }
   }, [])
 
@@ -175,6 +178,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         prev.map((s) => (s.id === id ? { ...s, status: 'denied' as const } : s))
       )
       setOpenSignal(null)
+      setLastTriagedAt(Date.now())
     } catch { /* silent */ }
   }, [])
 
@@ -199,6 +203,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         fetchSignalsForEvidence,
         fetchSignalsForCase,
         clearSignals,
+        lastTriagedAt,
       }}
     >
       {children}

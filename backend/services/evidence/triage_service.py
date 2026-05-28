@@ -88,8 +88,10 @@ def reject_pending_signals(pending_signal_id):
 
         cursor.execute(
             """
-                DELETE FROM PendingSignal WHERE Id = ?
-            """,(pending_signal_id,)
+                UPDATE PendingSignal
+                SET triage_status = 'rejected', reviewed_at = GETUTCDATE()
+                WHERE Id = ?
+            """, (pending_signal_id,)
         )
         conn.commit()
 
@@ -192,20 +194,44 @@ def get_signal_history(evidence_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            """
-                SELECT
-                    CAST(Id AS NVARCHAR(36)) AS id,
-                    signal_type, raw_value, normalized_value,
-                    confidence, source_locator, created_at
-                FROM Signal
-                WHERE evidence_id = ?
-                ORDER BY confidence DESC
-            """, (str(evidence_id),)
-        )
+        # Confirmed signals (from Signal table — regex-extracted, auto-confirmed)
+        cursor.execute("""
+            SELECT
+                CAST(Id AS NVARCHAR(36)) AS id,
+                signal_type, raw_value, normalized_value,
+                confidence, source_locator,
+                'confirmed' AS status,
+                NULL AS triage_reason,
+                NULL AS reviewed_at
+            FROM Signal
+            WHERE evidence_id = ?
+            ORDER BY confidence DESC
+        """, (str(evidence_id),))
         rows = cursor.fetchall()
         cols = [col[0] for col in cursor.description]
-        return [dict(zip(cols, row)) for row in rows]
+        confirmed = [dict(zip(cols, r)) for r in rows]
+
+        # Confirmed/rejected signals (from PendingSignal — LLM-extracted, triaged)
+        cursor.execute("""
+            SELECT
+                CAST(Id AS NVARCHAR(36)) AS id,
+                signal_type, raw_value, normalized_value,
+                confidence, source_locator,
+                triage_status AS status,
+                triage_reason,
+                CAST(reviewed_at AS NVARCHAR(50)) AS reviewed_at
+            FROM PendingSignal
+            WHERE evidence_id = ? AND triage_status IN ('confirmed', 'rejected')
+            ORDER BY confidence DESC
+        """, (str(evidence_id),))
+        rows = cursor.fetchall()
+        cols = [col[0] for col in cursor.description]
+        triaged = [dict(zip(cols, r)) for r in rows]
+
+        confirmed += [s for s in triaged if s['status'] == 'confirmed']
+        rejected   = [s for s in triaged if s['status'] == 'rejected']
+
+        return {"confirmed": confirmed, "rejected": rejected}
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
