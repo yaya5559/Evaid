@@ -170,8 +170,8 @@ function OrgCaseProgress() {
         </div>
       </header>
 
-      {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
-      {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
+      {error && <div className="admin-alert error">{error}</div>}
+      {success && <div className="admin-alert success">{success}</div>}
 
       <section className="admin-card">
         <div className="orgdash-card-head">

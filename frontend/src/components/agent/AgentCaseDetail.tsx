@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import AgentLayout from './AgentLayout'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
-import { EvidenceSection } from '../shared/EvidenceSection'
+import { EvidenceSection, EvidenceUploadSection } from '../shared/EvidenceSection'
 import { GraphFAB } from '../shared/GraphDrawer'
 import '../../styles/Admin/AdminLayout.css'
 import { getCaseCorrelation, getConfirmedSignals, type CaseCorrelation, type ConfirmedSignal } from '../../helpers/org/Cases'
@@ -45,7 +45,7 @@ function formatDate(d: string | undefined | null) {
 function AgentCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, clearSignals } = useSignals()
+  const { fetchSignalsForCase, clearSignals, lastTriagedAt } = useSignals()
   const navigate = useNavigate()
   const agentId = Number((user as any)?.user_id ?? 0)
   const orgId = Number((user as any)?.org_id ?? 0)
@@ -57,7 +57,7 @@ function AgentCaseDetail() {
   const [newNoteContent, setNewNoteContent] = useState('')
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
-  const [notesCollapsed, setNotesCollapsed] = useState(true)
+  const [notesCollapsed, setNotesCollapsed] = useState(false)
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
@@ -73,7 +73,7 @@ function AgentCaseDetail() {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelations).catch(() => setCorrelations([]))
     getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId])
+  }, [caseId, lastTriagedAt])
 
   const loadDetail = async () => {
     setLoading(true)
@@ -172,8 +172,8 @@ function AgentCaseDetail() {
         </div>
       </header>
 
-      {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
-      {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
+      {error && <div className="admin-alert error">{error}</div>}
+      {success && <div className="admin-alert success">{success}</div>}
       {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
       {detail && (
@@ -236,12 +236,11 @@ function AgentCaseDetail() {
             ))}
           </section>
 
-          <PendingSignalsSection />
+          <EvidenceUploadSection onUpload={handleUploadEvidence} />
 
           <EvidenceSection
             evidence={detail.evidence}
             loading={loading}
-            onUpload={handleUploadEvidence}
             onDelete={handleDeleteEvidence}
             previewRoute="/agent/evidence/preview"
           />
@@ -251,7 +250,8 @@ function AgentCaseDetail() {
               onClick={() => setNotesCollapsed(p => !p)}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
             >
-              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length} Notes</span>
+              Notes
+              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length}</span>
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                   style={{ transform: notesCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
@@ -305,6 +305,8 @@ function AgentCaseDetail() {
             )}
           </section>
 
+          <PendingSignalsSection />
+
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
             <h2
               onClick={() => setConfirmedCollapsed(p => !p)}
@@ -356,7 +358,10 @@ function AgentCaseDetail() {
             {!correlationsCollapsed && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
                 {correlations.map((c, i) => (
-                  <div key={i} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <div key={i} className="orgdash-progress-row"
+                    onClick={() => navigate(`/AgentCase/${c.related_case_id}`)}
+                    style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px', cursor: 'pointer' }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
                       <strong style={{ fontSize: '0.95rem' }}>{c.related_case_title}</strong>
                       <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{c.related_case_status}</span>

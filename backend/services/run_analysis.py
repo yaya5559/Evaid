@@ -129,7 +129,7 @@ def run_analysis(analysis_run_id):
         regex_signals = run_universal_extraction(markdown, attachement_id, cursor)
         platform, confidence, reasoning = detect_platform(markdown)
         extctractedSignals: list[ExtractedSignal] = run_llm_extraction(
-            markdown, platform, case_id, attachement_id, cursor, evidence_id=str(evidence_id)
+            markdown, platform, case_id, attachement_id, cursor
         )
 
         total_signals = regex_signals + extctractedSignals
@@ -165,6 +165,20 @@ def run_analysis(analysis_run_id):
                     )
                 )
 
+        conn.commit()
+
+        from collections import Counter
+        type_counts = Counter(s.signal_type for s in total_signals)
+        if type_counts:
+            parts = [
+                f"{count} {stype.replace('_', ' ')}{'s' if count > 1 else ''}"
+                for stype, count in type_counts.most_common()
+            ]
+            total = sum(type_counts.values())
+            summary = f"Found {total} signal{'s' if total != 1 else ''}: {', '.join(parts)}."
+        else:
+            summary = "No signals found."
+        cursor.execute("UPDATE EvidenceItem SET summary = ? WHERE Id = ?", (summary, evidence_id))
         conn.commit()
 
         cursor.execute(

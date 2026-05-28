@@ -136,20 +136,25 @@ def get_org_case(case_id: int, org_id: int):
         note_cols = [col[0] for col in cursor.description]
         notes = [dict(zip(note_cols, row)) for row in note_rows]
 
-        # Evidence (no binary data)
+        # Evidence from EvidenceItem (new pipeline)
         cursor.execute("""
             SELECT
-                CAST(FileId AS NVARCHAR(36)) AS file_id,
-                FileName        AS file_name,
-                FileExtension   AS file_extension,
-                ContentType     AS content_type,
-                CAST(upload_date AS NVARCHAR(50)) AS upload_date,
-                uploaded_by,
-                processing_status,
-                metadata_json
-            FROM Evidence
-            WHERE case_id = ?
-            ORDER BY upload_date DESC
+                CAST(ei.Id AS NVARCHAR(36))                     AS file_id,
+                ei.title                                         AS file_name,
+                CAST(ei.created_at AS NVARCHAR(50))             AS upload_date,
+                u.first_name + ' ' + u.last_name                AS uploaded_by,
+                ISNULL(
+                    (SELECT TOP 1 ar.analysisrun_status
+                     FROM AnalysisRun ar
+                     WHERE ar.evidence_id = ei.Id
+                     ORDER BY ar.started_at DESC), 'pending'
+                )                                                AS processing_status,
+                ei.agent_context,
+                ei.summary
+            FROM EvidenceItem ei
+            LEFT JOIN users u ON u.user_id = ei.created_by_user_id
+            WHERE ei.case_id = ?
+            ORDER BY ei.created_at DESC
             """, (case_id,))
 
         evidence_rows = cursor.fetchall()

@@ -45,15 +45,10 @@ export type OrgAssignedAgent = {
     assigned_by_last_name: string
 }
 
-export type SearchResult = {
-  signal_type: string
-  raw_value: string
-  confidence: number
-  case_id: number
-  case_title: string
-  case_status: string
-  found_at: string
-}
+export type SearchResult =
+  | { result_type: 'signal'; signal_type: string; raw_value: string; confidence: number; case_id: number; case_title: string; case_status: string }
+  | { result_type: 'actor'; actor_id: string; actor_name: string; role: string; case_id: number | null }
+  | { result_type: 'case'; case_id: number; case_number: string; case_title: string; case_status: string }
 
 export type AssignedAgent = OrgAssignedAgent
 
@@ -70,11 +65,11 @@ export type OrgCaseNote = {
 export type OrgCaseEvidence = {
     file_id: string
     file_name: string
-    file_extension: string
-    content_type: string
     upload_date: string
     uploaded_by: string
     processing_status: string
+    agent_context?: string | null
+    summary?: string | null
 }
 
 export type OrgCaseDetailResponse = {
@@ -350,6 +345,7 @@ export type CaseCorrelation = {
     shared_value: string
     confidence: number
     created_at: string
+    related_org_id?: string | null
 }
 
 export const getCaseCorrelation = async (caseId: string): Promise<CaseCorrelation[]> => {

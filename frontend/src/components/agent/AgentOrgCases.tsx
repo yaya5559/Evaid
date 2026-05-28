@@ -30,9 +30,9 @@ const statusTone: Record<CaseStatus, string> = { Solved: 'good', Closed: 'good',
 const severityLabel: Record<number, string> = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' }
 
 function formatDate(date: string | undefined | null) {
-  if (!date) return '—'
+  if (!date) return 'ï¿½'
   const d = new Date(date.slice(0, 10) + 'T00:00:00')
-  if (isNaN(d.getTime())) return '—'
+  if (isNaN(d.getTime())) return 'ï¿½'
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
@@ -94,11 +94,7 @@ function AgentOrgCases() {
         </div>
       </header>
 
-      {error && (
-        <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="admin-alert error">{error}</div>}
 
       <section className="admin-card">
         <div className="orgdash-card-head">
