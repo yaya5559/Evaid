@@ -32,6 +32,30 @@ function formatDate(d: string | undefined | null) {
   return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+function statusColor(status: string | undefined) {
+  const s = status?.toLowerCase()
+  if (s === 'confirmed' || s === 'processed' || s === 'complete') return '#16a34a'
+  if (s === 'processing' || s === 'initial_processing') return '#0ea5e9'
+  if (s === 'pending') return '#d97706'
+  return '#64748b'
+}
+
+function statusBg(status: string | undefined) {
+  const s = status?.toLowerCase()
+  if (s === 'confirmed' || s === 'processed' || s === 'complete') return 'rgba(22,163,74,0.12)'
+  if (s === 'processing' || s === 'initial_processing') return 'rgba(14,165,233,0.12)'
+  if (s === 'pending') return 'rgba(217,119,6,0.12)'
+  return 'rgba(100,116,139,0.10)'
+}
+
+function fileIcon(contentType: string | undefined) {
+  if (!contentType) return '📄'
+  if (contentType.startsWith('image/')) return '🖼'
+  if (contentType === 'application/pdf') return '📑'
+  if (contentType.includes('text')) return '📝'
+  return '📄'
+}
+
 function FilePreviewModal({ evidenceId, fileName, previewRoute, onClose }: {
   evidenceId: string
   fileName: string
@@ -109,14 +133,18 @@ export function EvidenceSection({ evidence, loading, onUpload, onDelete, preview
   const [signalEvidence, setSignalEvidence] = useState<{ id: string; name: string } | null>(null)
   const [noteEvidence, setNoteEvidence] = useState<{ name: string; note: string } | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadDone, setUploadDone] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleUpload = async () => {
     if (!evidenceFile) return
-    setUploading(true); setUploadError(null)
+    setUploading(true); setUploadError(null); setUploadDone(false)
     try {
       await onUpload(evidenceFile, agentNote)
       setEvidenceFile(null); setAgentNote('')
+      setUploadDone(true)
+      setTimeout(() => setUploadDone(false), 3000)
     } catch (err: any) {
       setUploadError(err?.message ?? 'Upload failed')
     } finally {
@@ -166,58 +194,72 @@ export function EvidenceSection({ evidence, loading, onUpload, onDelete, preview
         </div>
       )}
 
-      <section className="admin-card" style={{ marginBottom: '16px' }}>
-        <h2>Evidence</h2>
+      <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #2563eb' }}>
+        <h2
+          onClick={() => setCollapsed(p => !p)}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+        >
+          Evidence
+          <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{evidence.length}</span>
+          <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
+        </h2>
 
-        {evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
-        {evidence.map((ev) => (
-          <div key={ev.file_id} className="orgdash-progress-row" style={{ alignItems: 'center' }}>
-            {/* Clickable file name */}
-            <button
-              type="button"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, flex: 1, minWidth: 0 }}
-              onClick={() => setPreviewEvidence({ id: ev.file_id, name: ev.file_name })}
-            >
-              <span style={{ fontWeight: 500, textDecoration: 'underline', color: 'var(--color-text-primary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {ev.file_name}
-              </span>
-              <small style={{ opacity: 0.6 }}>{ev.processing_status} · {formatDate(ev.upload_date)}</small>
-            </button>
+        {!collapsed && (
+          <>
+            {evidence.length === 0 && <p style={{ opacity: 0.7 }}>No evidence uploaded.</p>}
 
-            {/* Buttons */}
-            <div style={{ display: 'flex', gap: '6px', flexShrink: 0, marginLeft: '12px' }}>
-              {ev.agent_context && (
-                <button
-                  type="button"
-                  className="admin-btn"
-                  style={{ fontSize: '0.8rem', padding: '3px 10px' }}
-                  onClick={() => setNoteEvidence({ name: ev.file_name, note: ev.agent_context! })}
-                >
-                  Note
-                </button>
-              )}
-              <button
-                type="button"
-                className="admin-btn"
-                style={{ fontSize: '0.8rem', padding: '3px 10px' }}
-                onClick={() => setSignalEvidence({ id: ev.file_id, name: ev.file_name })}
-              >
-                Signals
-              </button>
-              {confirmDeleteId === ev.file_id ? (
-                <>
-                  <button type="button" className="admin-btn critical" onClick={() => { void onDelete(ev.file_id); setConfirmDeleteId(null) }} disabled={loading}>Confirm</button>
-                  <button type="button" className="admin-btn" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
-                </>
-              ) : (
-                <button type="button" className="admin-btn critical" onClick={() => setConfirmDeleteId(ev.file_id)}>Delete</button>
-              )}
-            </div>
-          </div>
-        ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+          {evidence.map((ev) => {
+            const color = statusColor(ev.processing_status)
+            const bg = statusBg(ev.processing_status)
+            return (
+              <div key={ev.file_id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                  <span style={{ fontSize: '15px', flexShrink: 0 }}>{fileIcon(ev.content_type)}</span>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, flex: 1, minWidth: 0 }}
+                    onClick={() => setPreviewEvidence({ id: ev.file_id, name: ev.file_name })}
+                  >
+                    <span style={{ fontWeight: 500, color: 'var(--admin-text)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.9rem', textDecoration: 'underline' }}>
+                      {ev.file_name}
+                    </span>
+                  </button>
+                  <span className="admin-pill" style={{ fontSize: '0.7rem', background: bg, color, border: `1px solid ${color}44`, flexShrink: 0 }}>
+                    {ev.processing_status ?? 'unknown'}
+                  </span>
+                </div>
+                <small style={{ paddingLeft: '23px', opacity: 0.6 }}>{formatDate(ev.upload_date)}</small>
+                <div style={{ display: 'flex', gap: '6px', paddingLeft: '23px' }}>
+                  {ev.agent_context && (
+                    <button type="button" className="admin-btn" style={{ fontSize: '0.75rem', padding: '2px 9px' }} onClick={() => setNoteEvidence({ name: ev.file_name, note: ev.agent_context! })}>
+                      Note
+                    </button>
+                  )}
+                  <button type="button" className="admin-btn" style={{ fontSize: '0.75rem', padding: '2px 9px' }} onClick={() => setSignalEvidence({ id: ev.file_id, name: ev.file_name })}>
+                    Signals
+                  </button>
+                  {confirmDeleteId === ev.file_id ? (
+                    <>
+                      <button type="button" className="admin-btn critical" style={{ fontSize: '0.75rem', padding: '2px 9px' }} onClick={() => { void onDelete(ev.file_id); setConfirmDeleteId(null) }} disabled={loading}>Confirm</button>
+                      <button type="button" className="admin-btn" style={{ fontSize: '0.75rem', padding: '2px 9px' }} onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                    </>
+                  ) : (
+                    <button type="button" className="admin-btn critical" style={{ fontSize: '0.75rem', padding: '2px 9px' }} onClick={() => setConfirmDeleteId(ev.file_id)}>Delete</button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
 
-        {/* Upload section with AI note */}
-        <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border-tertiary)', paddingTop: '16px' }}>
+            {/* Upload section with AI note */}
+            <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border-tertiary)', paddingTop: '16px' }}>
           <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', fontSize: '0.9rem' }}>
             Note for AI <span style={{ opacity: 0.6, fontWeight: 400 }}>(optional — helps AI extract more relevant signals)</span>
           </label>
@@ -233,7 +275,7 @@ export function EvidenceSection({ evidence, loading, onUpload, onDelete, preview
             <input
               type="file"
               accept="image/*,.pdf,.txt,.csv,.json"
-              onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => { setEvidenceFile(e.target.files?.[0] ?? null); setUploadDone(false) }}
               style={{ flex: 1, color: 'inherit' }}
             />
             <button
@@ -241,12 +283,31 @@ export function EvidenceSection({ evidence, loading, onUpload, onDelete, preview
               className="admin-btn primary"
               onClick={() => void handleUpload()}
               disabled={uploading || !evidenceFile}
+              style={{ minWidth: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                    style={{ animation: 'spin 0.8s linear infinite' }}>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                  Uploading...
+                </>
+              ) : uploadDone ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Done
+                </>
+              ) : 'Upload'}
             </button>
           </div>
-          {uploadError && <p style={{ color: '#991b1b', fontSize: '0.85rem', marginTop: '6px' }}>{uploadError}</p>}
+          {uploadError && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '6px' }}>{uploadError}</p>}
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
+          </>
+        )}
       </section>
     </>
   )

@@ -40,11 +40,12 @@
   border-right: 1px solid var(--admin-border);
   display: flex;
   flex-direction: column;
-  padding: 20px 14px;
-  gap: 20px;
+  gap: 24px;
+  height: 100vh;
+  overflow-y: auto;
+  box-sizing: border-box;
   position: sticky;
   top: 0;
-  height: 100vh;
 }
 
 .admin-brand {

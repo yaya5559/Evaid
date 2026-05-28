@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   orgGetCaseDetail, orgUpdateCase, orgCloseCase, orgDeleteCase,
   orgGetAgents, orgAssignAgent,
   orgCreateNote, orgUpdateNote, orgDeleteNote,
   orgUploadEvidence, orgDeleteEvidence,
-  getActorsForCase, createActor,
+  getActorsForCase, createActor, addActorAlias, addActorNote,
   getCaseCorrelation, getConfirmedSignals,
   type OrgCaseDetailResponse, type OrgAgent, type Actor, type CaseCorrelation, type ConfirmedSignal,
 } from '../../helpers/org/Cases'
@@ -16,6 +16,7 @@ import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import { EvidenceSection } from '../shared/EvidenceSection'
 import '../../styles/Admin/AdminLayout.css'
 import { GraphFAB } from '../shared/GraphDrawer'
+import { Modal } from '../shared/Modal'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
 
@@ -48,7 +49,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, fetchSignalsForEvidence } = useSignals()
+  const { fetchSignalsForCase, fetchSignalsForEvidence, clearSignals } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -59,7 +60,6 @@ function OrgCaseDetail() {
   const [editSeverity, setEditSeverity] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
-  const [showCloseForm, setShowCloseForm] = useState(false)
   const [closeResolution, setCloseResolution] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showAssignForm, setShowAssignForm] = useState(false)
@@ -69,16 +69,31 @@ function OrgCaseDetail() {
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [editNoteContent, setEditNoteContent] = useState('')
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
-  const [notesCollapsed, setNotesCollapsed] = useState(true)
-  const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
-  const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
+  const [notesCollapsed, setNotesCollapsed] = useState(false)
+  const [confirmedCollapsed, setConfirmedCollapsed] = useState(false)
+  const [correlationsCollapsed, setCorrelationsCollapsed] = useState(false)
   const [actors, setActors] = useState<Actor[]>([])
   const [actorsLoading, setActorsLoading] = useState(false)
+  const [aliasInputActorId, setAliasInputActorId] = useState<string | null>(null)
+  const [newAlias, setNewAlias] = useState('')
+  const [noteInputActorId, setNoteInputActorId] = useState<string | null>(null)
+  const [newActorNote, setNewActorNote] = useState('')
   const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
   const [correlations, setCorrelation] = useState<CaseCorrelation[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showMoreMenu) return
+    const handler = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) setShowMoreMenu(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showMoreMenu])
   const [showAddActor, setShowAddActor] = useState(false)
   const [newActorName, setNewActorName] = useState('')
   const [newActorRole, setNewActorRole] = useState('Person of Interest')
@@ -103,6 +118,35 @@ function OrgCaseDetail() {
     }
   }
 
+  const handleAddAlias = async (actorId: string) => {
+    if (!newAlias.trim()) return
+    try {
+      await addActorAlias(actorId, newAlias.trim())
+      setActors(prev => prev.map(a =>
+        a.id === actorId ? { ...a, aliases: [...a.aliases, newAlias.trim()] } : a
+      ))
+      setNewAlias('')
+      setAliasInputActorId(null)
+    } catch {
+      alert('Failed to add alias.')
+    }
+  }
+
+  const handleAddActorNote = async (actorId: string) => {
+    if (!newActorNote.trim()) return
+    try {
+      const result = await addActorNote(actorId, newActorNote.trim())
+      const newNote = { note_id: result.note_id, content: newActorNote.trim(), created_at: new Date().toISOString() }
+      setActors(prev => prev.map(a =>
+        a.id === actorId ? { ...a, notes: [newNote, ...(a.notes ?? [])] } : a
+      ))
+      setNewActorNote('')
+      setNoteInputActorId(null)
+    } catch {
+      alert('Failed to add note.')
+    }
+  }
+
 
   const loadDetail = async () => {
     setLoading(true)
@@ -124,7 +168,7 @@ function OrgCaseDetail() {
     setEditSeverity(String(detail.case.severity_level ?? '2'))
     setEditDueDate(detail.case.due_date ? detail.case.due_date.slice(0, 10) : '')
     setShowEditForm((p) => !p)
-    setShowCloseForm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowAssignForm(false)
+    setShowCloseConfirm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowAssignForm(false)
   }
 
   const handleEditCase = async () => {
@@ -141,7 +185,7 @@ function OrgCaseDetail() {
     setLoading(true); setError(null)
     try {
       await orgCloseCase(caseId, orgId, Number((user as any)?.user_id ?? 0), closeResolution)
-      setSuccess('Case resolved'); setShowCloseForm(false); void loadDetail()
+      setSuccess('Case resolved'); setShowCloseConfirm(false); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to resolve case') } finally { setLoading(false) }
   }
 
@@ -155,7 +199,7 @@ function OrgCaseDetail() {
 
   const openAssignForm = async () => {
     setShowAssignForm((p) => !p)
-    setShowCloseForm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowEditForm(false)
+    setShowCloseConfirm(false); setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowEditForm(false)
     if (orgAgents.length === 0) {
       try { setOrgAgents(await orgGetAgents(orgId)) } catch { setError('Failed to load agents') }
     }
@@ -210,7 +254,11 @@ function OrgCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [caseId, orgId])
-  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    clearSignals()
+    void fetchSignalsForCase(caseId)
+  }, [caseId])
   useEffect(() => {
     if (!caseId) return
     setActorsLoading(true)
@@ -224,7 +272,7 @@ function OrgCaseDetail() {
 
   return (
     <OrgLayout>
-      <GraphFAB graphPath={`/OrgCase/${caseId}/graph`} />
+      <GraphFAB graphPath={`/OrgCases/${caseId}/graph`} />
 
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -245,103 +293,48 @@ function OrgCaseDetail() {
       {detail && (
         <>
           <section className="admin-card" style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
               <button type="button" className="admin-btn primary" onClick={() => {
                 setShowCloseConfirm((p) => !p)
-                setShowCloseForm(false); setShowDeleteConfirm(false); setShowAssignForm(false); setShowEditForm(false)
+                setShowCloseConfirm(false); setShowDeleteConfirm(false); setShowAssignForm(false); setShowEditForm(false)
               }}>Resolve</button>
-              <button type="button" className="admin-btn" onClick={() => void openAssignForm()}>Assign Agent</button>
-              <button type="button" className="admin-btn" onClick={() => openEditForm()}>Edit</button>
-              <button type="button" className="admin-btn critical" onClick={() => {
-                setShowDeleteConfirm((p) => !p)
-                setShowCloseForm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false)
-              }}>Delete</button>
               <button type="button" className="admin-btn" onClick={() => navigate(`/OrgCase/${caseId}/graph`)}>Signal Graph</button>
-            </div>
-
-            {showEditForm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <h3>Edit Case</h3>
-                <div className="edit-org-controls">
-                  <label className="edit-org-control"><span>Description</span>
-                    <textarea className="edit-org-input" rows={3} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
-                  </label>
-                  <label className="edit-org-control"><span>Priority</span>
-                    <select className="edit-org-input" value={editPriority} onChange={(e) => setEditPriority(e.target.value)}>
-                      <option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option>
-                    </select>
-                  </label>
-                  <label className="edit-org-control"><span>Severity</span>
-                    <select className="edit-org-input" value={editSeverity} onChange={(e) => setEditSeverity(e.target.value)}>
-                      <option value="1">Low</option><option value="2">Medium</option><option value="3">High</option><option value="4">Critical</option>
-                    </select>
-                  </label>
-                  <label className="edit-org-control"><span>Due Date</span>
-                    <input className="edit-org-input" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
-                  </label>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => void handleEditCase()} disabled={loading}>Save</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowEditForm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
-
-            {showAssignForm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <h3>Assign Agent</h3>
-                {orgAgents.length === 0 ? <p style={{ opacity: 0.7 }}>No agents found.</p> : (
-                  <div className="edit-org-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {orgAgents.map((a) => (
-                      <button key={a.user_id} type="button" className={`edit-org-item ${selectedAgentId === a.user_id ? 'active' : ''}`} onClick={() => setSelectedAgentId(a.user_id)}>
-                        <strong>{a.first_name} {a.last_name}</strong>
-                        <small style={{ marginLeft: '8px', opacity: 0.7 }}>{a.email}</small>
+              <div ref={moreMenuRef} style={{ position: 'relative' }}>
+                <button type="button" className="admin-btn" onClick={() => setShowMoreMenu(p => !p)}>
+                  ···
+                </button>
+                {showMoreMenu && (
+                  <div style={{
+                    position: 'absolute', top: '110%', right: 0, zIndex: 100,
+                    background: 'var(--admin-card-bg, #1a1a2e)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px', minWidth: '150px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                    overflow: 'hidden'
+                  }}>
+                    {[
+                      { label: 'Edit Case', action: () => { openEditForm(); setShowMoreMenu(false) } },
+                      { label: 'Assign Agent', action: () => { void openAssignForm(); setShowMoreMenu(false) } },
+                      { label: 'Delete', action: () => { setShowDeleteConfirm(p => !p); setShowCloseConfirm(false); setShowCloseConfirm(false); setShowAssignForm(false); setShowEditForm(false); setShowMoreMenu(false) }, danger: true },
+                    ].map(item => (
+                      <button key={item.label} type="button" onClick={item.action} style={{
+                        width: '100%', textAlign: 'left', padding: '10px 14px',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        fontSize: '0.875rem', color: item.danger ? '#ef4444' : 'inherit',
+                        fontFamily: 'inherit'
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                      >
+                        {item.label}
                       </button>
                     ))}
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => void handleAssign()} disabled={loading || !selectedAgentId}>Assign</button>
-                  <button type="button" className="admin-btn" onClick={() => { setShowAssignForm(false); setSelectedAgentId(null) }}>Cancel</button>
-                </div>
               </div>
-            )}
+            </div>
 
-            {showCloseConfirm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <p>Resolve <strong>{detail.case.title}</strong>?</p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => { setShowCloseConfirm(false); setShowCloseForm(true) }} disabled={loading}>Yes, Resolve</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowCloseConfirm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
-
-            {showCloseForm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <h3>Resolve Case</h3>
-                <div className="edit-org-controls">
-                  <label className="edit-org-control"><span>Resolution notes</span>
-                    <input className="edit-org-input" type="text" placeholder="Describe the resolution..." value={closeResolution} onChange={(e) => setCloseResolution(e.target.value)} />
-                  </label>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn primary" onClick={() => void handleClose()} disabled={loading || !closeResolution.trim()}>Confirm Resolve</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowCloseForm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
-
-            {showDeleteConfirm && (
-              <div className="admin-card" style={{ marginTop: '16px' }}>
-                <p>Delete <strong>{detail.case.title}</strong>? This cannot be undone.</p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button type="button" className="admin-btn critical" onClick={() => void handleDelete()} disabled={loading}>Delete</button>
-                  <button type="button" className="admin-btn" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
           </section>
 
           <section className="admin-card" style={{ marginBottom: '16px' }}>
@@ -392,12 +385,65 @@ function OrgCaseDetail() {
                   <span className={`admin-pill ${roleColor(actor.role)}`}>{actor.role}</span>
                   <span className={`admin-pill ${actor.source === 'AI' ? 'info' : 'neutral'}`}>{actor.source}</span>
                 </div>
-                <div style={{ fontSize: '0.82rem', opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ fontSize: '0.82rem', opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
                   <span>Aliases: {actor.aliases.length > 0 ? actor.aliases.join(', ') : '—'}</span>
+                  <button className="admin-btn" style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                    onClick={() => { setAliasInputActorId(actor.id); setNewAlias('') }}>
+                    + Alias
+                  </button>
                   {actor.confidenceScore != null && <span>Confidence: {Math.round(actor.confidenceScore * 100)}%</span>}
                   <span>Added: {formatDate(actor.createdAt)}</span>
-                  <span>{actor.evidenceCount} evidence · {actor.casesCount} cases</span>
                 </div>
+                {aliasInputActorId === actor.id && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                    <input
+                      className="edit-org-input"
+                      placeholder="e.g. J. Smith"
+                      value={newAlias}
+                      onChange={e => setNewAlias(e.target.value)}
+                      style={{ flex: 1 }}
+                      autoFocus
+                    />
+                    <button className="admin-btn primary" onClick={() => void handleAddAlias(actor.id)}>Save</button>
+                    <button className="admin-btn" onClick={() => setAliasInputActorId(null)}>Cancel</button>
+                  </div>
+                )}
+                <div style={{ marginTop: '6px' }}>
+                  <button className="admin-btn" style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                    onClick={() => { setNoteInputActorId(actor.id); setNewActorNote('') }}>
+                    + Note
+                  </button>
+                </div>
+                {noteInputActorId === actor.id && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px', width: '100%' }}>
+                    <textarea
+                      className="edit-org-input"
+                      placeholder="Write a note about this actor..."
+                      value={newActorNote}
+                      onChange={e => setNewActorNote(e.target.value)}
+                      rows={3}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                      autoFocus
+                    />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="admin-btn primary" onClick={() => void handleAddActorNote(actor.id)}>Save</button>
+                      <button className="admin-btn" onClick={() => setNoteInputActorId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+                {actor.notes && actor.notes.length > 0 && (
+                  <div style={{ marginTop: '8px', width: '100%', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {actor.notes.map(n => (
+                      <div key={n.note_id} style={{
+                        background: 'rgba(255,255,255,0.04)', borderRadius: '6px',
+                        padding: '8px 10px', fontSize: '0.82rem', lineHeight: '1.5'
+                      }}>
+                        <p style={{ margin: 0 }}>{n.content}</p>
+                        <small style={{ opacity: 0.5 }}>{formatDate(n.created_at)}</small>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </section>
@@ -425,7 +471,8 @@ function OrgCaseDetail() {
               onClick={() => setNotesCollapsed(p => !p)}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
             >
-              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length} Notes</span>
+              Notes
+              <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length}</span>
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                   style={{ transform: notesCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
@@ -477,7 +524,7 @@ function OrgCaseDetail() {
             )}
           </section>
           <PendingSignalsSection />
-          {confirmedSignals.length > 0 && (
+          {(confirmedSignals.length > 0 )&& (
             <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
               <h2
                 onClick={() => setConfirmedCollapsed(p => !p)}
@@ -492,7 +539,7 @@ function OrgCaseDetail() {
                   </svg>
                 </span>
               </h2>
-              {!confirmedCollapsed && (
+              {confirmedCollapsed && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
                   {confirmedSignals.map((s) => (
                     <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
@@ -551,7 +598,75 @@ function OrgCaseDetail() {
         </>
       )}
 
-      
+      {showEditForm && (
+        <Modal title="Edit Case" onClose={() => setShowEditForm(false)}>
+          <div className="edit-org-controls">
+            <label className="edit-org-control"><span>Description</span>
+              <textarea className="edit-org-input" rows={3} value={editDescription} onChange={e => setEditDescription(e.target.value)} />
+            </label>
+            <label className="edit-org-control"><span>Priority</span>
+              <select className="edit-org-input" value={editPriority} onChange={e => setEditPriority(e.target.value)}>
+                <option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option>
+              </select>
+            </label>
+            <label className="edit-org-control"><span>Severity</span>
+              <select className="edit-org-input" value={editSeverity} onChange={e => setEditSeverity(e.target.value)}>
+                <option value="1">Low</option><option value="2">Medium</option><option value="3">High</option><option value="4">Critical</option>
+              </select>
+            </label>
+            <label className="edit-org-control"><span>Due Date</span>
+              <input className="edit-org-input" type="date" value={editDueDate} onChange={e => setEditDueDate(e.target.value)} />
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button type="button" className="admin-btn primary" onClick={() => void handleEditCase()} disabled={loading}>Save</button>
+            <button type="button" className="admin-btn" onClick={() => setShowEditForm(false)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
+      {showAssignForm && (
+        <Modal title="Assign Agent" onClose={() => { setShowAssignForm(false); setSelectedAgentId(null) }}>
+          {orgAgents.length === 0 ? <p style={{ opacity: 0.7 }}>No agents found.</p> : (
+            <div className="edit-org-list" style={{ maxHeight: '240px', overflowY: 'auto' }}>
+              {orgAgents.map(a => (
+                <button key={a.user_id} type="button" className={`edit-org-item ${selectedAgentId === a.user_id ? 'active' : ''}`} onClick={() => setSelectedAgentId(a.user_id)}>
+                  <strong>{a.first_name} {a.last_name}</strong>
+                  <small style={{ marginLeft: '8px', opacity: 0.7 }}>{a.email}</small>
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button type="button" className="admin-btn primary" onClick={() => void handleAssign()} disabled={loading || !selectedAgentId}>Assign</button>
+            <button type="button" className="admin-btn" onClick={() => { setShowAssignForm(false); setSelectedAgentId(null) }}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
+      {showCloseConfirm && (
+        <Modal title="Resolve Case" onClose={() => setShowCloseConfirm(false)} width="400px">
+          <p style={{ marginBottom: '16px' }}>Resolve <strong>{detail?.case.title}</strong>?</p>
+          <label className="edit-org-control"><span>Resolution notes</span>
+            <input className="edit-org-input" type="text" placeholder="Describe the resolution..." value={closeResolution} onChange={e => setCloseResolution(e.target.value)} />
+          </label>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button type="button" className="admin-btn primary" onClick={() => void handleClose()} disabled={loading || !closeResolution.trim()}>Confirm Resolve</button>
+            <button type="button" className="admin-btn" onClick={() => setShowCloseConfirm(false)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
+      {showDeleteConfirm && (
+        <Modal title="Delete Case" onClose={() => setShowDeleteConfirm(false)} width="400px">
+          <p style={{ marginBottom: '16px' }}>Delete <strong>{detail?.case.title}</strong>? This cannot be undone.</p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="button" className="admin-btn critical" onClick={() => void handleDelete()} disabled={loading}>Delete</button>
+            <button type="button" className="admin-btn" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
     </OrgLayout>
   )
 }

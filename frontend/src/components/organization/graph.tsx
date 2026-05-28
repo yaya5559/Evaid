@@ -57,10 +57,40 @@ const GROUP_PADDING = 80
 const ROW_GAP = 24
 const COL_PADDING_TOP = 60
 const COL_PADDING_BOTTOM = 40
+const POLL_INTERVAL_MS = 15_000
 
-type LayoutNode = GraphNode & { x: number; y: number }
+type FilterState = {
+  types: Set<NodeType>
+  status: 'all' | 'confirmed' | 'pending'
+  actor: string | null
+  dateFrom: string
+  dateTo: string
+}
 
-function computeLayout(nodes: GraphNode[]): { layoutNodes: LayoutNode[]; canvasH: number } {
+const DEFAULT_FILTERS: FilterState = {
+  types: new Set(['person', 'event', 'location', 'evidence']),
+  status: 'all',
+  actor: null,
+  dateFrom: '',
+  dateTo: '',
+}
+
+function isFiltered(node: GraphNode, edges: GraphEdge[], filters: FilterState): boolean {
+  if (!filters.types.has(node.type)) return false
+  if (filters.status !== 'all' && node.triage_status !== filters.status) return false
+  if (filters.actor) {
+    const connected = edges.some((e) => e.From === filters.actor || e.to === filters.actor
+      ? (e.From === node.id || e.to === node.id || node.id === filters.actor)
+      : false)
+    if (!connected && node.id !== filters.actor) return false
+  }
+  return true
+}
+
+type LayoutNode = GraphNode & { x: number; y: number; isNew?: boolean; dimmed?: boolean }
+
+// lay out nodes in columns by type
+function computeLayout(nodes: GraphNode[], newIds?: Set<string>, dimmedIds?: Set<string>): { layoutNodes: LayoutNode[]; canvasH: number } {
   const groups: Record<NodeType, GraphNode[]> = { person: [], location: [], event: [], evidence: [] }
   for (const n of nodes) groups[n.type].push(n)
   const typeOrder: NodeType[] = ['person', 'event', 'location', 'evidence']
@@ -78,10 +108,36 @@ function computeLayout(nodes: GraphNode[]): { layoutNodes: LayoutNode[]; canvasH
     const totalH = members.length * (NODE_H + ROW_GAP) - ROW_GAP
     const startY = Math.max(COL_PADDING_TOP, (canvasH - totalH) / 2)
     members.forEach((node, ri) => {
-      result.push({ ...node, x: cx - NODE_W / 2, y: startY + ri * (NODE_H + ROW_GAP) })
+      result.push({ ...node, x: cx - NODE_W / 2, y: startY + ri * (NODE_H + ROW_GAP), isNew: newIds?.has(node.id), dimmed: dimmedIds?.has(node.id) })
     })
   })
   return { layoutNodes: result, canvasH }
+}
+// merge incoming poll data without resetting existing nodes
+function mergeGraphData(existing: GraphResponse, incoming: GraphResponse): { merged: GraphResponse; newNodeIds: Set<string> } {
+  const existingNodeIds = new Set(existing.nodes.map((n) => n.id))
+  const existingEdgeIds = new Set(existing.edges.map((e) => e.id))
+  const newNodeIds = new Set<string>()
+
+  const addedNodes = incoming.nodes.filter((n) => {
+    if (!existingNodeIds.has(n.id)) { newNodeIds.add(n.id); return true }
+    return false
+  })
+  const addedEdges = incoming.edges.filter((e) => !existingEdgeIds.has(e.id))
+  const updatedNodes = existing.nodes.map((n) => {
+    const fresh = incoming.nodes.find((x) => x.id === n.id)
+    if (fresh && fresh.triage_status !== n.triage_status) return { ...n, triage_status: fresh.triage_status }
+    return n
+  })
+
+  return {
+    merged: {
+      ...existing,
+      nodes: [...updatedNodes, ...addedNodes],
+      edges: [...existing.edges, ...addedEdges],
+    },
+    newNodeIds,
+  }
 }
 
 const NODE_STYLE: Record<NodeType, { fill: string; stroke: string; label: string }> = {
@@ -142,6 +198,9 @@ function Defs({ layoutNodes, edges }: { layoutNodes: LayoutNode[]; edges: GraphE
       })}
       <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
         <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#00000020" />
+      </filter>
+      <filter id="new-glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#22c55e" floodOpacity="0.7" />
       </filter>
     </defs>
   )
@@ -211,8 +270,13 @@ function NodeBox({ node, selected, onClick, dark }: {
   const label = node.label.length > MAX_LABEL ? node.label.slice(0, MAX_LABEL - 1) + '…' : node.label
 
   return (
-    <g onClick={onClick} style={{ cursor: 'pointer' }} filter={selected ? 'url(#shadow)' : undefined}>
-      <rect x={node.x} y={node.y} width={NODE_W} height={NODE_H} rx={NODE_RADIUS} fill={style.fill} stroke={style.stroke} strokeWidth={strokeW} />
+    <g onClick={onClick} style={{ cursor: 'pointer', opacity: node.dimmed ? 0.2 : 1, transition: 'opacity 0.2s ease' }} filter={node.isNew ? 'url(#new-glow)' : selected ? 'url(#shadow)' : undefined}>
+      <rect
+        x={node.x} y={node.y} width={NODE_W} height={NODE_H} rx={NODE_RADIUS}
+        fill={node.isNew ? (dark ? '#14532d' : '#dcfce7') : style.fill}
+        stroke={node.isNew ? '#22c55e' : style.stroke}
+        strokeWidth={node.isNew ? 2 : strokeW}
+      />
       {node.source === 'USER' && (
         <rect x={node.x + NODE_W - 28} y={node.y + 4} width={22} height={13} rx={4} fill={dark ? '#3730A3' : '#EEF2FF'} />
       )}
@@ -221,7 +285,12 @@ function NodeBox({ node, selected, onClick, dark }: {
           USR
         </text>
       )}
-      <text x={node.x + 12} y={node.y + 16} fontSize={10} fill={style.stroke} fontWeight={600} style={{ fontFamily: 'var(--font-sans, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+      {node.isNew && (
+        <text x={node.x + NODE_W - 10} y={node.y + NODE_H - 6} fontSize={8} fill="#22c55e" textAnchor="middle" fontWeight={700} style={{ fontFamily: 'var(--font-mono, monospace)' }}>
+          NEW
+        </text>
+      )}
+      <text x={node.x + 12} y={node.y + 16} fontSize={10} fill={node.isNew ? '#22c55e' : style.stroke} fontWeight={600} style={{ fontFamily: 'var(--font-sans, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
         {node.type}
       </text>
       <text x={node.x + 12} y={node.y + 35} fontSize={13} fill={dark ? '#F1F5F9' : '#0F172A'} fontWeight={500} style={{ fontFamily: 'var(--font-sans, sans-serif)' }}>
@@ -456,7 +525,7 @@ function DetailPanel({ node, edges, nodes, onClose, previewRoute }: {
   const s = NODE_STYLE[node.type]
 
   return (
-    <div style={{ position: 'absolute', top: 12, right: 12, width: 256, background: 'var(--color-background-primary)', border: '0.5px solid var(--color-border-secondary)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', zIndex: 10, maxHeight: 'calc(100% - 24px)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', top: 80, right: 16, width: 272, background: 'var(--color-background-primary)', border: '0.5px solid var(--color-border-secondary)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.10)', zIndex: 10, maxHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '10px 14px', background: s.fill, borderBottom: `1px solid ${s.stroke}22`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: s.stroke, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-sans)' }}>{node.type}</div>
@@ -465,7 +534,7 @@ function DetailPanel({ node, edges, nodes, onClose, previewRoute }: {
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.5, padding: 0, lineHeight: 1, color: 'inherit' }}>✕</button>
       </div>
       <div style={{ padding: '10px 14px', overflowY: 'auto', flex: 1 }}>
-        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)', marginBottom: 8 }}>Source: {node.source}</div>
+        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)', marginBottom: 8 }}>Source: {node.source}</div>
 
         {(node.signal_type || node.raw_value || node.confidence != null) && (
           <div style={{ marginBottom: 10, padding: '8px 10px', background: 'var(--color-background-secondary)', borderRadius: 7, border: '0.5px solid var(--color-border-tertiary)' }}>
@@ -540,6 +609,268 @@ function DetailPanel({ node, edges, nodes, onClose, previewRoute }: {
   )
 }
 
+// filter button + dropdown panel
+function FilterDropdown({ filters, setFilters, personNodes, activeCount, totalCount }: {
+  filters: FilterState
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>
+  personNodes: LayoutNode[]
+  activeCount: number
+  totalCount: number
+}) {
+  const [open, setOpen] = useState(false)
+  const [dropPos, setDropPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const NODE_TYPES: NodeType[] = ['person', 'event', 'location', 'evidence']
+  const TYPE_DOT: Record<NodeType, string> = {
+    person: '#7C3AED', event: '#D97706', location: '#059669', evidence: '#2563EB',
+  }
+
+  const hasActiveFilters = filters.status !== 'all' || filters.actor !== null ||
+    filters.dateFrom !== '' || filters.dateTo !== '' || filters.types.size < 4
+
+  const toggleType = (t: NodeType) => {
+    setFilters((f) => {
+      const next = new Set(f.types)
+      if (next.has(t) && next.size > 1) next.delete(t)
+      else next.add(t)
+      return { ...f, types: next }
+    })
+  }
+
+  const clearAll = () => setFilters({ ...DEFAULT_FILTERS, types: new Set(['person', 'event', 'location', 'evidence']) })
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const row: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6 }
+  const label: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: '#7e95ab', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-sans)' }
+  const selectStyle: React.CSSProperties = { fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #213344', background: '#0f172a', color: '#ebf3ff', fontFamily: 'var(--font-sans)', cursor: 'pointer', width: '100%' }
+
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setDropPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+    }
+    setOpen((o) => !o)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={handleToggle}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: 13, padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
+          fontFamily: 'var(--font-sans)', fontWeight: 500,
+          border: `0.5px solid ${hasActiveFilters ? '#7C3AED' : 'var(--color-border-secondary)'}`,
+          background: hasActiveFilters ? '#EDE9FE' : '#1e293b',
+          color: hasActiveFilters ? '#4C1D95' : '#9fb6ce',
+        }}
+      >
+        <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
+          <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round"/>
+        </svg>
+        Filter
+        {hasActiveFilters && (
+          <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 20, background: '#7C3AED', color: '#fff', fontWeight: 600 }}>
+            {(filters.types.size < 4 ? 1 : 0) + (filters.status !== 'all' ? 1 : 0) + (filters.actor ? 1 : 0) + (filters.dateFrom || filters.dateTo ? 1 : 0)}
+          </span>
+        )}
+        <svg width={10} height={10} viewBox="0 0 10 10" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>
+          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{ position: 'fixed', top: dropPos.top, right: dropPos.right, width: 360, background: '#111d27', border: '1px solid #213344', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 9000, padding: 20, display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 20 }}>
+          <div style={row}>
+            <span style={label}>Node type</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {NODE_TYPES.map((t) => {
+                const active = filters.types.has(t)
+                return (
+                  <button key={t} type="button" onClick={() => toggleType(t)} style={{
+                    fontSize: 12, padding: '4px 10px', borderRadius: 20, cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 500,
+                    border: `0.5px solid ${active ? TYPE_DOT[t] : 'var(--color-border-secondary)'}`,
+                    background: active ? `${TYPE_DOT[t]}18` : 'none',
+                    color: active ? TYPE_DOT[t] : 'var(--color-text-secondary)',
+                    display: 'flex', alignItems: 'center', gap: 5, transition: 'all .12s',
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: TYPE_DOT[t], flexShrink: 0 }} />
+                    {t}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div style={row}>
+            <span style={label}>Signal status</span>
+            <select value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value as FilterState['status'] }))} style={selectStyle}>
+              <option value="all">All signals</option>
+              <option value="confirmed">Confirmed only</option>
+              <option value="pending">Pending only</option>
+            </select>
+          </div>
+          <div style={row}>
+            <span style={label}>Focus on actor</span>
+            <select value={filters.actor ?? ''} onChange={(e) => setFilters((f) => ({ ...f, actor: e.target.value || null }))} style={selectStyle}>
+              <option value="">All actors</option>
+              {personNodes.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
+          </div>
+          <div style={row}>
+            <span style={label}>Date range</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <input type="date" value={filters.dateFrom} onChange={(e) => setFilters((f) => ({ ...f, dateFrom: e.target.value }))} style={{ ...selectStyle }} />
+              <input type="date" value={filters.dateTo} onChange={(e) => setFilters((f) => ({ ...f, dateTo: e.target.value }))} style={{ ...selectStyle }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #213344', paddingTop: 12 }}>
+            <span style={{ fontSize: 12, color: '#7e95ab', fontFamily: 'var(--font-mono, monospace)' }}>{activeCount}/{totalCount} shown</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {hasActiveFilters && (
+                <button type="button" onClick={clearAll} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #213344', background: 'none', color: '#9fb6ce', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                  Clear all
+                </button>
+              )}
+              <button type="button" onClick={() => setOpen(false)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #213344', background: '#1e293b', color: '#ebf3ff', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 500 }}>
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// floating panel showing the 5 most-connected nodes
+function TopConnectionsSidebar({ nodes, edges, onSelectNode }: {
+  nodes: LayoutNode[]
+  edges: GraphEdge[]
+  onSelectNode: (id: string) => void
+}) {
+  const [collapsed, setCollapsed] = useState(true)
+
+  const TYPE_COLOR: Record<NodeType, string> = {
+    person: '#7C3AED', event: '#D97706', location: '#059669', evidence: '#2563EB',
+  }
+  const TYPE_BG: Record<NodeType, string> = {
+    person: '#EDE9FE', event: '#FEF3C7', location: '#D1FAE5', evidence: '#DBEAFE',
+  }
+
+  const connCount: Record<string, number> = {}
+  edges.forEach((e) => {
+    connCount[e.From] = (connCount[e.From] ?? 0) + 1
+    connCount[e.to] = (connCount[e.to] ?? 0) + 1
+  })
+
+  const top5 = [...nodes]
+    .filter((n) => (connCount[n.id] ?? 0) > 0)
+    .sort((a, b) => (connCount[b.id] ?? 0) - (connCount[a.id] ?? 0))
+    .slice(0, 5)
+
+  const maxConns = top5[0] ? (connCount[top5[0].id] ?? 0) : 1
+
+  return (
+    <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 50 }}>
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          style={{ background: '#111d27', border: '1px solid #213344', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.3)', color: '#9fb6ce', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500 }}
+        >
+          <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
+            <circle cx={3} cy={3.5} r={1.5} fill="currentColor" opacity={0.7} />
+            <rect x={6} y={2.5} width={7} height={2} rx={1} fill="currentColor" opacity={0.4} />
+            <circle cx={3} cy={7} r={1.5} fill="currentColor" opacity={0.7} />
+            <rect x={6} y={6} width={5} height={2} rx={1} fill="currentColor" opacity={0.4} />
+            <circle cx={3} cy={10.5} r={1.5} fill="currentColor" opacity={0.7} />
+            <rect x={6} y={9.5} width={3} height={2} rx={1} fill="currentColor" opacity={0.4} />
+          </svg>
+          Most connected
+        </button>
+      ) : (
+        <div style={{ width: 200, background: '#111d27', border: '1px solid #213344', borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid #213344', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#7e95ab', fontFamily: 'var(--font-sans)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Most connected
+            </span>
+            <button type="button" onClick={() => setCollapsed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#7e95ab', fontSize: 16, lineHeight: 1 }}>✕</button>
+          </div>
+          <div style={{ overflowY: 'auto', maxHeight: 300, scrollbarWidth: 'none' }}>
+            {top5.length === 0 && <div style={{ fontSize: 12, color: '#7e95ab', fontFamily: 'var(--font-sans)', padding: '12px 14px' }}>No connections yet</div>}
+            {top5.map((node, i) => {
+              const count = connCount[node.id] ?? 0
+              const barW = Math.round((count / maxConns) * 100)
+              const dotColor = TYPE_COLOR[node.type]
+              const bgColor = TYPE_BG[node.type]
+              return (
+                <button key={node.id} type="button" onClick={() => onSelectNode(node.id)}
+                  style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '9px 14px', textAlign: 'left', fontFamily: 'var(--font-sans)', borderBottom: '1px solid #1a2a39', display: 'flex', flexDirection: 'column', gap: 5 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#1e293b' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#7e95ab', fontFamily: 'var(--font-mono, monospace)', flexShrink: 0, minWidth: 14 }}>{i + 1}</span>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, fontWeight: 500, color: '#ebf3ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{node.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: dotColor, flexShrink: 0, fontFamily: 'var(--font-mono, monospace)' }}>{count}</span>
+                  </div>
+                  <div style={{ paddingLeft: 21 }}>
+                    <div style={{ height: 3, borderRadius: 2, background: '#1e293b', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 2, width: `${barW}%`, background: dotColor, opacity: 0.6 }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 5, paddingLeft: 21 }}>
+                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, background: bgColor, color: dotColor, fontWeight: 500, textTransform: 'capitalize' }}>{node.type}</span>
+                    {node.triage_status && (
+                      <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, fontWeight: 500, background: node.triage_status === 'confirmed' ? '#dcfce7' : '#fef9c3', color: node.triage_status === 'confirmed' ? '#166534' : '#854d0e' }}>{node.triage_status}</span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          <div style={{ padding: '6px 14px', borderTop: '1px solid #1a2a39' }}>
+            <span style={{ fontSize: 11, color: '#7e95ab', fontFamily: 'var(--font-sans)' }}>Click to highlight</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+function LiveDot({ polling, newCount }: { polling: boolean; newCount: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ position: 'relative', width: 8, height: 8 }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: polling ? '#22c55e' : '#94a3b8' }} />
+        {polling && (
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite', opacity: 0.4 }} />
+        )}
+      </div>
+      <span style={{ fontSize: 11, color: polling ? '#22c55e' : 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' }}>
+        {polling ? 'Live' : 'Paused'}
+      </span>
+      {newCount > 0 && (
+        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#22c55e', color: '#fff', fontWeight: 600, fontFamily: 'var(--font-sans)' }}>
+          +{newCount} new
+        </span>
+      )}
+    </div>
+  )
+}
+
+// main graph component
 function Graph({ caseId, previewRoute = '/evidence/preview', backPath, caseTitle }: GraphProps) {
   const [data, setData] = useState<GraphResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -547,8 +878,14 @@ function Graph({ caseId, previewRoute = '/evidence/preview', backPath, caseTitle
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   const [dark, setDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const [newNodeIds, setNewNodeIds] = useState<Set<string>>(new Set())
+  const [polling, setPolling] = useState(true)
+  const [newCount, setNewCount] = useState(0)
+  const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS, types: new Set(['person', 'event', 'location', 'evidence']) })
   const svgRef = useRef<SVGSVGElement>(null)
+  const dataRef = useRef<GraphResponse | null>(null)
   const navigate = useNavigate()
+  useEffect(() => { dataRef.current = data }, [data])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -556,18 +893,47 @@ function Graph({ caseId, previewRoute = '/evidence/preview', backPath, caseTitle
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
-
   useEffect(() => {
     setLoading(true)
     setError(null)
+    setNewNodeIds(new Set())
+    setNewCount(0)
     api.get<GraphResponse>(`/graph/cases/${caseId}`)
       .then((res) => setData(res.data))
       .catch(() => setError('Failed to load graph data.'))
       .finally(() => setLoading(false))
   }, [caseId])
+  useEffect(() => {
+    if (!polling) return
+    const interval = setInterval(async () => {
+      if (!dataRef.current) return
+      try {
+        const res = await api.get<GraphResponse>(`/graph/cases/${caseId}`)
+        const { merged, newNodeIds: incoming } = mergeGraphData(dataRef.current, res.data)
+        if (incoming.size > 0) {
+          setData(merged)
+          setNewNodeIds(incoming)
+          setNewCount((c) => c + incoming.size)
+          setTimeout(() => setNewNodeIds(new Set()), 8000)
+        } else {
+          setData(merged)
+        }
+      } catch { /* silent — don't disrupt the view on poll failure */ }
+    }, POLL_INTERVAL_MS)
+    return () => clearInterval(interval)
+  }, [caseId, polling])
 
-  const { layoutNodes, canvasH } = data ? computeLayout(data.nodes) : { layoutNodes: [], canvasH: CANVAS_H_MIN }
+  const { layoutNodes, canvasH } = data ? computeLayout(data.nodes, newNodeIds) : { layoutNodes: [], canvasH: CANVAS_H_MIN }
   const selectedNode = layoutNodes.find((n) => n.id === selectedNodeId) ?? null
+  const dimmedIds = new Set<string>()
+  if (data) {
+    layoutNodes.forEach((n) => {
+      if (!isFiltered(n, data.edges, filters)) dimmedIds.add(n.id)
+    })
+  }
+  const filteredLayoutNodes = layoutNodes.map((n) => ({ ...n, dimmed: dimmedIds.has(n.id) }))
+  const personNodes = layoutNodes.filter((n) => n.type === 'person')
+  const activeCount = layoutNodes.length - dimmedIds.size
 
   const typeOrder: NodeType[] = ['person', 'event', 'location', 'evidence']
   const groups: Partial<Record<NodeType, boolean>> = {}
@@ -581,9 +947,14 @@ function Graph({ caseId, previewRoute = '/evidence/preview', backPath, caseTitle
     setSelectedEdgeId(null)
   }, [])
 
+  const clearNew = () => { setNewNodeIds(new Set()); setNewCount(0) }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--color-background-primary)', overflow: 'hidden' }}>
-      <style>{`.graph-scroll-container::-webkit-scrollbar { display: none; }`}</style>
+      <style>{`
+        .graph-scroll-container::-webkit-scrollbar { display: none; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(2); opacity: 0; } }
+      `}</style>
       <header style={{ padding: '12px 20px', borderBottom: '0.5px solid var(--color-border-tertiary)', background: 'var(--color-background-secondary)', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
         <button
           type="button"
@@ -596,81 +967,97 @@ function Graph({ caseId, previewRoute = '/evidence/preview', backPath, caseTitle
           Back
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <svg width={16} height={16} viewBox="0 0 18 18" fill="none">
-            <circle cx={4} cy={4} r={3} stroke="var(--color-text-secondary)" strokeWidth={1.2} />
-            <circle cx={14} cy={4} r={3} stroke="var(--color-text-secondary)" strokeWidth={1.2} />
-            <circle cx={9} cy={14} r={3} stroke="var(--color-text-secondary)" strokeWidth={1.2} />
-            <line x1={7} y1={4} x2={11} y2={4} stroke="var(--color-text-secondary)" strokeWidth={1} />
-            <line x1={5.5} y1={6.5} x2={7.5} y2={11.5} stroke="var(--color-text-secondary)" strokeWidth={1} />
-            <line x1={12.5} y1={6.5} x2={10.5} y2={11.5} stroke="var(--color-text-secondary)" strokeWidth={1} />
-          </svg>
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' }}>Evidence Graph</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', lineHeight: 1.2 }}>
-              {caseTitle ?? `Case #${caseId}`}
-            </div>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' }}>Evidence Graph</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', lineHeight: 1.2 }}>
+            {caseTitle ?? `Case #${caseId}`}
           </div>
         </div>
 
         {data && (
-          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'var(--color-background-info)', color: 'var(--color-text-info)', fontFamily: 'var(--font-mono, monospace)', marginLeft: 4 }}>
+          <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'var(--color-background-info)', color: 'var(--color-text-info)', fontFamily: 'var(--font-mono, monospace)', marginLeft: 4 }}>
             {data.nodes.length} nodes · {data.edges.length} edges
           </span>
         )}
 
-        <div style={{ marginLeft: 'auto' }}>
-          <button
-            type="button"
-            onClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null) }}
-            style={{ background: 'none', border: '0.5px solid var(--color-border-secondary)', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}
-          >
+        <LiveDot polling={polling} newCount={newCount} />
+
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <FilterDropdown
+            filters={filters}
+            setFilters={setFilters}
+            personNodes={personNodes}
+            activeCount={activeCount}
+            totalCount={layoutNodes.length}
+          />
+          {newCount > 0 && (
+            <button type="button" onClick={clearNew} style={{ background: 'none', border: '0.5px solid #22c55e', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: '#22c55e', fontFamily: 'var(--font-sans)' }}>
+              Clear new
+            </button>
+          )}
+          <button type="button" onClick={() => setPolling((p) => !p)} style={{ background: 'none', border: '0.5px solid var(--color-border-secondary)', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
+            {polling ? 'Pause' : 'Resume'}
+          </button>
+          <button type="button" onClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null) }} style={{ background: 'none', border: '0.5px solid var(--color-border-secondary)', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
             Reset
           </button>
         </div>
       </header>
-
-      <div style={{ flex: 1, position: 'relative', overflow: 'auto', scrollbarWidth: 'none' }} className="graph-scroll-container">
-        {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>Loading graph…</span>
-          </div>
-        )}
-        {error && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <span style={{ fontSize: 13, color: 'var(--color-text-danger)', fontFamily: 'var(--font-sans)' }}>{error}</span>
-          </div>
-        )}
-        {!loading && !error && data && data.nodes.length === 0 && <EmptyState />}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         {!loading && !error && data && data.nodes.length > 0 && (
-          <>
+          <TopConnectionsSidebar
+            nodes={filteredLayoutNodes}
+            edges={data.edges}
+            onSelectNode={(id) => { setSelectedNodeId(id); setSelectedEdgeId(null) }}
+          />
+        )}
+        <div style={{ flex: 1, position: 'relative', overflow: 'auto', scrollbarWidth: 'none' }} className="graph-scroll-container">
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>Loading graph…</span>
+            </div>
+          )}
+          {error && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <span style={{ fontSize: 13, color: 'var(--color-text-danger)', fontFamily: 'var(--font-sans)' }}>{error}</span>
+            </div>
+          )}
+          {!loading && !error && data && data.nodes.length === 0 && <EmptyState />}
+          {!loading && !error && data && data.nodes.length > 0 && (
+            <>
             <svg ref={svgRef} width={CANVAS_W} height={canvasH} viewBox={`0 0 ${CANVAS_W} ${canvasH}`} style={{ display: 'block', minWidth: '100%' }} onClick={handleCanvasClick}>
-              <Defs layoutNodes={layoutNodes} edges={data.edges} />
+              <Defs layoutNodes={filteredLayoutNodes} edges={data.edges} />
               {activeCols.map((type, ci) => (
                 <ColumnHeader key={type} type={type} x={GROUP_PADDING + ci * colW} colW={colW} />
               ))}
               {activeCols.slice(0, -1).map((_, ci) => (
                 <line key={ci} x1={GROUP_PADDING + (ci + 1) * colW} y1={40} x2={GROUP_PADDING + (ci + 1) * colW} y2={canvasH - 20} stroke={dark ? '#334155' : '#E2E8F0'} strokeWidth={0.5} strokeDasharray="4 4" />
               ))}
-              {data.edges.map((edge) => (
-                <EdgeLine key={edge.id} edge={edge} layoutNodes={layoutNodes} selected={selectedEdgeId === edge.id} onClick={(e) => { e.stopPropagation(); setSelectedEdgeId(edge.id); setSelectedNodeId(null) }} />
-              ))}
-              {layoutNodes.map((node) => (
+              {data.edges.map((edge) => {
+                const fromDimmed = dimmedIds.has(edge.From)
+                const toDimmed = dimmedIds.has(edge.to)
+                return (
+                  <g key={edge.id} style={{ opacity: fromDimmed || toDimmed ? 0.08 : 1, transition: 'opacity 0.2s ease' }}>
+                    <EdgeLine edge={edge} layoutNodes={filteredLayoutNodes} selected={selectedEdgeId === edge.id} onClick={(e) => { e.stopPropagation(); setSelectedEdgeId(edge.id); setSelectedNodeId(null) }} />
+                  </g>
+                )
+              })}
+              {filteredLayoutNodes.map((node) => (
                 <NodeBox key={node.id} node={node} selected={selectedNodeId === node.id} dark={dark} onClick={(e) => { e.stopPropagation(); setSelectedNodeId(node.id); setSelectedEdgeId(null) }} />
               ))}
             </svg>
-            <DetailPanel node={selectedNode} edges={data.edges} nodes={layoutNodes} onClose={() => setSelectedNodeId(null)} previewRoute={previewRoute} />
-          </>
-        )}
+            <DetailPanel node={selectedNode} edges={data.edges} nodes={filteredLayoutNodes} onClose={() => setSelectedNodeId(null)} previewRoute={previewRoute} />
+            </>
+          )}
+        </div>
+
       </div>
 
       {!loading && !error && data && data.nodes.length > 0 && (
-        <Legend dark={dark} edges={data.edges} layoutNodes={layoutNodes} />
+        <Legend dark={dark} edges={data.edges} layoutNodes={filteredLayoutNodes} />
       )}
     </div>
   )
 }
 
 export default Graph
-
-// Force Change 2026
