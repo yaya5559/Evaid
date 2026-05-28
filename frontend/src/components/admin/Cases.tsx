@@ -35,7 +35,7 @@ function normalizeStatus(status: string | undefined): CaseStatus {
   return 'Open'
 }
 
-const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'good', Discarded: 'critical' }
+const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'info', Discarded: 'critical' }
 
 function roleColor(role: string): string {
   if (role === 'Suspect') return 'critical'
