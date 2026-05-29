@@ -193,7 +193,13 @@ function Login() {
         </form>
 
         <footer className="footer" aria-label="Help">
-          <p className="fine">By continuing you agree to our Terms & Privacy.</p>
+          <p className="fine">
+            By continuing you agree to our{" "}
+            <Link to="/terms" className="link">
+              Terms of Service
+            </Link>
+            .
+          </p>
         </footer>
       </section>
     </main>

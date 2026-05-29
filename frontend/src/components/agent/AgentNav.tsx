@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAIWarning } from '../../context/AIWarningContext'
 import { NotificationBell } from '../shared/NotificationBell'
@@ -59,7 +59,7 @@ function AgentNav() {
       </nav>
 
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div className='admin-user-panel' style={{ cursor: 'default' }}>
+        <div className='admin-user-panel' style={{ cursor: 'pointer' }} onClick={() => navigate('/Profile')} title='Edit profile'>
           <div className='admin-user-avatar'>{initials || 'AG'}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className='admin-user-name'>Agent</div>
@@ -79,6 +79,14 @@ function AgentNav() {
           </svg>
           AI Use Policy
         </button>
+
+        <Link to='/terms' className='admin-nav-policy-link'>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Terms of Service
+        </Link>
       </div>
     </>
   )

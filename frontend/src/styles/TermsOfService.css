@@ -1,0 +1,228 @@
+.tos-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(59, 130, 246, 0.12), transparent 32rem),
+    #0b111e;
+  color: #f1f5f9;
+  padding: 60px 20px 80px;
+}
+
+[data-theme="light"] .tos-page {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(14, 165, 233, 0.1), transparent 32rem),
+    #f8fbff;
+  color: #0f172a;
+}
+
+.tos-container {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.tos-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #94a3b8;
+  text-decoration: none;
+  margin-bottom: 40px;
+  transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tos-back:hover {
+  color: #f1f5f9;
+}
+
+[data-theme="light"] .tos-back:hover {
+  color: #0f172a;
+}
+
+.tos-header {
+  margin-bottom: 48px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .tos-header {
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+}
+
+.tos-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  margin-bottom: 16px;
+}
+
+.tos-title {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.tos-meta {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+[data-theme="light"] .tos-meta {
+  color: #475569;
+}
+
+.tos-intro {
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 48px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #cbd5e1;
+}
+
+[data-theme="light"] .tos-intro {
+  background: rgba(59, 130, 246, 0.04);
+  color: #334155;
+}
+
+.tos-section {
+  margin-bottom: 44px;
+}
+
+.tos-section-number {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3b82f6;
+  margin: 0 0 8px;
+}
+
+.tos-section-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+[data-theme="light"] .tos-section-title {
+  color: #0f172a;
+}
+
+.tos-section p {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #94a3b8;
+}
+
+[data-theme="light"] .tos-section p {
+  color: #475569;
+}
+
+.tos-section p:last-child {
+  margin-bottom: 0;
+}
+
+.tos-section ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+
+.tos-section ul li {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+[data-theme="light"] .tos-section ul li {
+  color: #475569;
+}
+
+.tos-warning {
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.18);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 12px;
+}
+
+.tos-warning p {
+  color: #fbbf24 !important;
+  margin: 0 !important;
+  font-size: 14px !important;
+}
+
+[data-theme="light"] .tos-warning p {
+  color: #b45309 !important;
+}
+
+.tos-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 0 0 44px;
+}
+
+[data-theme="light"] .tos-divider {
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+.tos-contact {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 28px 32px;
+  margin-top: 56px;
+}
+
+[data-theme="light"] .tos-contact {
+  background: rgba(248, 251, 255, 0.8);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.tos-contact h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+[data-theme="light"] .tos-contact h3 {
+  color: #0f172a;
+}
+
+.tos-contact p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #64748b;
+}
+
+[data-theme="light"] .tos-contact p {
+  color: #475569;
+}
+
+.tos-contact a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.tos-contact a:hover {
+  text-decoration: underline;
+}
