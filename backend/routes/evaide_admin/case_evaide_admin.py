@@ -1,8 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from models.cases import CreateCase, UpdateCase, CloseCase
 import services.evaide_admin.admin_case_services as services
+from dependencies.auth import require_roles
 
-router = APIRouter(prefix="/admin/cases", tags=["Evaide Admin - Cases"])
+router = APIRouter(
+    prefix="/admin/cases",
+    tags=["Evaide Admin - Cases"],
+    dependencies=[Depends(require_roles("evaide_admin"))],
+)
 
 
 @router.get("/")

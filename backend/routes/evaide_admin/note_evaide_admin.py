@@ -1,8 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 import services.evaide_admin.admin_case_notes_services as services
+from dependencies.auth import require_roles
 
-router = APIRouter(prefix="/admin/notes", tags=["Evaide Admin - Notes"])
+router = APIRouter(
+    prefix="/admin/notes",
+    tags=["Evaide Admin - Notes"],
+    dependencies=[Depends(require_roles("evaide_admin"))],
+)
 
 
 class CreateNoteBody(BaseModel):

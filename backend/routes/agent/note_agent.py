@@ -1,8 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 import services.agent.agent_note_services as services
+from dependencies.auth import require_roles
 
-router = APIRouter(prefix="/agent/notes", tags=["Agent - Notes"])
+router = APIRouter(
+    prefix="/agent/notes",
+    tags=["Agent - Notes"],
+    dependencies=[Depends(require_roles("agent", "org_admin", "evaide_admin"))],
+)
 
 
 class NoteCreate(BaseModel):
