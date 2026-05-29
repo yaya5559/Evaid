@@ -1,5 +1,8 @@
 import { useSignals } from '../../context/SignalContext'
 import '../../styles/Signals.css'
+import { FilePreviewModal } from './EvidenceSection'
+
+
 
 function confidenceColor(score: number): string {
   if (score >= 0.75) return '#16a34a'
@@ -42,133 +45,140 @@ function parseLocator(raw: string | null): ParsedLocator | null {
   try { return JSON.parse(raw) } catch { return null }
 }
 
-export function SignalModal() {
-  const { openSignal, setOpenSignal, confirmSignal, denySignal } = useSignals()
-  if (!openSignal) return null
+export function SignalModal({previewRoute}:{previewRoute:string}) {
+    const { openSignal, setOpenSignal, confirmSignal, denySignal } = useSignals()
+    const locator = parseLocator(openSignal?.source_locator ?? null)
 
-  const locator = parseLocator(openSignal.source_locator)
+    if (!openSignal) return null    
 
-  return (
-    <div
-      className="signal-modal-backdrop"
-      onClick={() => setOpenSignal(null)}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="signal-modal-card" onClick={(e) => e.stopPropagation()}>
+    return (
+      <div
+        className="signal-modal-backdrop"
+        onClick={() => setOpenSignal(null)}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="signal-modal-card" onClick={(e) => e.stopPropagation()}>
 
-        {/* Header */}
-        <div className="signal-modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span className="signal-type-badge large evidence">
-              {formatSignalType(openSignal.signal_type)}
-            </span>
-            {openSignal.status !== 'pending' && (
-              <span className={`signal-status-badge ${openSignal.status}`}>
-                {openSignal.status}
+          {/* Header */}
+          <div className="signal-modal-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span className="signal-type-badge large evidence">
+                {formatSignalType(openSignal.signal_type)}
               </span>
-            )}
-          </div>
-          <button
-            type="button"
-            className="signal-modal-close"
-            onClick={() => setOpenSignal(null)}
-            aria-label="Close"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="signal-modal-body">
-
-          <div className="signal-modal-section">
-            <div className="signal-modal-label">Extracted Value</div>
-            <div className="signal-modal-value" style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
-              {openSignal.raw_value}
+              {openSignal.status !== 'pending' && (
+                <span className={`signal-status-badge ${openSignal.status}`}>
+                  {openSignal.status}
+                </span>
+              )}
             </div>
-          </div>
-
-          {openSignal.normalized_value && openSignal.normalized_value !== openSignal.raw_value && (
-            <div className="signal-modal-section">
-              <div className="signal-modal-label">Normalized</div>
-              <div className="signal-modal-value" style={{ fontFamily: 'monospace', opacity: 0.75 }}>
-                {openSignal.normalized_value}
-              </div>
-            </div>
-          )}
-
-          <div className="signal-modal-section">
-            <div className="signal-modal-label">Confidence</div>
-            <ConfidenceBar score={openSignal.confidence} />
-          </div>
-
-          {locator?.platform && (
-            <div className="signal-modal-section">
-              <div className="signal-modal-label">Detected Platform</div>
-              <div className="signal-modal-value">{locator.platform}</div>
-            </div>
-          )}
-
-          {locator?.reasoning && (
-            <div className="signal-modal-section">
-              <div className="signal-modal-label">AI Reasoning</div>
-              <div className="signal-modal-notes">{locator.reasoning}</div>
-            </div>
-          )}
-
-          {(locator?.char_start != null && locator?.char_end != null) && (
-            <div className="signal-modal-section">
-              <div className="signal-modal-label">Location in Document</div>
-              <div className="signal-modal-value" style={{ fontSize: '0.82rem', opacity: 0.75 }}>
-                Characters {locator.char_start} – {locator.char_end}
-              </div>
-            </div>
-          )}
-
-          {openSignal.triage_reason && (
-            <div className="signal-modal-section">
-              <div className="signal-modal-label">Source</div>
-              <div className="signal-modal-value" style={{ textTransform: 'capitalize' }}>
-                {openSignal.triage_reason.replace(/_/g, ' ')}
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* Footer */}
-        <div className="signal-modal-footer">
-          {openSignal.status === 'pending' ? (
-            <>
-              <button
-                type="button"
-                className="signal-btn confirm"
-                onClick={() => void confirmSignal(openSignal.id)}
-              >
-                Confirm Signal
-              </button>
-              <button
-                type="button"
-                className="signal-btn deny"
-                onClick={() => void denySignal(openSignal.id)}
-              >
-                Deny Signal
-              </button>
-            </>
-          ) : (
             <button
               type="button"
-              className="signal-btn"
-              style={{ background: '#f3f4f6', color: '#374151' }}
+              className="signal-modal-close"
               onClick={() => setOpenSignal(null)}
+              aria-label="Close"
             >
-              Close
+              ×
             </button>
-          )}
-        </div>
+          </div>
 
+            {/* Two-panel row */}
+          <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+
+            {/* Left: signal details + footer */}
+            <div style={{ width: '340px', flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid #213344' }}>
+              <div className="signal-modal-body">
+
+                <div className="signal-modal-section">
+                  <div className="signal-modal-label">Extracted Value</div>
+                  <div className="signal-modal-value" style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                    {openSignal.raw_value}
+                  </div>
+                </div>
+
+                {openSignal.normalized_value && openSignal.normalized_value !== openSignal.raw_value && (
+                  <div className="signal-modal-section">
+                    <div className="signal-modal-label">Normalized</div>
+                    <div className="signal-modal-value" style={{ fontFamily: 'monospace', opacity: 0.75 }}>
+                      {openSignal.normalized_value}
+                    </div>
+                  </div>
+                )}
+
+                <div className="signal-modal-section">
+                  <div className="signal-modal-label">Confidence</div>
+                  <ConfidenceBar score={openSignal.confidence} />
+                </div>
+
+                {locator?.platform && (
+                  <div className="signal-modal-section">
+                    <div className="signal-modal-label">Detected Platform</div>
+                    <div className="signal-modal-value">{locator.platform}</div>
+                  </div>
+                )}
+
+                {locator?.reasoning && (
+                  <div className="signal-modal-section">
+                    <div className="signal-modal-label">AI Reasoning</div>
+                    <div className="signal-modal-notes">{locator.reasoning}</div>
+                  </div>
+                )}
+
+                {(locator?.char_start != null && locator?.char_end != null) && (
+                  <div className="signal-modal-section">
+                    <div className="signal-modal-label">Location in Document</div>
+                    <div className="signal-modal-value" style={{ fontSize: '0.82rem', opacity: 0.75 }}>
+                      Characters {locator.char_start} – {locator.char_end}
+                    </div>
+                  </div>
+                )}
+
+                {openSignal.triage_reason && (
+                  <div className="signal-modal-section">
+                    <div className="signal-modal-label">Source</div>
+                    <div className="signal-modal-value" style={{ textTransform: 'capitalize' }}>
+                      {openSignal.triage_reason.replace(/_/g, ' ')}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Footer inside left panel */}
+              <div className="signal-modal-footer">
+                {openSignal.status === 'pending' ? (
+                  <>
+                    <button type="button" className="signal-btn confirm" onClick={() => void confirmSignal(openSignal.id)}>
+                      Confirm Signal
+                    </button>
+                    <button type="button" className="signal-btn deny" onClick={() => void denySignal(openSignal.id)}>
+                      Deny Signal
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="signal-btn" style={{ background: 'rgba(255,255,255,0.06)', color: '#9fb6ce' }} onClick={() => setOpenSignal(null)}>
+                    Close
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Right: imgae Preview*/}
+            <div style ={{flex: 1, overflow: 'hidden', borderRadius: '0 0 18px 0'}}>
+              <FilePreviewModal
+                evidenceId={openSignal.evidence_id}
+                fileName={openSignal.raw_value}
+                previewRoute={previewRoute}
+                onClose={() => {}}
+                embedded
+              />
+            </div>
+
+          </div>
+
+        </div>
       </div>
-    </div>
-  )
-}
+
+      
+    )
+  }

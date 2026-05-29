@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from fastapi import Depends, status, APIRouter, UploadFile, File, HTTPException
+from fastapi.responses import Response as FastAPIResponse
 import threading
 from services.run_analysis import run_analysis
 from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals, get_signal_history
@@ -263,6 +264,7 @@ async def get_case_correaltion(case_id: str):
         conn.close()
 
 
+
 @router.get("/confirmedSignals/{case_id}")
 async def get_confirmed_signals_for_case(case_id: str):
     return get_confirmed_signals(case_id)
@@ -351,3 +353,4 @@ def search_evidence(q:str):
         raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
         conn.close()
+

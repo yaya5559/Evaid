@@ -23,6 +23,7 @@ type BackendSignal = {
   confidence: number
   source_locator: string | null
   triage_reason: string | null
+  evidence_id?:string
 }
 
 type SignalContextValue = {
@@ -106,7 +107,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
       const mapped: Signal[] = raw.map((s) => ({
         ...s,
         status: 'pending' as const,
-        evidence_id: caseId,
+        evidence_id: s.evidence_id ?? caseId,
       }))
       processIncoming(mapped)
     } catch { /* silent */ }

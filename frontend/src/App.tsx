@@ -40,6 +40,10 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
   if (loading) return null
   if (!user) return <Navigate to="/Login" replace />
   const role = (user as any).role as string
+
+
+
+
   if (!allowedRoles.includes(role)) {
     if (role === 'evaide_admin') return <Navigate to="/Dashboard" replace />
     if (role === 'org_admin') return <Navigate to="/Org_Dashboard" replace />
@@ -52,9 +56,15 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
 function AuthenticatedSignals() {
   const { user, loading } = useAuth()
   if (loading || !user) return null
+  const role = (user as any).role as string
+
+  const previewRoute = role === 'evaide_admin' ? '/admin/evidence/preview' :
+                     role === 'org_admin'    ? '/org/evidence/preview' : 
+                     '/agent/evidence/preview'
+
   return (
     <>
-      <SignalModal />
+      <SignalModal  previewRoute={previewRoute}/>
       <SignalPanel />
       <FloatingSignalButton />
     </>
