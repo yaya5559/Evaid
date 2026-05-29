@@ -28,7 +28,7 @@ function normalizeStatus(s: string | undefined): CaseStatus {
   return 'Open'
 }
 
-const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'good', Discarded: 'critical' }
+const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'info', Discarded: 'critical' }
 const severityLabel: Record<number, string> = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' }
 
 function roleColor(role: string): string {

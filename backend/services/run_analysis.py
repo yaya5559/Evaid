@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from services.database import get_db_connection
 from datetime import datetime, timezone
 from services.extractors import DocumentExtractor
@@ -116,7 +117,7 @@ def run_analysis(analysis_run_id):
         if extractor is None:
             raise ValueError(f"Unsupported attachment type: {attachement[0]}")
 
-        markdown = extractor.extract_to_markdown(attachement[1], attachement[2])
+        markdown = extractor.extract_to_markdown(attachement[1], attachement[0])
 
         cursor.execute(
             """

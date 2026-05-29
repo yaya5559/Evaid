@@ -321,6 +321,22 @@
   z-index: 1;
 }
 
+/* ── Page Header ── */
+.admin-header {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-subtext {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: var(--admin-muted);
+  line-height: 1.5;
+}
+
 /* ── Page Header Typography ── */
 .admin-eyebrow {
   font-size: 10px;
