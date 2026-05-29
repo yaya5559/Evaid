@@ -50,6 +50,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'evaide'
-          slot-name: 'Production'
+          app-name: 'evaid'
+          slot-name: 'production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_36D1B8FEFDC442A59A692852E5944CDB }}
