@@ -86,6 +86,7 @@ export function PendingSignalsSection() {
                     {Math.round(signal.confidence * 100)}%
                   </span>
                   <span style={{ opacity: 0.4, fontSize: '0.8rem' }}>Review →</span>
+                  
                 </div>
               </button>
             ))}
