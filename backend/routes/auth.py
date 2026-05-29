@@ -8,6 +8,9 @@ import os
 load_dotenv()
 router = APIRouter(prefix="/auth", tags=["Auth"])
 SECURE_COOKIES = os.getenv("SECURE_COOKIES", "false").lower() == "true"
+# Cross-site deployments (frontend + backend on different domains) require
+# SameSite=None + Secure. Local dev uses Lax so cookies work without HTTPS.
+SAME_SITE = "none" if SECURE_COOKIES else "lax"
 
 #pydantic guarantees email and password exist 
 class LoginRequest(BaseModel):
@@ -37,8 +40,8 @@ def refresh_token(response: Response, refresh_token: str = Cookie(None)):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=SECURE_COOKIES,   # false for localhost
-        samesite="strict",
+        secure=SECURE_COOKIES,
+        samesite=SAME_SITE,
         path="/",
         max_age=60*60*24*7 #7days
     )
@@ -93,8 +96,8 @@ def login(data: LoginRequest, response : Response, remember: bool = False ):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=SECURE_COOKIES,   # false for localhost
-        samesite="strict",
+        secure=SECURE_COOKIES,
+        samesite=SAME_SITE,
         path="/",
         max_age=60*60*24*7 #7days
     )

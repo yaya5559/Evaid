@@ -35,7 +35,7 @@ function normalizeStatus(status: string | undefined): CaseStatus {
   return 'Open'
 }
 
-const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'good', Discarded: 'critical' }
+const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'info', Discarded: 'critical' }
 
 function roleColor(role: string): string {
   if (role === 'Suspect') return 'critical'
@@ -244,8 +244,8 @@ function AdminCases() {
           </div>
         </header>
 
-        {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
-        {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
+        {error && <div className="admin-alert error">{error}</div>}
+        {success && <div className="admin-alert success">{success}</div>}
 
         <section style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px' }}>
           {/* Organizations list */}

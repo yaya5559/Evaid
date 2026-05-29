@@ -36,7 +36,7 @@ export function PendingSignalsSection() {
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
-              transform: collapsed ? 'rotate(0deg)':'rotate(180deg)',
+              transform: collapsed ? 'rotate(180deg)':'rotate(0deg)',
               transition: 'transform 0.2s ease'
             }}
           >
@@ -44,7 +44,7 @@ export function PendingSignalsSection() {
           </svg>
         </span>
       </h2>
-      {!collapsed && (
+      {collapsed && (
         <>
           <p style={{ opacity: 0.6, fontSize: '0.85rem', marginTop: 0, marginBottom: '12px' }}>
             These signals were extracted from uploaded evidence and need your review. Click a signal to review it.
@@ -86,6 +86,7 @@ export function PendingSignalsSection() {
                     {Math.round(signal.confidence * 100)}%
                   </span>
                   <span style={{ opacity: 0.4, fontSize: '0.8rem' }}>Review →</span>
+                  
                 </div>
               </button>
             ))}

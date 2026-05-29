@@ -17,6 +17,7 @@ import OrgRegisterAgent from './components/organization/OrgRegisterAgent'
 import OrgStartCase from './components/organization/OrgStartCase'
 import OrgCaseGraph from './components/organization/OrgCaseGraph'
 import AddAgent from './components/admin/AddAgents'
+import ViewAgents from './components/admin/ViewAgents'
 import Cases from './components/admin/Cases'
 import AdminCaseDetail from './components/admin/CaseDetail'
 import AdminCaseGraph from './components/admin/AdminCaseGraph'
@@ -24,11 +25,10 @@ import OrgCaseDetail from './components/organization/OrgCaseDetail'
 import AgentCaseDetail from './components/agent/AgentCaseDetail'
 import AgentCaseGraph from './components/agent/AgentCaseGraph'
 import AgentDashboard from './components/agent/AgentDashboard'
-import AgentProfile from './components/agent/AgentProfile'
-import AgentEditProfile from './components/agent/AgentEditProfile'
-import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import AgentCases from './components/agent/AgentCases'
+import AdminProfile from './components/admin/AdminProfile'
 import AgentOrgCases from './components/agent/AgentOrgCases'
+import EvidenceUpload from './components/Evidence/EvidenceUpload'
 
 type ProtectedRouteProps = {
   allowedRoles: string[]
@@ -50,6 +50,8 @@ function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
 }
 
 function AuthenticatedSignals() {
+  const { user, loading } = useAuth()
+  if (loading || !user) return null
   return (
     <>
       <SignalModal />
@@ -73,6 +75,7 @@ function App() {
           <Route path="/Add_Organization" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AddOrganization /></ProtectedRoute>} />
           <Route path="/Edit_Organization" element={<ProtectedRoute allowedRoles={['evaide_admin']}><EditOrganization /></ProtectedRoute>} />
           <Route path="/Register_Agent" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AddAgent /></ProtectedRoute>} />
+          <Route path="/View_Agents" element={<ProtectedRoute allowedRoles={['evaide_admin']}><ViewAgents /></ProtectedRoute>} />
           <Route path="/Cases" element={<ProtectedRoute allowedRoles={['evaide_admin']}><Cases /></ProtectedRoute>} />
           <Route path="/Cases/:orgId/:caseId" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AdminCaseDetail /></ProtectedRoute>} />
           <Route path="/Cases/:orgId/:caseId/graph" element={<ProtectedRoute allowedRoles={['evaide_admin']}><AdminCaseGraph /></ProtectedRoute>} />
@@ -88,17 +91,17 @@ function App() {
 
           {/* Agent only */}
           <Route path="/AgentDashboard" element={<ProtectedRoute allowedRoles={['agent']}><AgentDashboard /></ProtectedRoute>} />
-          <Route path="/AgentProfile" element={<ProtectedRoute allowedRoles={['agent']}><AgentProfile /></ProtectedRoute>} />
-          <Route path="/AgentEditProfile" element={<ProtectedRoute allowedRoles={['agent']}><AgentEditProfile /></ProtectedRoute>} />
           <Route path="/AgentCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentCases /></ProtectedRoute>} />
           <Route path="/AgentCase/:caseId" element={<ProtectedRoute allowedRoles={['agent']}><AgentCaseDetail /></ProtectedRoute>} />
           <Route path="/AgentCase/:caseId/graph" element={<ProtectedRoute allowedRoles={['agent']}><AgentCaseGraph /></ProtectedRoute>} />
           <Route path="/AgentOrgCases" element={<ProtectedRoute allowedRoles={['agent']}><AgentOrgCases /></ProtectedRoute>} />
 
       {/* Any authenticated user */}
-      <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+          <Route path="/Profile" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><AdminProfile /></ProtectedRoute>} />
+          <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
       </AIWarningProvider>
     </SignalProvider>
   )

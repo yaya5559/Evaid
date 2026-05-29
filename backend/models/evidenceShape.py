@@ -7,7 +7,8 @@ from typing import Optional
 class EvidenceItemCreate(BaseModel):
     case_id: int
     title: str
-    description:str
+    description: str
+    agent_context: Optional[str] = None
 
 
 class EvidenceItemResponse(BaseModel):

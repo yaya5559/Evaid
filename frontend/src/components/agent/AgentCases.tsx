@@ -30,7 +30,7 @@ function normalizeStatus(status: string | undefined): CaseStatus {
     return 'Open'
 }
 
-const statusTone: Record<CaseStatus, string> = { Solved: 'good', Closed: 'good', Open: 'good', Discarded: 'critical' }
+const statusTone: Record<CaseStatus, string> = { Solved: 'good', Closed: 'good', Open: 'info', Discarded: 'critical' }
 const severityLabel: Record<number, string> = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' }
 
 function formatDate(date: string | undefined | null) {

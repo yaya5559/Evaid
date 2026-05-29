@@ -14,9 +14,10 @@ import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
 import Nav from './Nav'
 import { PendingSignalsSection } from '../shared/PendingSignalsSection'
-import { EvidenceSection } from '../shared/EvidenceSection'
+import { EvidenceSection, EvidenceUploadSection } from '../shared/EvidenceSection'
 import { GraphFAB } from '../shared/GraphDrawer'
 import '../../styles/Admin/AdminLayout.css'
+import { getCaseCorrelation, getConfirmedSignals, type CaseCorrelation, type ConfirmedSignal } from '../../helpers/org/Cases'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded'
 
@@ -27,7 +28,7 @@ function normalizeStatus(s: string | undefined): CaseStatus {
   return 'Open'
 }
 
-const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'good', Discarded: 'critical' }
+const statusTone: Record<CaseStatus, string> = { Solved: 'good', Open: 'info', Discarded: 'critical' }
 const severityLabel: Record<number, string> = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' }
 
 function roleColor(role: string): string {
@@ -46,7 +47,7 @@ function formatDate(d: string | undefined | null) {
 function AdminCaseDetail() {
   const { orgId = '', caseId = '' } = useParams<{ orgId: string; caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase } = useSignals()
+  const { fetchSignalsForCase, lastTriagedAt } = useSignals()
   const navigate = useNavigate()
 
   const [detail, setDetail] = useState<CaseDetailResponse | null>(null)
@@ -72,6 +73,11 @@ function AdminCaseDetail() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [notesCollapsed, setNotesCollapsed] = useState(true)
+  const [correlations, setCorrelations] = useState<CaseCorrelation[]>([])
+  const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
+  const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
+  const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
 
   const loadDetail = async () => {
     setLoading(true)
@@ -182,6 +188,11 @@ function AdminCaseDetail() {
   useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
   useEffect(() => {
     if (!caseId) return
+    getCaseCorrelation(caseId).then(setCorrelations).catch(() => setCorrelations([]))
+    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
+  }, [caseId, lastTriagedAt])
+  useEffect(() => {
+    if (!caseId) return
     setActorsLoading(true)
     getActorsForCase(caseId).then(setActors).catch(() => setActors([])).finally(() => setActorsLoading(false))
   }, [caseId])
@@ -206,8 +217,8 @@ function AdminCaseDetail() {
           </div>
         </header>
 
-        {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{error}</div>}
-        {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>{success}</div>}
+        {error && <div className="admin-alert error">{error}</div>}
+        {success && <div className="admin-alert success">{success}</div>}
         {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
 
         {detail && (
@@ -361,57 +372,145 @@ function AdminCaseDetail() {
               ))}
             </section>
 
-            <section className="admin-card" style={{ marginBottom: '16px' }}>
-              <h2>Notes</h2>
-              {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
-              {detail.notes.map((note) => (
-                <div key={note.note_id} className="orgdash-progress-row">
-                  {editingNoteId === note.note_id ? (
-                    <div style={{ width: '100%' }}>
-                      <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                        <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
-                        <button type="button" className="admin-btn" onClick={() => setEditingNoteId(null)}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : confirmDeleteNoteId === note.note_id ? (
-                    <div style={{ width: '100%' }}>
-                      <p style={{ margin: '0 0 8px' }}>{note.content}</p>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
-                        <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
-                        <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ margin: 0 }}>{note.content}</p>
-                        <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
-                        <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
-                        <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-              <div style={{ marginTop: '12px' }}>
-                <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
-                <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
-              </div>
-            </section>
-
-            <PendingSignalsSection />
+            <EvidenceUploadSection onUpload={handleUploadEvidence} />
 
             <EvidenceSection
               evidence={detail.evidence}
               loading={loading}
-              onUpload={handleUploadEvidence}
               onDelete={handleDeleteEvidence}
               previewRoute="/admin/evidence/preview"
             />
+
+            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #fa0000' }}>
+              <h2
+                onClick={() => setNotesCollapsed(p => !p)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+              >
+                Notes
+                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{detail.notes.length}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: notesCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </h2>
+              {notesCollapsed && (
+                <>
+                  {detail.notes.length === 0 && <p style={{ opacity: 0.7 }}>No notes yet.</p>}
+                  {detail.notes.map((note) => (
+                    <div key={note.note_id} className="orgdash-progress-row">
+                      {editingNoteId === note.note_id ? (
+                        <div style={{ width: '100%' }}>
+                          <textarea className="edit-org-input" rows={3} value={editNoteContent} onChange={(e) => setEditNoteContent(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                            <button type="button" className="admin-btn primary" onClick={() => void handleEditNote(note.note_id)} disabled={loading || !editNoteContent.trim()}>Save</button>
+                            <button type="button" className="admin-btn" onClick={() => setEditingNoteId(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : confirmDeleteNoteId === note.note_id ? (
+                        <div style={{ width: '100%' }}>
+                          <p style={{ margin: '0 0 8px' }}>{note.content}</p>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Delete this note?</span>
+                            <button type="button" className="admin-btn critical" onClick={() => void handleDeleteNote(note.note_id)} disabled={loading}>Yes, Delete</button>
+                            <button type="button" className="admin-btn" onClick={() => setConfirmDeleteNoteId(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ margin: 0 }}>{note.content}</p>
+                            <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+                            <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
+                            <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  <div style={{ marginTop: '12px' }}>
+                    <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
+                    <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Add Note</button>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <PendingSignalsSection />
+
+            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
+              <h2
+                onClick={() => setConfirmedCollapsed(p => !p)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+              >
+                Confirmed Signals
+                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{confirmedSignals.length}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: confirmedCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </h2>
+              {!confirmedCollapsed && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                  {confirmedSignals.map((s) => (
+                    <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                        <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{s.signal_type.replace(/_/g, ' ')}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{s.raw_value}</span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                          {Math.round(s.confidence * 100)}%
+                        </span>
+                      </div>
+                      {s.normalized_value && s.normalized_value !== s.raw_value && (
+                        <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
+              <h2
+                onClick={() => setCorrelationsCollapsed(p => !p)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+              >
+                Related Cases
+                <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{correlations.length} correlation{correlations.length !== 1 ? 's' : ''}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: correlationsCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </h2>
+              {!correlationsCollapsed && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                  {correlations.map((c, i) => (
+                    <div key={i} className="orgdash-progress-row"
+                      onClick={() => c.related_org_id && navigate(`/Cases/${c.related_org_id}/${c.related_case_id}`)}
+                      style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px', cursor: c.related_org_id ? 'pointer' : 'default' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                        <strong style={{ fontSize: '0.95rem' }}>{c.related_case_title}</strong>
+                        <span className="admin-pill neutral" style={{ fontSize: '0.75rem' }}>{c.related_case_status}</span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: c.confidence >= 0.75 ? '#16a34a' : c.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
+                          {Math.round(c.confidence * 100)}%
+                        </span>
+                      </div>
+                      <small style={{ opacity: 0.65 }}>
+                        Shared: <span style={{ fontFamily: 'monospace' }}>{c.signal_type.replace(/_/g, ' ')} — {c.shared_value}</span>
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           </>
         )}
       </main>

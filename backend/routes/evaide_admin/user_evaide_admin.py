@@ -1,7 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 import services.evaide_admin.admin_user_services as services
+from dependencies.auth import require_roles
 
-router = APIRouter(prefix="/admin/users", tags=["Evaide Admin - Users"])
+router = APIRouter(
+    prefix="/admin/users",
+    tags=["Evaide Admin - Users"],
+    dependencies=[Depends(require_roles("evaide_admin"))],
+)
 
 
 @router.get("/")

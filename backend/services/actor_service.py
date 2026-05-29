@@ -26,6 +26,11 @@ def list_actors_for_case(case_id: int):
             actor_id = row[0]
             cursor.execute("SELECT alias_value FROM ActorAlias WHERE actor_id = ?", (actor_id,))
             aliases = [r[0] for r in cursor.fetchall()]
+            cursor.execute(
+                "SELECT note_id, content, CAST(created_at AS NVARCHAR(50)) FROM ActorNote WHERE actor_id = ? ORDER BY created_at DESC",
+                (actor_id,)
+            )
+            notes = [{"note_id": r[0], "content": r[1], "created_at": r[2]} for r in cursor.fetchall()]
             actors.append({
                 "id": actor_id,
                 "primaryName": row[1],
@@ -34,6 +39,7 @@ def list_actors_for_case(case_id: int):
                 "source": row[4],
                 "createdAt": row[5],
                 "aliases": aliases,
+                "notes": notes,
             })
 
         return actors

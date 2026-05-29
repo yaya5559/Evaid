@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { api } from '../../context/AuthContext'
+import { useSignals } from '../../context/SignalContext'
 
 type SignalRecord = {
     id: string
@@ -43,6 +44,7 @@ function formatDate(d: string | null | undefined) {
 }
 
 export function SignalHistoryModal({ evidenceId, evidenceName, onClose }: SignalHistoryModalProps) {
+    const { lastTriagedAt } = useSignals()
     const [history, setHistory] = useState<SignalHistory | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -62,7 +64,7 @@ export function SignalHistoryModal({ evidenceId, evidenceName, onClose }: Signal
             }
         }
         void load()
-    }, [evidenceId])
+    }, [evidenceId, lastTriagedAt])
 
     useEffect(() => {
         document.body.style.overflow = 'hidden'

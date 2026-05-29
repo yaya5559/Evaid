@@ -7,6 +7,16 @@ import '../../styles/Admin/AdminLayout.css'
 
 const severityMap: Record<string, number> = { Low: 1, Medium: 2, High: 3, Critical: 4 }
 
+const fieldLabel: React.CSSProperties = {
+  display: 'block',
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--admin-muted-2)',
+  marginBottom: '6px',
+}
+
 function OrgStartCase() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -47,100 +57,123 @@ function OrgStartCase() {
 
   return (
     <OrgLayout>
-      <header className="admin-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ maxWidth: '580px', margin: '0 auto' }}>
+
+        {/* Top bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
           <button type="button" className="admin-btn" onClick={() => navigate('/OrgCaseProgress')}>
             ← Back
           </button>
           <div>
-            <div className="admin-eyebrow">Organization console</div>
-            <h1 className="admin-title">Start a New Case</h1>
+            <div className="admin-eyebrow">New Investigation</div>
+            <h1 className="admin-title" style={{ fontSize: '1.6rem' }}>Start a Case</h1>
           </div>
         </div>
-      </header>
 
-      {error && (
-        <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: '6px', marginBottom: '16px' }}>
-          {error}
-        </div>
-      )}
+        {error && <div className="admin-alert error">{error}</div>}
 
-      <section className="admin-card" style={{ maxWidth: '640px' }}>
-        <div className="edit-org-controls">
+        <div className="admin-card" style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-          <label className="edit-org-control">
-            <span>Case Title <span style={{ color: '#dc2626' }}>*</span></span>
+          {/* Title */}
+          <div>
+            <label style={fieldLabel}>
+              Case Title <span style={{ color: '#ef4444' }}>*</span>
+            </label>
             <input
               className="edit-org-input"
               type="text"
               placeholder="Enter a clear, descriptive title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.95rem' }}
             />
-          </label>
+          </div>
 
-          <label className="edit-org-control">
-            <span>Description</span>
+          {/* Description */}
+          <div>
+            <label style={fieldLabel}>Description</label>
             <textarea
               className="edit-org-input"
               rows={4}
               placeholder="Describe the case background, context, or initial findings..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', fontSize: '0.9rem' }}
             />
-          </label>
+          </div>
 
-          <label className="edit-org-control">
-            <span>Priority</span>
-            <select className="edit-org-input" value={priority} onChange={(e) => setPriority(e.target.value)}>
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-              <option>Critical</option>
-            </select>
-          </label>
+          {/* Priority + Severity side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={fieldLabel}>Priority</label>
+              <select
+                className="edit-org-input"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              >
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Critical</option>
+              </select>
+            </div>
+            <div>
+              <label style={fieldLabel}>Severity</label>
+              <select
+                className="edit-org-input"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              >
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Critical</option>
+              </select>
+            </div>
+          </div>
 
-          <label className="edit-org-control">
-            <span>Severity</span>
-            <select className="edit-org-input" value={severity} onChange={(e) => setSeverity(e.target.value)}>
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-              <option>Critical</option>
-            </select>
-          </label>
-
-          <label className="edit-org-control">
-            <span>Due Date</span>
+          {/* Due Date */}
+          <div>
+            <label style={fieldLabel}>
+              Due Date <span style={{ opacity: 0.5, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+            </label>
             <input
               className="edit-org-input"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box' }}
             />
-          </label>
+          </div>
+
+          {/* Divider */}
+          <div style={{ borderTop: '1px solid var(--admin-border)', margin: '0 -32px', paddingTop: '0' }} />
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="admin-btn primary"
+              onClick={() => void handleSubmit()}
+              disabled={loading || !title.trim()}
+              style={{ padding: '11px 28px', fontSize: '0.9rem' }}
+            >
+              {loading ? 'Starting...' : 'Start Case'}
+            </button>
+            <button
+              type="button"
+              className="admin-btn"
+              onClick={() => navigate('/OrgCaseProgress')}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+          </div>
 
         </div>
-
-        <div style={{ display: 'flex', gap: '8px', marginTop: '20px' }}>
-          <button
-            type="button"
-            className="admin-btn primary"
-            onClick={() => void handleSubmit()}
-            disabled={loading || !title.trim()}
-          >
-            {loading ? 'Starting...' : 'Start Case'}
-          </button>
-          <button
-            type="button"
-            className="admin-btn"
-            onClick={() => navigate('/OrgCaseProgress')}
-            disabled={loading}
-          >
-            Cancel
-          </button>
-        </div>
-      </section>
+      </div>
     </OrgLayout>
   )
 }
