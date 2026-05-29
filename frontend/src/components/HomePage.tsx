@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/HomePage.css";
 
 function HomePage() {
@@ -75,6 +75,9 @@ function HomePage() {
                 <div className="modal-disclaimer-fine">
                   *Disclaimer: This intelligence tool serves as an administrative assistant module. Final human assessment is required for verification.
                 </div>
+                <Link to="/terms" className="modal-terms-link">
+                  View Terms of Service →
+                </Link>
 
                 <button className="warning-close-btn" onClick={() => setShowRoleModal(false)}>
                   Launch Dashboard
@@ -232,7 +235,11 @@ function HomePage() {
                   <a href="#">Lin</a>
                   <a href="#">GH</a>
                 </div>
-                <p className="fine">© {new Date().getFullYear()} EVAIDE. All rights reserved.</p>
+                <p className="fine">
+                  © {new Date().getFullYear()} EVAIDE. All rights reserved.
+                  {" · "}
+                  <Link to="/terms" className="footer-terms-link">Terms of Service</Link>
+                </p>
               </footer>
 
               {/* Right Column: Two-Column Verification & Transmission Input Form */}

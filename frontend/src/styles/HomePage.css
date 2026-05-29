@@ -485,6 +485,29 @@ body {
   line-height: 1.4;
 }
 
+.modal-terms-link {
+  font-size: 0.78rem;
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.15s;
+  margin-top: -8px;
+}
+
+.modal-terms-link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+.footer-terms-link {
+  color: #475569;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-terms-link:hover {
+  color: #94a3b8;
+}
+
 .warning-close-btn {
   background: var(--brand);
   color: #ffffff;

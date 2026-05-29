@@ -28,6 +28,9 @@ from .evaide_admin.note_evaide_admin import router as admin_note_router
 #Actors
 from .actors import router as actors_router
 
+# Profile
+from .profile import router as profile_router
+
 
 router = APIRouter(prefix="/Evaide")
 
@@ -61,3 +64,6 @@ router.include_router(admin_note_router)
 
 #actors
 router.include_router(actors_router)
+
+# Profile
+router.include_router(profile_router)
