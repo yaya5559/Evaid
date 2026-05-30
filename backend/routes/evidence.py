@@ -161,6 +161,32 @@ async def get_evidence_item(evidence_id: UUID):
         conn.close()
 
 
+@router.get("/pending-signals/org/{org_id}")
+async def list_pending_signals_for_org(org_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                CAST(ps.Id AS NVARCHAR(36)) AS id,
+                ps.signal_type, ps.raw_value, ps.normalized_value,
+                ps.confidence, ps.source_locator, ps.triage_reason,
+                CAST(ps.evidence_id AS NVARCHAR(36)) AS evidence_id,
+                CAST(ei.case_id AS NVARCHAR(36)) AS case_id,
+                c.title AS case_title
+            FROM PendingSignal ps
+            JOIN EvidenceItem ei ON ei.Id = ps.evidence_id
+            JOIN Cases c ON c.case_id = ei.case_id
+            WHERE c.org_id = ? AND ps.triage_status = 'pending'
+            ORDER BY ps.confidence DESC
+        """, (org_id,))
+        rows = cursor.fetchall()
+        cols = [col[0] for col in cursor.description]
+        return [dict(zip(cols, row)) for row in rows]
+    finally:
+        conn.close()
+
+
 # Must be before /{evidence_id}/pending-signals to avoid route conflict
 @router.get("/pending-signals/case/{case_id}")
 async def list_pending_signals_for_case(case_id: int):
@@ -172,9 +198,12 @@ async def list_pending_signals_for_case(case_id: int):
                 CAST(ps.Id AS NVARCHAR(36)) AS id,
                 ps.signal_type, ps.raw_value, ps.normalized_value,
                 ps.confidence, ps.source_locator, ps.triage_reason,
-                CAST(ps.evidence_id AS NVARCHAR(36)) AS evidence_id
+                CAST(ps.evidence_id AS NVARCHAR(36)) AS evidence_id,
+                CAST(ei.case_id AS NVARCHAR(36)) AS case_id,
+                c.title AS case_title
             FROM PendingSignal ps
             JOIN EvidenceItem ei ON ei.Id = ps.evidence_id
+            JOIN Cases c ON c.case_id = ei.case_id
             WHERE ei.case_id = ? AND ps.triage_status = 'pending'
             ORDER BY ps.confidence DESC
         """, (case_id,))

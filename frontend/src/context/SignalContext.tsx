@@ -13,6 +13,8 @@ export type Signal = {
   triage_reason: string | null
   status: SignalStatus
   evidence_id: string
+  case_id?: string
+  case_title?: string
 }
 
 type BackendSignal = {
@@ -23,7 +25,9 @@ type BackendSignal = {
   confidence: number
   source_locator: string | null
   triage_reason: string | null
-  evidence_id?:string
+  evidence_id?: string
+  case_id?: string
+  case_title?: string
 }
 
 type SignalContextValue = {
@@ -40,6 +44,7 @@ type SignalContextValue = {
   denySignal: (id: string) => Promise<void>
   fetchSignalsForEvidence: (evidenceId: string) => Promise<void>
   fetchSignalsForCase: (caseId: string) => Promise<void>
+  fetchSignalsForOrg: (orgId: string) => Promise<void>
   clearSignals: () => void
   lastTriagedAt: number
 }
@@ -59,6 +64,11 @@ async function getPendingSignals(evidenceId: string): Promise<BackendSignal[]> {
 
 async function getPendingSignalsForCase(caseId: string): Promise<BackendSignal[]> {
   const res = await api.get(`/evidence/pending-signals/case/${caseId}`)
+  return Array.isArray(res.data) ? res.data : []
+}
+
+async function getPendingSignalsForOrg(orgId: string): Promise<BackendSignal[]> {
+  const res = await api.get(`/evidence/pending-signals/org/${orgId}`)
   return Array.isArray(res.data) ? res.data : []
 }
 
@@ -108,6 +118,18 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         ...s,
         status: 'pending' as const,
         evidence_id: s.evidence_id ?? caseId,
+      }))
+      processIncoming(mapped)
+    } catch { /* silent */ }
+  }, [processIncoming])
+
+  const fetchSignalsForOrg = useCallback(async (orgId: string) => {
+    try {
+      const raw = await getPendingSignalsForOrg(orgId)
+      const mapped: Signal[] = raw.map((s) => ({
+        ...s,
+        status: 'pending' as const,
+        evidence_id: s.evidence_id ?? '',
       }))
       processIncoming(mapped)
     } catch { /* silent */ }
@@ -203,6 +225,7 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         denySignal,
         fetchSignalsForEvidence,
         fetchSignalsForCase,
+        fetchSignalsForOrg,
         clearSignals,
         lastTriagedAt,
       }}

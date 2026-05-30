@@ -382,6 +382,7 @@ function AgentDashboard() {
                   <span className="agentdash-signal-type">{s.signal_type}</span>
                   <span className="agentdash-signal-value">{s.raw_value}</span>
                   <span className="agentdash-signal-meta">
+                    {s.case_title && <span style={{ opacity: 0.7 }}>{s.case_title} · </span>}
                     Confidence {Math.round(s.confidence * 100)}%
                     {s.triage_reason ? ` · ${s.triage_reason}` : ''}
                   </span>
