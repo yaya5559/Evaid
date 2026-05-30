@@ -6,7 +6,7 @@ import {
   orgCreateNote, orgUpdateNote, orgDeleteNote,
   orgUploadEvidence, orgDeleteEvidence,
   getActorsForCase, createActor, addActorAlias, addActorNote,
-  getCaseCorrelation, getConfirmedSignals,
+  getCaseCorrelation, getConfirmedSignals, revokeConfirmedSignal,
   type OrgCaseDetailResponse, type OrgAgent, type Actor, type CaseCorrelation, type ConfirmedSignal,
 } from '../../helpers/org/Cases'
 import { useAuth } from '../../context/AuthContext'
@@ -548,6 +548,14 @@ if (!res.case) { setError('Case not found'); return }
                         <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: s.confidence >= 0.75 ? '#16a34a' : s.confidence >= 0.5 ? '#d97706' : '#dc2626' }}>
                           {Math.round(s.confidence * 100)}%
                         </span>
+                        <button
+                          type="button"
+                          className="admin-btn critical"
+                          style={{ fontSize: '0.7rem', padding: '2px 10px' }}
+                          onClick={() => void revokeConfirmedSignal(s.id).then(() => setConfirmedSignals(prev => prev.filter(x => x.id !== s.id)))}
+                        >
+                          Deny
+                        </button>
                       </div>
                       {s.normalized_value && s.normalized_value !== s.raw_value && (
                         <small style={{ opacity: 0.6 }}>Normalized: {s.normalized_value}</small>

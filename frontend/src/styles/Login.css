@@ -251,3 +251,12 @@
   background: transparent;
   cursor: pointer;
 }
+
+
+.link {
+  color: #e99290;
+}
+
+.link:hover {
+  color: #ff0000;
+}

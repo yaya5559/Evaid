@@ -357,6 +357,10 @@ export const getCaseCorrelation = async (caseId: string): Promise<CaseCorrelatio
     }
 }
 
+export const revokeConfirmedSignal = async (signalId: string): Promise<void> => {
+    await api.delete(`/evidence/signals/${signalId}`)
+}
+
 export const createActor = async (caseId: string, name: string, role: string): Promise<Actor> => {
   const res = await api.post(`/actors/case/${caseId}`, { name, role })
   return res.data

@@ -58,7 +58,7 @@ export function FilePreviewModal({ evidenceId, fileName, previewRoute, onClose, 
       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#08121a' }}>
         {loadingPreview && <p style={{ opacity: 0.5, color: '#fff' }}>Loading...</p>}
         {previewError && <p style={{ color: '#f87171' }}>{previewError}</p>}
-        {blobUrl && isImage && <img src={blobUrl} alt={fileName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />}
+        {blobUrl && isImage && <img src={blobUrl} alt={fileName} style={{ maxHeight: '85%', objectFit: 'contain', display: 'block' }} />}
         {blobUrl && isPdf && <iframe src={blobUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />}
         {!blobUrl && !loadingPreview && !previewError && <span style={{ opacity: 0.3, fontSize: '0.82rem', color: '#ebf3ff' }}>No preview available</span>}
       </div>
