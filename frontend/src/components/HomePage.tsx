@@ -7,16 +7,13 @@ function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeId, setActiveId] = useState("section1");
 
-  // Displays only your Welcome Role Modal on mount
-  const [showRoleModal, setShowRoleModal] = useState(true);
-
-  // Handle locking scroll when the mobile menu or welcome modal is active
+  // Handle locking scroll when the mobile menu is active
   useEffect(() => {
-    document.body.style.overflow = (menuOpen || showRoleModal) ? "hidden" : "";
+    document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [menuOpen, showRoleModal]);
+  }, [menuOpen]);
 
   // Intersection Observer for highlighting active nav links
   useEffect(() => {
@@ -48,43 +45,6 @@ function HomePage() {
   return (
       <div className="homePage">
 
-        {/* ── YOUR STRUCTURAL ROLE-BASED WELCOME MODAL ── */}
-        {showRoleModal && (
-            <div className="warning-overlay">
-              <div className="warning-modal animate-slide-up">
-                <div className="warning-icon">🤖</div>
-                <h2>Welcome to EVAIDE Services</h2>
-
-                <div className="role-greetings-container">
-                  <div className="role-box org-box">
-                    <h4>🏢 Organizations</h4>
-                    <p>Welcome! Thank you for choosing our services to optimize your workspace operations.</p>
-                  </div>
-
-                  <div className="role-box admin-box">
-                    <h4>🔑 Admins</h4>
-                    <p>Welcome back! Ready to manage your administrative controls and system protocols.</p>
-                  </div>
-
-                  <div className="role-box agent-box">
-                    <h4>🕵️‍♂️ Agents</h4>
-                    <p>Welcome! Step inside—this is exactly where your job starts.</p>
-                  </div>
-                </div>
-
-                <div className="modal-disclaimer-fine">
-                  *Disclaimer: This intelligence tool serves as an administrative assistant module. Final human assessment is required for verification.
-                </div>
-                <Link to="/terms" className="modal-terms-link">
-                  View Terms of Service →
-                </Link>
-
-                <button className="warning-close-btn" onClick={() => setShowRoleModal(false)}>
-                  Launch Dashboard
-                </button>
-              </div>
-            </div>
-        )}
 
         {/* ── GLOBAL NAVIGATION HEADER ── */}
         <header className="navBar" role="navigation" aria-label="Primary">

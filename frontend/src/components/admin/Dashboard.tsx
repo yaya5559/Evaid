@@ -100,7 +100,6 @@ function Dashboard() {
   const [activityLog, setActivityLog] = useState<string[]>([]);
   const [lastLogins, setLastLogins] = useState<LastLoginEntry[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [orgSearch, setOrgSearch] = useState('');
   const [orgStatusFilter, setOrgStatusFilter] = useState<'All' | OrganizationRow['health']>('All');
   const [orgExpanded, setOrgExpanded] = useState(false);
@@ -306,8 +305,8 @@ function Dashboard() {
                   border: '1px solid var(--admin-border)',
                   padding: '10px 16px',
                   fontWeight: 600,
-                  color: 'var(--admin-text)',
-                  background: 'rgba(255,255,255,0.02)',
+                  color: '#000000',
+                  background: 'rgb(77, 101, 125)',
                   cursor: 'pointer',
                   colorScheme: 'dark',
                   fontFamily: 'inherit',

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from fastapi import Depends, status, APIRouter, UploadFile, File, HTTPException
+from fastapi.responses import Response as FastAPIResponse
 import threading
 from services.run_analysis import run_analysis
 from services.evidence.triage_service import confirm_pending_signal, reject_pending_signals, get_signal_history
@@ -263,9 +264,51 @@ async def get_case_correaltion(case_id: str):
         conn.close()
 
 
+
 @router.get("/confirmedSignals/{case_id}")
 async def get_confirmed_signals_for_case(case_id: str):
     return get_confirmed_signals(case_id)
+
+
+@router.delete("/signals/{signal_id}")
+async def revoke_confirmed_signal(signal_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Get the signal details before deleting so we can match the PendingSignal
+        cursor.execute(
+            "SELECT evidence_id, signal_type, raw_value FROM Signal WHERE CAST(Id AS NVARCHAR(36)) = ?",
+            (signal_id.upper(),)
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Signal not found")
+        evidence_id, signal_type, raw_value = row
+
+        # Delete from Signal table
+        cursor.execute(
+            "DELETE FROM Signal WHERE CAST(Id AS NVARCHAR(36)) = ?",
+            (signal_id.upper(),)
+        )
+
+        # Mark the matching PendingSignal back to rejected
+        cursor.execute(
+            """UPDATE PendingSignal
+               SET triage_status = 'rejected', reviewed_at = GETUTCDATE()
+               WHERE evidence_id = ? AND signal_type = ? AND raw_value = ?
+               AND triage_status = 'confirmed'""",
+            (evidence_id, signal_type, raw_value)
+        )
+
+        conn.commit()
+        return {"message": "Signal revoked"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 
 @router.get('/search')
@@ -351,3 +394,4 @@ def search_evidence(q:str):
         raise HTTPException(status_code=500, detail="Internal server error.")
     finally:
         conn.close()
+

@@ -20,11 +20,12 @@ function formatDate(d: string | undefined | null) {
 }
 
 
-function FilePreviewModal({ evidenceId, fileName, previewRoute, onClose }: {
+export function FilePreviewModal({ evidenceId, fileName, previewRoute, onClose, embedded }: {
   evidenceId: string
   fileName: string
   previewRoute: string
   onClose: () => void
+  embedded?: boolean
 }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [contentType, setContentType] = useState<string>('')
@@ -51,6 +52,18 @@ function FilePreviewModal({ evidenceId, fileName, previewRoute, onClose }: {
 
   const isImage = contentType.startsWith('image/')
   const isPdf = contentType === 'application/pdf'
+
+  if (embedded) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#08121a' }}>
+        {loadingPreview && <p style={{ opacity: 0.5, color: '#fff' }}>Loading...</p>}
+        {previewError && <p style={{ color: '#f87171' }}>{previewError}</p>}
+        {blobUrl && isImage && <img src={blobUrl} alt={fileName} style={{ maxHeight: '85%', objectFit: 'contain', display: 'block' }} />}
+        {blobUrl && isPdf && <iframe src={blobUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />}
+        {!blobUrl && !loadingPreview && !previewError && <span style={{ opacity: 0.3, fontSize: '0.82rem', color: '#ebf3ff' }}>No preview available</span>}
+      </div>
+    )
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={onClose}>
