@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import { editOrganization, getOrganizations, type OrganizationListItem } from '../../helpers/admin/organizations'
+import { disableOrganization, editOrganization, getOrganizations, type OrganizationListItem } from '../../helpers/admin/organizations'
 import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/EditOrganization.css'
 import Nav from './Nav'
@@ -180,6 +180,7 @@ function EditOrganization() {
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [archiving, setArchiving] = useState(false)
   const [useDemoData, setUseDemoData] = useState(false)
 
   const [notice, setNotice] = useState<string | null>(null)
@@ -360,6 +361,31 @@ function EditOrganization() {
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     void onSave()
+  }
+
+  const onArchive = async () => {
+    if (!selectedOrganization) return
+    if (!window.confirm(`Archive "${selectedOrganization.companyName}"? This will disable all user access.`)) return
+
+    setArchiving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      await disableOrganization(selectedOrganization.companyName)
+      setOrganizations((current) =>
+        current.map((org) =>
+          org.org_id === selectedOrganization.org_id ? { ...org, status: 'suspended' } : org
+        )
+      )
+      setForm((current) => (current ? { ...current, status: 'suspended' } : current))
+      setOriginalForm((current) => (current ? { ...current, status: 'suspended' } : current))
+      setSuccess('Organization has been archived and access has been disabled.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to archive organization.')
+    } finally {
+      setArchiving(false)
+    }
   }
 
   return (
@@ -554,8 +580,13 @@ function EditOrganization() {
                     <h3>Danger Zone</h3>
                     <p>Archiving disables user access and removes the organization from active operations.</p>
                   </div>
-                  <button className='admin-btn edit-org-danger-btn' disabled title='Archive endpoint is not implemented yet.' type='button'>
-                    Archive Organization
+                  <button
+                    className='admin-btn edit-org-danger-btn'
+                    disabled={archiving || saving || useDemoData || selectedOrganization.status === 'suspended'}
+                    onClick={() => void onArchive()}
+                    type='button'
+                  >
+                    {archiving ? 'Archiving...' : 'Archive Organization'}
                   </button>
                 </div>
               </>
