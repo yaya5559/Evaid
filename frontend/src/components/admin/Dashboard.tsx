@@ -51,6 +51,66 @@ type LastLoginEntry = {
   last_login_at: string;
 };
 
+type ActivityEntry = {
+  event_type:
+    | 'note_added' | 'note_edited'
+    | 'case_opened' | 'case_closed'
+    | 'agent_assigned'
+    | 'user_registered' | 'user_deactivated'
+    | 'org_created' | 'org_archived'
+    | 'evidence_uploaded' | 'evidence_added' | 'evidence_linked'
+    | 'analysis_completed'
+    | 'ai_suggestion' | 'ai_suggestion_reviewed'
+    | 'signal_triaged'
+    | 'entity_cluster';
+  label: string;
+  actor: string;
+  org_name: string;
+  timestamp: string;
+};
+
+function activityPill(eventType: ActivityEntry['event_type']): string {
+  if (eventType === 'case_opened') return 'up';
+  if (eventType === 'case_closed') return 'neutral';
+  if (eventType === 'note_added') return 'info';
+  if (eventType === 'note_edited') return 'info';
+  if (eventType === 'agent_assigned') return 'info';
+  if (eventType === 'user_registered') return 'neutral';
+  if (eventType === 'org_created') return 'up';
+  if (eventType === 'org_archived') return 'neutral';
+  if (eventType === 'evidence_uploaded') return 'info';
+  if (eventType === 'evidence_added') return 'info';
+  if (eventType === 'analysis_completed') return 'neutral';
+  if (eventType === 'ai_suggestion') return 'critical';
+  if (eventType === 'ai_suggestion_reviewed') return 'info';
+  if (eventType === 'signal_triaged') return 'info';
+  if (eventType === 'user_deactivated') return 'neutral';
+  if (eventType === 'evidence_linked') return 'info';
+  if (eventType === 'entity_cluster') return 'critical';
+  return 'neutral';
+}
+
+function activityTag(eventType: ActivityEntry['event_type']): string {
+  if (eventType === 'case_opened') return 'Case opened';
+  if (eventType === 'case_closed') return 'Case closed';
+  if (eventType === 'note_added') return 'Note';
+  if (eventType === 'note_edited') return 'Note edited';
+  if (eventType === 'agent_assigned') return 'Assigned';
+  if (eventType === 'user_registered') return 'New user';
+  if (eventType === 'user_deactivated') return 'Deactivated';
+  if (eventType === 'org_created') return 'Org created';
+  if (eventType === 'org_archived') return 'Org archived';
+  if (eventType === 'evidence_uploaded') return 'Evidence';
+  if (eventType === 'evidence_added') return 'Evidence';
+  if (eventType === 'evidence_linked') return 'Evidence linked';
+  if (eventType === 'analysis_completed') return 'Analysis';
+  if (eventType === 'ai_suggestion') return 'AI';
+  if (eventType === 'ai_suggestion_reviewed') return 'AI reviewed';
+  if (eventType === 'signal_triaged') return 'Signal';
+  if (eventType === 'entity_cluster') return 'Entity cluster';
+  return eventType;
+}
+
 function rolePill(role: string): string {
   const r = role.toUpperCase();
   if (r === 'EVAIDE_ADMIN') return 'critical';
@@ -97,7 +157,7 @@ function Dashboard() {
   const [kpiCards, setKpiCards] = useState<KpiCard[]>([]);
   const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
-  const [activityLog, setActivityLog] = useState<string[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
   const [lastLogins, setLastLogins] = useState<LastLoginEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [orgSearch, setOrgSearch] = useState('');
@@ -500,7 +560,19 @@ function Dashboard() {
                 ? <li style={{ opacity: 0.4 }}>Loading activity...</li>
                 : activityLog.length === 0
                 ? <li style={{ opacity: 0.5 }}>No recent activity.</li>
-                : activityLog.map((item) => <li key={item}>{item}</li>)}
+                : activityLog.map((item, i) => (
+                  <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={`admin-pill ${activityPill(item.event_type)}`} style={{ fontSize: '0.7rem', padding: '1px 6px' }}>
+                        {activityTag(item.event_type)}
+                      </span>
+                      <span style={{ fontWeight: 500, fontSize: '0.88rem' }}>{item.label}</span>
+                    </div>
+                    <div style={{ fontSize: '0.78rem', opacity: 0.6, paddingLeft: '2px' }}>
+                      {item.actor} &middot; {item.org_name} &middot; {formatDateTime(item.timestamp)}
+                    </div>
+                  </li>
+                ))}
             </ul>
           </article>
         </section>
