@@ -36,6 +36,7 @@ router = APIRouter(prefix="/Evaide")
 
 # Shared / auth
 router.include_router(login_router)
+router.include_router(register_router)
 router.include_router(organization_router)
 router.include_router(evidence_router)
 
