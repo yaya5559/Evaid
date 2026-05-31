@@ -70,20 +70,6 @@ export type Actor = {
     casesCount: number
 }
 
-export type LinkedCase = {
-    case_id: number
-    CaseNumber: string
-    title: string
-    status: string
-    priority: string
-    severity_level: string | number
-    created_at: string
-    due_date: string | null
-    link_reason: string
-    shared_signal_type: string
-    shared_signal_value: string
-    confidence: number
-}
 
 export const getActorsForCase = async (caseId: string): Promise<Actor[]> => {
   try {
