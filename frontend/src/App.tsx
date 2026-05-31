@@ -28,7 +28,6 @@ import AgentDashboard from './components/agent/AgentDashboard'
 import AgentCases from './components/agent/AgentCases'
 import AdminProfile from './components/admin/AdminProfile'
 import AgentOrgCases from './components/agent/AgentOrgCases'
-import EvidenceUpload from './components/Evidence/EvidenceUpload'
 import TermsOfService from './components/TermsOfService'
 
 type ProtectedRouteProps = {
@@ -109,7 +108,6 @@ function App() {
 
       {/* Any authenticated user */}
           <Route path="/Profile" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><AdminProfile /></ProtectedRoute>} />
-          <Route path="/Evidence_Upload" element={<ProtectedRoute allowedRoles={['evaide_admin', 'org_admin', 'agent']}><EvidenceUpload /></ProtectedRoute>} />
 
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="*" element={<Navigate to="/" replace />} />
