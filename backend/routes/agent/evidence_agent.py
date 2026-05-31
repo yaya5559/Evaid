@@ -1,24 +1,28 @@
 from fastapi import APIRouter, Depends, Response
-from dependencies.auth import get_current_user
+from dependencies.auth import get_current_user, require_roles
 from services.database import get_db_connection
 import services.agent.agent_evidence_services as services
 
-router = APIRouter(prefix="/agent/evidence", tags=["Agent - Evidence"])
+router = APIRouter(
+    prefix="/agent/evidence",
+    tags=["Agent - Evidence"],
+    dependencies=[Depends(require_roles("agent", "org_admin", "evaide_admin"))],
+)
 
 
 @router.get("/")
-def list_my_evidence(agent_id: int):
-    return services.list_my_evidence(agent_id)
+def list_my_evidence(user: dict = Depends(get_current_user)):
+    return services.list_my_evidence(user["user_id"])
 
 
 @router.get("/case/{case_id}")
-def list_case_evidence(case_id: int, agent_id: int):
-    return services.list_case_evidence(case_id, agent_id)
+def list_case_evidence(case_id: int, user: dict = Depends(get_current_user)):
+    return services.list_case_evidence(case_id, user["user_id"])
 
 
 @router.get("/file/{file_id}")
-def get_evidence_file(file_id: str, agent_id: int):
-    return services.get_evidence_file(file_id, agent_id)
+def get_evidence_file(file_id: str, user: dict = Depends(get_current_user)):
+    return services.get_evidence_file(file_id, user["user_id"])
 
 
 # IMPORTANT: /preview must come before /{evidence_item_id} to avoid route conflict
@@ -48,13 +52,13 @@ def preview_evidence(evidence_item_id: str, current_user=Depends(get_current_use
 
 
 @router.patch("/confirm/{file_id}")
-def confirm_evidence(file_id: str, agent_id: int):
-    return services.confirm_evidence(file_id, agent_id)
+def confirm_evidence(file_id: str, user: dict = Depends(get_current_user)):
+    return services.confirm_evidence(file_id, user["user_id"])
 
 
 @router.delete("/cancel/{file_id}")
-def cancel_evidence(file_id: str, agent_id: int):
-    return services.cancel_evidence(file_id, agent_id)
+def cancel_evidence(file_id: str, user: dict = Depends(get_current_user)):
+    return services.cancel_evidence(file_id, user["user_id"])
 
 
 @router.delete("/{evidence_item_id}")

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from models.cases import CreateCase, UpdateCase, CloseCase
 import services.evaide_admin.admin_case_services as services
-from dependencies.auth import require_roles
+from dependencies.auth import require_roles, get_current_user
 
 router = APIRouter(
     prefix="/admin/cases",
@@ -31,8 +31,8 @@ def get_case_detail(org_id: int, case_id: int):
 
 
 @router.post("/org/{org_id}/create_case")
-def create_case(org_id: int, data: CreateCase, user_id: int):
-    return services.create_case(data, user_id)
+def create_case(org_id: int, data: CreateCase, user: dict = Depends(get_current_user)):
+    return services.create_case(data, user["user_id"])
 
 
 @router.patch("/org/{org_id}/update/{case_id}")
@@ -46,11 +46,11 @@ def close_case(org_id: int, case_id: int, data: CloseCase):
 
 
 @router.delete("/org/{org_id}/{case_id}/delete")
-def delete_case(org_id: int, case_id: int, user_id: int):
-    return services.delete_case(case_id, user_id)
+def delete_case(org_id: int, case_id: int, user: dict = Depends(get_current_user)):
+    return services.delete_case(case_id, user["user_id"])
 
 
 @router.post("/org/{org_id}/{case_id}/assign")
-def assign_agent(org_id: int, case_id: int, user_id: int, assigned_by: int):
-    return services.assign_agent(case_id, user_id, assigned_by)
+def assign_agent(org_id: int, case_id: int, user_id: int, user: dict = Depends(get_current_user)):
+    return services.assign_agent(case_id, user_id, user["user_id"])
 
