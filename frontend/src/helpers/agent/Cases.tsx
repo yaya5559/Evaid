@@ -121,17 +121,6 @@ export const agentGetOrgCases = async (orgId: number): Promise<AgentCaseListItem
     }
 }
 
-export const agentGetLinkedCases = async (caseId: string): Promise<LinkedCase[]> => {
-    try {
-        const res = await api.get(`/graph/cases/${caseId}/linked`, {
-            withCredentials: true,
-        })
-        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to load linked cases')
-        return (res.data?.linked_cases ?? []) as LinkedCase[]
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to load linked cases')
-    }
-}
 
 export const agentGetCaseDetail = async (caseId: string, agentId: number, orgId: number): Promise<AgentCaseDetailResponse> => {
     try {
