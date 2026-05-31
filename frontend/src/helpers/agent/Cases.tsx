@@ -160,10 +160,9 @@ export const agentUpdateCase = async (caseId: string, agentId: number, orgId: nu
     }
 }
 
-export const agentCreateNote = async (caseId: string, agentId: number, content: string) => {
+export const agentCreateNote = async (caseId: string, content: string) => {
     try {
         const res = await api.post(`/agent/notes/case/${caseId}`, { content }, {
-            params: { agent_id: agentId },
             withCredentials: true,
         })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to create note')
@@ -173,10 +172,9 @@ export const agentCreateNote = async (caseId: string, agentId: number, content: 
     }
 }
 
-export const agentUpdateNote = async (noteId: number, agentId: number, content: string) => {
+export const agentUpdateNote = async (noteId: number, content: string) => {
     try {
         const res = await api.patch(`/agent/notes/${noteId}`, { content }, {
-            params: { agent_id: agentId },
             withCredentials: true,
         })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to update note')
@@ -186,10 +184,9 @@ export const agentUpdateNote = async (noteId: number, agentId: number, content: 
     }
 }
 
-export const agentDeleteNote = async (noteId: number, agentId: number) => {
+export const agentDeleteNote = async (noteId: number) => {
     try {
         const res = await api.delete(`/agent/notes/${noteId}`, {
-            params: { agent_id: agentId },
             withCredentials: true,
         })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to delete note')
@@ -246,15 +243,7 @@ export const agentUploadEvidence = async (caseId: string, file: File, _agentId: 
     }
 }
 
-export const agentConfirmEvidence = async (fileId: string) => {
-    try {
-        const res = await api.post(`/evidence/confirm/${fileId}`, null, { withCredentials: true })
-        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Confirm failed')
-        return res.data
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to confirm evidence')
-    }
-}
+
 
 export const agentDeleteEvidence = async (fileId: string, agentId: number) => {
     try {

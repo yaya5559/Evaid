@@ -6,8 +6,8 @@ import {
   orgCreateNote, orgUpdateNote, orgDeleteNote,
   orgUploadEvidence, orgDeleteEvidence,
   getActorsForCase, createActor, addActorAlias, addActorNote,
-  getCaseCorrelation, getConfirmedSignals, revokeConfirmedSignal,
-  type OrgCaseDetailResponse, type OrgAgent, type Actor, type CaseCorrelation, type ConfirmedSignal,
+  getCaseCorrelation, revokeConfirmedSignal,
+  type OrgCaseDetailResponse, type OrgAgent, type Actor, type CaseCorrelation,
 } from '../../helpers/org/Cases'
 import { useAuth } from '../../context/AuthContext'
 import { useSignals } from '../../context/SignalContext'
@@ -49,7 +49,7 @@ function formatDate(d: string | undefined | null) {
 function OrgCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, fetchSignalsForEvidence, clearSignals, lastTriagedAt } = useSignals()
+  const { fetchSignalsForCase, fetchSignalsForEvidence, clearSignals, confirmedSignals, setWatchedCase } = useSignals()
   const navigate = useNavigate()
   const orgId = String((user as any)?.org_id ?? '')
 
@@ -78,7 +78,6 @@ function OrgCaseDetail() {
   const [newAlias, setNewAlias] = useState('')
   const [noteInputActorId, setNoteInputActorId] = useState<string | null>(null)
   const [newActorNote, setNewActorNote] = useState('')
-  const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
   const [correlations, setCorrelation] = useState<CaseCorrelation[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -102,8 +101,12 @@ function OrgCaseDetail() {
   useEffect(() => {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelation).catch(() => setCorrelation([]))
-    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId, lastTriagedAt])
+  }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    void setWatchedCase(caseId)
+    return () => { void setWatchedCase(null) }
+  }, [caseId])
 
   const handleAddActor = async () => {
     if (!newActorName.trim()) return
@@ -522,9 +525,8 @@ if (!res.case) { setError('Case not found'); return }
               </>
             )}
           </section>
-          <PendingSignalsSection />
-          {(confirmedSignals.length > 0 )&& (
-            <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
+          <PendingSignalsSection hideWhenEmpty={false} />
+          <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
               <h2
                 onClick={() => setConfirmedCollapsed(p => !p)}
                 style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
@@ -539,6 +541,10 @@ if (!res.case) { setError('Case not found'); return }
                 </span>
               </h2>
               {confirmedCollapsed && (
+                <>
+                {confirmedSignals.length === 0 && (
+                  <p style={{ opacity: 0.5, fontSize: '0.85rem', margin: 0 }}>No confirmed signals.</p>
+                )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
                   {confirmedSignals.map((s) => (
                     <div key={s.id} className="orgdash-progress-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
@@ -552,7 +558,7 @@ if (!res.case) { setError('Case not found'); return }
                           type="button"
                           className="admin-btn critical"
                           style={{ fontSize: '0.7rem', padding: '2px 10px' }}
-                          onClick={() => void revokeConfirmedSignal(s.id).then(() => setConfirmedSignals(prev => prev.filter(x => x.id !== s.id)))}
+                          onClick={() => void revokeConfirmedSignal(s.id).then(() => setWatchedCase(caseId))}
                         >
                           Deny
                         </button>
@@ -563,9 +569,9 @@ if (!res.case) { setError('Case not found'); return }
                     </div>
                   ))}
                 </div>
+                </>
               )}
             </section>
-          )}
 
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
             <h2

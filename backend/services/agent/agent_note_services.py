@@ -40,6 +40,26 @@ def create_case_note(case_id: int, agent_id: int, content: str):
         conn.close()
 
 
+def delete_my_note(note_id: int, agent_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM case_notes WHERE note_id = ? AND created_by_user_id = ?",
+            (note_id, agent_id)
+        )
+        if cursor.rowcount == 0:
+            return {"message": "Note not found or access denied"}
+        conn.commit()
+        return {"message": "Success"}
+    except pyodbc.Error as e:
+        conn.rollback()
+        return {"message": "Error", "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
 def update_my_note(note_id: int, agent_id: int, content: str):
     conn = get_db_connection()
     cursor = conn.cursor()

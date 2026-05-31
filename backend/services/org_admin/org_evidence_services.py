@@ -5,6 +5,7 @@ import pyodbc
 load_dotenv()
 
 
+
 def _case_belongs_to_org(cursor, case_id: int, org_id: int) -> bool:
     """Returns True if the case belongs to the organization."""
     cursor.execute("""
@@ -134,7 +135,6 @@ def delete_evidence(file_id: str, org_id: int):
     cursor = conn.cursor()
 
     try:
-        print(file_id)
         cursor.execute("SELECT case_id FROM EvidenceItem WHERE Id = ?", (file_id,))
         row = cursor.fetchone()
         if not row:

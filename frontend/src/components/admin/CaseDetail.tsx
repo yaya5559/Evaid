@@ -17,7 +17,7 @@ import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import { EvidenceSection, EvidenceUploadSection } from '../shared/EvidenceSection'
 import { GraphFAB } from '../shared/GraphDrawer'
 import '../../styles/Admin/AdminLayout.css'
-import { getCaseCorrelation, getConfirmedSignals, type CaseCorrelation, type ConfirmedSignal } from '../../helpers/org/Cases'
+import { getCaseCorrelation, type CaseCorrelation } from '../../helpers/org/Cases'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded'
 
@@ -47,7 +47,7 @@ function formatDate(d: string | undefined | null) {
 function AdminCaseDetail() {
   const { orgId = '', caseId = '' } = useParams<{ orgId: string; caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, lastTriagedAt } = useSignals()
+  const { fetchSignalsForCase, clearSignals, confirmedSignals, setWatchedCase } = useSignals()
   const navigate = useNavigate()
 
   const [detail, setDetail] = useState<CaseDetailResponse | null>(null)
@@ -76,7 +76,6 @@ function AdminCaseDetail() {
   const [notesCollapsed, setNotesCollapsed] = useState(true)
   const [correlations, setCorrelations] = useState<CaseCorrelation[]>([])
   const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
-  const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
   const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
 
   const loadDetail = async () => {
@@ -185,12 +184,20 @@ function AdminCaseDetail() {
   }
 
   useEffect(() => { void loadDetail() }, [orgId, caseId])
-  useEffect(() => { if (caseId) void fetchSignalsForCase(caseId) }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    clearSignals()
+    void fetchSignalsForCase(caseId)
+  }, [caseId])
   useEffect(() => {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelations).catch(() => setCorrelations([]))
-    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId, lastTriagedAt])
+  }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    void setWatchedCase(caseId)
+    return () => { void setWatchedCase(null) }
+  }, [caseId])
   useEffect(() => {
     if (!caseId) return
     setActorsLoading(true)
@@ -439,7 +446,7 @@ function AdminCaseDetail() {
               )}
             </section>
 
-            <PendingSignalsSection />
+            <PendingSignalsSection hideWhenEmpty={false} />
 
             <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
               <h2

@@ -11,13 +11,13 @@ function formatSignalType(type: string): string {
   return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export function PendingSignalsSection() {
+export function PendingSignalsSection({ hideWhenEmpty = true }: { hideWhenEmpty?: boolean }) {
   const { signals, setOpenSignal } = useSignals()
   const [collapsed, setCollapsed] = useState<boolean>(false)
 
   const pending = signals.filter((s) => s.status === 'pending')
 
-  if (pending.length === 0) return null
+  if (pending.length === 0 && hideWhenEmpty) return null
 
   return (
     <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #d97706' }}>
@@ -50,6 +50,9 @@ export function PendingSignalsSection() {
             These signals were extracted from uploaded evidence and need your review. Click a signal to review it.
           </p>
 
+          {pending.length === 0 && (
+            <p style={{ opacity: 0.5, fontSize: '0.85rem', margin: 0 }}>No pending signals.</p>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
             {pending.map((signal) => (
               <button

@@ -14,7 +14,7 @@ import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import { EvidenceSection, EvidenceUploadSection } from '../shared/EvidenceSection'
 import { GraphFAB } from '../shared/GraphDrawer'
 import '../../styles/Admin/AdminLayout.css'
-import { getCaseCorrelation, getConfirmedSignals, type CaseCorrelation, type ConfirmedSignal } from '../../helpers/org/Cases'
+import { getCaseCorrelation, type CaseCorrelation } from '../../helpers/org/Cases'
 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
 
@@ -45,7 +45,7 @@ function formatDate(d: string | undefined | null) {
 function AgentCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
-  const { fetchSignalsForCase, clearSignals, lastTriagedAt } = useSignals()
+  const { fetchSignalsForCase, clearSignals, confirmedSignals, setWatchedCase } = useSignals()
   const navigate = useNavigate()
   const agentId = Number((user as any)?.user_id ?? 0)
   const orgId = Number((user as any)?.org_id ?? 0)
@@ -66,14 +66,17 @@ function AgentCaseDetail() {
   const [success, setSuccess] = useState<string | null>(null)
   const [correlations, setCorrelations] = useState<CaseCorrelation[]>([])
   const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
-  const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
   const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
 
   useEffect(() => {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelations).catch(() => setCorrelations([]))
-    getConfirmedSignals(caseId).then(setConfirmedSignals).catch(() => setConfirmedSignals([]))
-  }, [caseId, lastTriagedAt])
+  }, [caseId])
+  useEffect(() => {
+    if (!caseId) return
+    void setWatchedCase(caseId)
+    return () => { void setWatchedCase(null) }
+  }, [caseId])
 
   const loadDetail = async () => {
     setLoading(true)
@@ -106,7 +109,7 @@ function AgentCaseDetail() {
     if (!newNoteContent.trim()) return
     setLoading(true); setError(null)
     try {
-      await agentCreateNote(caseId, agentId, newNoteContent)
+      await agentCreateNote(caseId, newNoteContent)
       setSuccess('Note added'); setNewNoteContent(''); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to add note') } finally { setLoading(false) }
   }
@@ -115,7 +118,7 @@ function AgentCaseDetail() {
     if (!editNoteContent.trim()) return
     setLoading(true); setError(null)
     try {
-      await agentUpdateNote(noteId, agentId, editNoteContent)
+      await agentUpdateNote(noteId, editNoteContent)
       setSuccess('Note updated'); setEditingNoteId(null); setEditNoteContent(''); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to update note') } finally { setLoading(false) }
   }
@@ -123,7 +126,7 @@ function AgentCaseDetail() {
   const handleDeleteNote = async (noteId: number) => {
     setLoading(true); setError(null)
     try {
-      await agentDeleteNote(noteId, agentId)
+      await agentDeleteNote(noteId)
       setSuccess('Note deleted'); setConfirmDeleteNoteId(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to delete note') } finally { setLoading(false) }
   }
