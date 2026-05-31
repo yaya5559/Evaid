@@ -137,7 +137,7 @@ function PipelineBar({
 function AgentDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const { signals, fetchSignalsForCase } = useSignals()
+  const { signals, fetchSignalsForCase, setOpenSignal } = useSignals()
 
   const agentId = Number((user as any)?.user_id ?? 0)
   const orgId   = Number((user as any)?.org_id   ?? 0)
@@ -378,7 +378,7 @@ function AgentDashboard() {
           ) : (
             <div className="agentdash-signal-list">
               {pendingSignals.slice(0, 6).map(s => (
-                <div key={s.id} className="agentdash-signal-row">
+                <div key={s.id} className="agentdash-health-row" onClick={() => setOpenSignal(s)} style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'flex-start', gap: '3px' }}>
                   <span className="agentdash-signal-type">{s.signal_type}</span>
                   <span className="agentdash-signal-value">{s.raw_value}</span>
                   <span className="agentdash-signal-meta">
@@ -504,13 +504,9 @@ function AgentDashboard() {
           ) : (
             <div className="agentdash-assignment-list">
               {assignments.map(a => (
-                <div key={a.assignment_id} className="agentdash-assignment-row">
+                <div key={a.assignment_id} className="agentdash-health-row" onClick={() => navigate(`/AgentCase/${a.case_id}`)} style={{ cursor: 'pointer' }}>
                   <div className="agentdash-assignment-info">
-                    <div className="agentdash-assignment-title">
-                      <Link to={`/AgentCase/${a.case_id}`} style={{ color: 'var(--admin-text)', textDecoration: 'none' }}>
-                        {a.case_title}
-                      </Link>
-                    </div>
+                    <div className="agentdash-assignment-title">{a.case_title}</div>
                     <div className="agentdash-assignment-meta">
                       {a.CaseNumber} · Assigned by {a.assigned_by_name} · {formatDate(a.assigned_at)}
                     </div>

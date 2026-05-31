@@ -134,7 +134,7 @@ function AgentOrgCases() {
               </div>
               <button
                 type="button"
-                className="admin-btn"
+                className="admin-btn primary"
                 style={{ marginLeft: '12px', flexShrink: 0, alignSelf: 'flex-start' }}
                 onClick={() => navigate(`/AgentCase/${c.id}`)}
               >
