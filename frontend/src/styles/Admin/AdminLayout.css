@@ -36,7 +36,7 @@
 .admin-shell {
   position: relative;
   isolation: isolate;
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 268px minmax(0, 1fr);
   color: var(--admin-text);
@@ -316,6 +316,7 @@
 /* ── Main Content Area ── */
 .admin-main {
   overflow-y: auto;
+  height: 100vh;
   padding: 28px 30px 36px;
   position: relative;
   z-index: 1;
