@@ -1,7 +1,9 @@
 import { useMemo, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useSignals } from '../../context/SignalContext'
 import OrgNav from './OrgNav'
+import { PendingSignalsSection } from '../shared/PendingSignalsSection'
 import '../../styles/Admin/AdminLayout.css'
 import '../../styles/Admin/OrgDashboard.css'
 
@@ -42,10 +44,17 @@ function normalizeStatus(s: string | undefined): CaseStatus {
 
 function OrgDashboard() {
   const { user, api } = useAuth()
+  const { fetchSignalsForOrg } = useSignals()
   const [orgSummary, setOrgSummary] = useState<any>(null)
   const [caseRecords, setCaseRecords] = useState<CaseRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const orgId = String((user as any)?.org_id ?? '')
+
+  useEffect(() => {
+    if (orgId) void fetchSignalsForOrg(orgId)
+  }, [orgId])
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -194,6 +203,8 @@ function OrgDashboard() {
             </div>
           </article>
         </section>
+
+        <PendingSignalsSection />
 
         {/* Case register */}
         <section className='admin-card orgdash-table-card'>

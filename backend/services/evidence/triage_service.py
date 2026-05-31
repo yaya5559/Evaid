@@ -12,11 +12,15 @@ def get_pending_signals(evidence_id):
 
         cursor.execute(
             """
-                SELECT Id, signal_type, raw_value, normalized_value,
-                       confidence, source_locator, triage_reason
-                FROM PendingSignal
-                WHERE evidence_id = ? AND triage_status = 'pending'
-                ORDER BY confidence DESC
+                SELECT ps.Id, ps.signal_type, ps.raw_value, ps.normalized_value,
+                       ps.confidence, ps.source_locator, ps.triage_reason,
+                       CAST(ei.case_id AS NVARCHAR(36)) AS case_id,
+                       c.title AS case_title
+                FROM PendingSignal ps
+                JOIN EvidenceItem ei ON ei.Id = ps.evidence_id
+                JOIN Cases c ON c.case_id = ei.case_id
+                WHERE ps.evidence_id = ? AND ps.triage_status = 'pending'
+                ORDER BY ps.confidence DESC
             """, (evidence_id,))
 
         rows = cursor.fetchall()
@@ -30,6 +34,8 @@ def get_pending_signals(evidence_id):
                 "confidence": row[4],
                 "source_locator": row[5],
                 "triage_reason": row[6],
+                "case_id": row[7],
+                "case_title": row[8],
             }
             for row in rows
         ]
@@ -48,9 +54,13 @@ def get_pending_signals_for_case(case_id):
         cursor.execute(
             """
                 SELECT ps.Id, ps.signal_type, ps.raw_value, ps.normalized_value,
-                       ps.confidence, ps.source_locator, ps.triage_reason, ps.evidence_id
+                       ps.confidence, ps.source_locator, ps.triage_reason,
+                       CAST(ps.evidence_id AS NVARCHAR(36)) AS evidence_id,
+                       CAST(ei.case_id AS NVARCHAR(36)) AS case_id,
+                       c.title AS case_title
                 FROM PendingSignal ps
                 JOIN EvidenceItem ei ON ps.evidence_id = ei.Id
+                JOIN Cases c ON c.case_id = ei.case_id
                 WHERE ei.case_id = ? AND ps.triage_status = 'pending'
                 ORDER BY ps.confidence DESC
             """, (case_id,))
@@ -67,6 +77,8 @@ def get_pending_signals_for_case(case_id):
                 "source_locator": row[5],
                 "triage_reason": row[6],
                 "evidence_id": str(row[7]),
+                "case_id": row[8],
+                "case_title": row[9],
             }
             for row in rows
         ]

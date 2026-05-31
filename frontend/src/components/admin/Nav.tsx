@@ -81,17 +81,24 @@ function AdminNav() {
       </nav>
 
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div className='admin-user-panel' style={{ cursor: 'pointer' }} onClick={() => navigate('/Profile')} title='Edit profile'>
+        <div className='admin-user-panel'>
           <div className='admin-user-avatar'>SA</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className='admin-user-name'>Security Admin</div>
-            <div className='admin-user-role'>Organization control</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className='admin-user-role' style={{ flex: 1, minWidth: 0 }}>Organization control</span>
+              <button type='button' className='admin-user-logout-btn' onClick={() => navigate('/Profile')} title='Profile'>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </button>
+              <button type='button' className='admin-user-logout-btn' onClick={() => void onLogout()} title='Sign out'>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+              </button>
+            </div>
           </div>
-          <button type='button' className='admin-user-logout-btn' onClick={() => void onLogout()} title='Sign out'>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
         </div>
 
         <button type='button' className='admin-nav-policy-link' onClick={openWarning}>

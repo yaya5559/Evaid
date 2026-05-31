@@ -89,6 +89,13 @@ export function SignalModal({previewRoute}:{previewRoute:string}) {
             <div style={{ width: '340px', flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid #213344' }}>
               <div className="signal-modal-body">
 
+                {openSignal.case_title && (
+                  <div className="signal-modal-section">
+                    <div className="signal-modal-label">Case</div>
+                    <div className="signal-modal-value">{openSignal.case_title}</div>
+                  </div>
+                )}
+
                 <div className="signal-modal-section">
                   <div className="signal-modal-label">Extracted Value</div>
                   <div className="signal-modal-value" style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>

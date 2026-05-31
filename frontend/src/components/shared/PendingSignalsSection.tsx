@@ -73,20 +73,26 @@ export function PendingSignalsSection() {
                 onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                  <span className="signal-type-badge small evidence" style={{ flexShrink: 0 }}>
-                    {formatSignalType(signal.signal_type)}
-                  </span>
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {signal.raw_value}
-                  </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="signal-type-badge small evidence" style={{ flexShrink: 0 }}>
+                      {formatSignalType(signal.signal_type)}
+                    </span>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {signal.raw_value}
+                    </span>
+                  </div>
+                  {signal.case_title && (
+                    <span style={{ fontSize: '0.75rem', opacity: 0.55, paddingLeft: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      Case: {signal.case_title}
+                    </span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, marginLeft: '12px' }}>
                   <span style={{ fontWeight: 700, color: confidenceColor(signal.confidence), fontSize: '0.85rem' }}>
                     {Math.round(signal.confidence * 100)}%
                   </span>
                   <span style={{ opacity: 0.4, fontSize: '0.8rem' }}>Review →</span>
-                  
                 </div>
               </button>
             ))}
