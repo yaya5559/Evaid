@@ -32,7 +32,7 @@ def get_my_profile(current_user: dict = Depends(get_current_user)):
             """
             SELECT u.first_name, u.last_name, u.email, r.role_name,
                    o.name AS company, u.phone_number,
-                   CONVERT(NVARCHAR(50), u.last_login_at, 127)
+                   u.last_login_at
             FROM users u
             JOIN roles r ON r.role_id = u.role_id
             LEFT JOIN organizations o ON o.org_id = u.org_id
@@ -44,7 +44,12 @@ def get_my_profile(current_user: dict = Depends(get_current_user)):
         if not row:
             raise HTTPException(status_code=404, detail="User not found")
         first_name, last_name, email, role, company, phone_number, last_login_at = row
-        login_str = last_login_at if last_login_at else None
+        if hasattr(last_login_at, 'isoformat'):
+            login_str = last_login_at.isoformat()
+        elif last_login_at is not None:
+            login_str = str(last_login_at)
+        else:
+            login_str = None
         return {
             "name": f"{first_name or ''} {last_name or ''}".strip(),
             "email": email,
