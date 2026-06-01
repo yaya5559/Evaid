@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   agentGetCaseDetail, agentUpdateCase,
   agentCreateNote, agentUpdateNote, agentDeleteNote,
@@ -47,6 +47,8 @@ function AgentCaseDetail() {
   const { user } = useAuth()
   const { fetchSignalsForCase, clearSignals, confirmedSignals, setWatchedCase } = useSignals()
   const navigate = useNavigate()
+  const location = useLocation()
+  const readOnly = new URLSearchParams(location.search).get('readonly') === '1'
   const agentId = Number((user as any)?.user_id ?? 0)
   const orgId = Number((user as any)?.org_id ?? 0)
 
@@ -184,10 +186,10 @@ function AgentCaseDetail() {
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
-              <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>
+              {!readOnly && <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>}
               <button type="button" className="admin-btn" onClick={() => navigate(`/AgentCase/${caseId}/graph`)} >Signal Graph</button>
             </div>
-            {showEditForm && (
+            {!readOnly && showEditForm && (
               <div className="admin-card" style={{ marginTop: '16px' }}>
                 <h3>Edit Case</h3>
                 <div className="edit-org-controls">
@@ -239,7 +241,7 @@ function AgentCaseDetail() {
             ))}
           </section>
 
-          <EvidenceUploadSection onUpload={handleUploadEvidence} />
+          {!readOnly && <EvidenceUploadSection onUpload={handleUploadEvidence} />}
 
           <EvidenceSection
             evidence={detail.evidence}
@@ -290,7 +292,7 @@ function AgentCaseDetail() {
                           <p style={{ margin: 0 }}>{note.content}</p>
                           <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
                         </div>
-                        {note.author_id === agentId && (
+                        {!readOnly && note.author_id === agentId && (
                           <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
                             <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
                             <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
@@ -300,10 +302,12 @@ function AgentCaseDetail() {
                     )}
                   </div>
                 ))}
-                <div style={{ marginTop: '12px' }}>
-                  <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
-                  <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
-                </div>
+                {!readOnly && (
+                  <div style={{ marginTop: '12px' }}>
+                    <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
+                    <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
+                  </div>
+                )}
               </>
             )}
           </section>
