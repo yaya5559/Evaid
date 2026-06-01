@@ -70,20 +70,6 @@ export type Actor = {
     casesCount: number
 }
 
-export type LinkedCase = {
-    case_id: number
-    CaseNumber: string
-    title: string
-    status: string
-    priority: string
-    severity_level: string | number
-    created_at: string
-    due_date: string | null
-    link_reason: string
-    shared_signal_type: string
-    shared_signal_value: string
-    confidence: number
-}
 
 export const getActorsForCase = async (caseId: string): Promise<Actor[]> => {
   try {
@@ -121,17 +107,6 @@ export const agentGetOrgCases = async (orgId: number): Promise<AgentCaseListItem
     }
 }
 
-export const agentGetLinkedCases = async (caseId: string): Promise<LinkedCase[]> => {
-    try {
-        const res = await api.get(`/graph/cases/${caseId}/linked`, {
-            withCredentials: true,
-        })
-        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to load linked cases')
-        return (res.data?.linked_cases ?? []) as LinkedCase[]
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to load linked cases')
-    }
-}
 
 export const agentGetCaseDetail = async (caseId: string, agentId: number, orgId: number): Promise<AgentCaseDetailResponse> => {
     try {
@@ -160,10 +135,9 @@ export const agentUpdateCase = async (caseId: string, agentId: number, orgId: nu
     }
 }
 
-export const agentCreateNote = async (caseId: string, agentId: number, content: string) => {
+export const agentCreateNote = async (caseId: string, content: string) => {
     try {
         const res = await api.post(`/agent/notes/case/${caseId}`, { content }, {
-            params: { agent_id: agentId },
             withCredentials: true,
         })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to create note')
@@ -173,10 +147,9 @@ export const agentCreateNote = async (caseId: string, agentId: number, content: 
     }
 }
 
-export const agentUpdateNote = async (noteId: number, agentId: number, content: string) => {
+export const agentUpdateNote = async (noteId: number, content: string) => {
     try {
         const res = await api.patch(`/agent/notes/${noteId}`, { content }, {
-            params: { agent_id: agentId },
             withCredentials: true,
         })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to update note')
@@ -186,10 +159,9 @@ export const agentUpdateNote = async (noteId: number, agentId: number, content: 
     }
 }
 
-export const agentDeleteNote = async (noteId: number, agentId: number) => {
+export const agentDeleteNote = async (noteId: number) => {
     try {
         const res = await api.delete(`/agent/notes/${noteId}`, {
-            params: { agent_id: agentId },
             withCredentials: true,
         })
         if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Failed to delete note')
@@ -246,15 +218,7 @@ export const agentUploadEvidence = async (caseId: string, file: File, _agentId: 
     }
 }
 
-export const agentConfirmEvidence = async (fileId: string) => {
-    try {
-        const res = await api.post(`/evidence/confirm/${fileId}`, null, { withCredentials: true })
-        if (res.data?.message === 'Error') throw new Error(res.data?.error ?? 'Confirm failed')
-        return res.data
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Unable to confirm evidence')
-    }
-}
+
 
 export const agentDeleteEvidence = async (fileId: string, agentId: number) => {
     try {

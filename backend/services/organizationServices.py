@@ -91,7 +91,7 @@ def disable_organization(name: str):
 
   try:
     query = "UPDATE organizations SET is_active = 0 WHERE name = ?"
-    cursor.execute(query, (name))
+    cursor.execute(query, (name,))
     conn.commit()
     return True
   
@@ -108,7 +108,7 @@ def enable_organization(name: str):
 
   try:
     query = "UPDATE organizations SET is_active = 1 WHERE name = ?"
-    cursor.execute(query, (name))
+    cursor.execute(query, (name,))
     conn.commit()
     return True
   

@@ -136,7 +136,7 @@ def get_org_case(case_id: int, org_id: int):
         note_cols = [col[0] for col in cursor.description]
         notes = [dict(zip(note_cols, row)) for row in note_rows]
 
-        # Evidence from EvidenceItem (new pipeline)
+        # Evidence from EvidenceItem (new pipeline) 
         cursor.execute("""
             SELECT
                 CAST(ei.Id AS NVARCHAR(36))                     AS file_id,

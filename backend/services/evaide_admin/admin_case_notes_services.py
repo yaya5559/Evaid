@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from fastapi import HTTPException
 from services.database import get_db_connection
 import pyodbc
 
@@ -99,7 +100,7 @@ def delete_note(note_id: int):
         cursor.execute("DELETE FROM case_notes WHERE note_id = ?", (note_id,))
 
         if cursor.rowcount == 0:
-            return {"message": "Note not found"}
+            raise HTTPException(status_code=404)
 
         conn.commit()
         return {"message": "Success"}

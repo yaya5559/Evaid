@@ -328,14 +328,7 @@ export const orgUploadEvidence = async (caseId: string, file: File, _userId: num
     }
 }
 
-export const orgConfirmEvidence = async (fileId: string) => {
-    try {
-        const res = await api.post(`/evidence/confirm/${fileId}`, null, { withCredentials: true })
-        return res.data
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Confirm failed')
-    }
-}
+
 
 export type CaseCorrelation = {
     related_case_id: string,

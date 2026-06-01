@@ -99,13 +99,21 @@ def delete_evidence(file_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # DELETE FROM Evidence WHERE FileId = ?
-        cursor.execute("DELETE FROM Evidence WHERE FileId = ?", (file_id,))
-        # if nothing got deleted the id prob doesnt exist
-        if cursor.rowcount == 0:
-            return {"message": "Error", "error": "Evidence not found"}
+        cursor.execute("SELECT case_id FROM EvidenceItem WHERE Id = ?", (file_id,))
+        row = cursor.fetchone()
+        if not row:
+            return {"message": "Evidence not found"}
+
+
+        # Delete child records before deleting EvidenceItem
+        cursor.execute("DELETE FROM Signal WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM PendingSignal WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM AnalysisRun WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM Attachment WHERE evidence_id = ?", (file_id,))
+        cursor.execute("DELETE FROM EvidenceItem WHERE Id = ?", (file_id,))
         conn.commit()
-        return {"message": "Success", "deleted_file_id": file_id}
+
+        return {"message": "Success"}
     except pyodbc.Error as e:
         return {"message": "Error", "error": str(e)}
     finally:

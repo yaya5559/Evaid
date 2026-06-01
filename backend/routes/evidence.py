@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import Depends, status, APIRouter, UploadFile, File, HTTPException
+from fastapi import Depends, status, APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response as FastAPIResponse
 import threading
 from services.run_analysis import run_analysis
@@ -128,6 +128,70 @@ async def upload_attachement(
             size_bytes=size_bytes,
             status=ANALYSISRUN_STATUS_INITIAL,
         )
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    finally:
+        conn.close()
+
+
+@router.post("/upload", status_code=status.HTTP_201_CREATED)
+async def upload_evidence(
+    case_id: str = Form(...),
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
+):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Missing filename.")
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Unsupported content type: {file.content_type}",
+        )
+
+    checksum_sha256, _, file_bytes = _hash_uploadfile_sha256(file)
+    captured_at_utc = datetime.now(timezone.utc)
+    title = file.filename.rsplit(".", 1)[0]
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO EvidenceItem (case_id, evidenceItem_description, title, created_by_user_id, created_at)
+            OUTPUT INSERTED.Id
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (case_id, title, title, user["user_id"], captured_at_utc),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=500, detail="Failed to create evidence item.")
+        evidence_item_id = UUID(str(row[0]))
+
+        attachment_id = _insert_attachment(
+            cursor=cursor,
+            evidence_item_id=evidence_item_id,
+            attachment_kind=file.content_type,
+            file_bytes=file_bytes,
+            checksum_sha256=checksum_sha256,
+            captured_at_utc=captured_at_utc,
+        )
+        analysis_run_id = _insert_analysis_run(
+            cursor=cursor,
+            evidence_item_id=evidence_item_id,
+            attachment_id=attachment_id,
+        )
+        conn.commit()
+        threading.Thread(target=run_analysis, args=(analysis_run_id,), daemon=True).start()
+        return {
+            "file_id": str(evidence_item_id),
+            "filename": file.filename,
+            "message": "Success",
+        }
     except HTTPException:
         conn.rollback()
         raise

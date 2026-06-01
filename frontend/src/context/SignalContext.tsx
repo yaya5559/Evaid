@@ -17,6 +17,16 @@ export type Signal = {
   case_title?: string
 }
 
+export type ConfirmedSignal = {
+  id: string
+  signal_type: string
+  raw_value: string
+  normalized_value: string | null
+  confidence: number
+  source_locator: string | null
+  evidence_id: string
+}
+
 type BackendSignal = {
   id: string
   signal_type: string
@@ -45,7 +55,9 @@ type SignalContextValue = {
   fetchSignalsForEvidence: (evidenceId: string) => Promise<void>
   fetchSignalsForCase: (caseId: string) => Promise<void>
   fetchSignalsForOrg: (orgId: string) => Promise<void>
+  confirmedSignals: ConfirmedSignal[]
   clearSignals: () => void
+  setWatchedCase: (caseId: string | null) => Promise<void>
   lastTriagedAt: number
 }
 
@@ -72,6 +84,11 @@ async function getPendingSignalsForOrg(orgId: string): Promise<BackendSignal[]> 
   return Array.isArray(res.data) ? res.data : []
 }
 
+async function getConfirmedSignalsForCase(caseId: string): Promise<ConfirmedSignal[]> {
+  const res = await api.get(`/evidence/confirmedSignals/${caseId}`)
+  return Array.isArray(res.data) ? res.data : []
+}
+
 // ── Provider ───────────────────────────────────────────────
 
 export function SignalProvider({ children }: { children: React.ReactNode }) {
@@ -81,17 +98,34 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
   const [openSignal, setOpenSignal] = useState<Signal | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [lastTriagedAt, setLastTriagedAt] = useState(0)
+  const [confirmedSignals, setConfirmedSignals] = useState<ConfirmedSignal[]>([])
   const knownIds = useRef<Set<string>>(new Set())
   const watchedEvidenceIds = useRef<Set<string>>(new Set())
+  const watchedCaseId = useRef<string | null>(null)
 
   const clearSignals = useCallback(() => {
     setSignals([])
+    setConfirmedSignals([])
     setSeenIds(new Set())
     setToastQueue([])
     setOpenSignal(null)
+    watchedCaseId.current = null
     knownIds.current = new Set()
     watchedEvidenceIds.current = new Set()
   }, [])
+
+  const setWatchedCase = useCallback(async (caseId: string | null) => {
+    watchedCaseId.current = caseId
+    if (caseId) {
+      try {
+        const confirmed = await getConfirmedSignalsForCase(caseId)
+        setConfirmedSignals(confirmed)
+      } catch { /* silent */ }
+    } else {
+      setConfirmedSignals([])
+    }
+  }, [])
+
 
   const processIncoming = useCallback((incoming: Signal[]) => {
     if (incoming.length === 0) return
@@ -161,6 +195,13 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
           processIncoming(mapped)
         } catch { /* silent */ }
       }
+
+      if (watchedCaseId.current) {
+        try {
+          const confirmed = await getConfirmedSignalsForCase(watchedCaseId.current)
+          setConfirmedSignals(confirmed)
+        } catch { /* silent */ }
+      }
     }
     const interval = setInterval(() => void poll(), 30_000)
     return () => clearInterval(interval)
@@ -226,8 +267,10 @@ export function SignalProvider({ children }: { children: React.ReactNode }) {
         fetchSignalsForEvidence,
         fetchSignalsForCase,
         fetchSignalsForOrg,
+        confirmedSignals,
         clearSignals,
         lastTriagedAt,
+        setWatchedCase,
       }}
     >
       {children}

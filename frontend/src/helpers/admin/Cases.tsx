@@ -314,14 +314,7 @@ export const uploadEvidence = async (caseId: string, file: File, userId: number)
     }
 }
 
-export const confirmEvidence = async (fileId: string) => {
-    try {
-        const res = await api.post(`/evidence/confirm/${fileId}`, null, { withCredentials: true })
-        return res.data
-    } catch (err: any) {
-        throw new Error(err?.response?.data?.detail ?? err?.message ?? 'Confirm failed')
-    }
-}
+
 
 export const deleteEvidence = async (fileId: string) => {
     try {

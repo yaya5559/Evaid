@@ -1,7 +1,9 @@
+import { useState, useCallback, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAIWarning } from '../../context/AIWarningContext'
 import { NotificationBell } from '../shared/NotificationBell'
+import { searchEvidence, type SearchResult } from '../../helpers/org/Cases'
 
 const navClassName = ({ isActive }: { isActive: boolean }) =>
   `admin-nav-item${isActive ? ' active' : ''}`
@@ -16,6 +18,23 @@ function AgentNav() {
     navigate('/Login', { replace: true })
   }
 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [searching, setSearching] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (q.trim().length < 2) { setSearchResults([]); return }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true)
+      const results = await searchEvidence(q)
+      setSearchResults(results)
+      setSearching(false)
+    }, 400)
+  }, [])
+
   const email = (user as any)?.email ?? ''
   const initials = email.slice(0, 2).toUpperCase()
 
@@ -28,6 +47,63 @@ function AgentNav() {
           <div className='admin-brand-sub'>Agent console</div>
         </div>
         <NotificationBell />
+      </div>
+
+      <div style={{ padding: '0 0 4px', position: 'relative' }}>
+        <input
+          className="edit-org-input"
+          placeholder="Search evidence, actors, cases..."
+          value={searchQuery}
+          onChange={e => handleSearch(e.target.value)}
+          style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.82rem' }}
+        />
+        {(searching || searchResults.length > 0) && (
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, right: 0,
+            background: 'var(--admin-card-bg, #1a1a2e)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '8px', zIndex: 100, maxHeight: '360px', overflowY: 'auto',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+          }}>
+            {searching && <div style={{ padding: '10px 12px', opacity: 0.6, fontSize: '0.82rem' }}>Searching...</div>}
+            {!searching && searchResults.length === 0 && (
+              <div style={{ padding: '10px 12px', opacity: 0.6, fontSize: '0.82rem' }}>No results found.</div>
+            )}
+            {!searching && searchResults.length > 0 && (() => {
+              const signals = searchResults.filter((r): r is Extract<SearchResult, { result_type: 'signal' }> => r.result_type === 'signal')
+              const actors  = searchResults.filter((r): r is Extract<SearchResult, { result_type: 'actor' }> => r.result_type === 'actor')
+              const cases   = searchResults.filter((r): r is Extract<SearchResult, { result_type: 'case' }> => r.result_type === 'case')
+              const clear = () => { setSearchQuery(''); setSearchResults([]) }
+              const label = (text: string) => (
+                <div key={text} style={{ padding: '6px 12px 2px', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.45 }}>{text}</div>
+              )
+              const row = (key: string, top: string, bottom: string, onClick: () => void) => (
+                <div key={key} onClick={onClick}
+                  style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <div style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{top}</div>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{bottom}</div>
+                </div>
+              )
+              return [
+                ...(signals.length > 0 ? [label('Signals'), ...signals.map((r, i) =>
+                  row(`s${i}`, r.raw_value, `${r.signal_type.replace(/_/g, ' ')} · ${r.case_title}`,
+                    () => { navigate(`/AgentCase/${r.case_id}`); clear() })
+                )] : []),
+                ...(actors.length > 0 ? [label('Actors'), ...actors.map((r, i) =>
+                  row(`a${i}`, r.actor_name, r.role,
+                    () => { if (r.case_id) navigate(`/AgentCase/${r.case_id}`); clear() })
+                )] : []),
+                ...(cases.length > 0 ? [label('Cases'), ...cases.map((r, i) =>
+                  row(`c${i}`, r.case_title, `Case #${r.case_number} · ${r.case_status}`,
+                    () => { navigate(`/AgentCase/${r.case_id}`); clear() })
+                )] : []),
+              ]
+            })()}
+          </div>
+        )}
       </div>
 
       <nav className='admin-nav'>
