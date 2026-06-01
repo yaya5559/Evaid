@@ -55,8 +55,9 @@ export default function Profile() {
         setLastLogin(d.last_login_at);
         setOrgName(d.company || "");
       })
-      .catch(() => {
+      .catch((err) => {
         if (!active) return;
+        console.error("Profile load error:", err.response?.data ?? err.message);
         setMessage({ type: "error", text: "Failed to load profile. Please refresh the page." });
       })
       .finally(() => {
