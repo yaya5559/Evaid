@@ -4,9 +4,9 @@ import { agentGetOrgCases, type AgentCaseListItem } from '../../helpers/agent/Ca
 import { useAuth } from '../../context/AuthContext'
 import AgentLayout from './AgentLayout'
 import '../../styles/Admin/AdminLayout.css'
-
+ 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
-
+ 
 type CaseRecord = {
   id: string
   caseNumber?: string
@@ -17,7 +17,7 @@ type CaseRecord = {
   priority: string
   dueDate?: string
 }
-
+ 
 function normalizeStatus(status: string | undefined): CaseStatus {
   const s = status?.trim().toLowerCase()
   if (s === 'solved') return 'Solved'
@@ -25,17 +25,17 @@ function normalizeStatus(status: string | undefined): CaseStatus {
   if (s === 'discarded') return 'Discarded'
   return 'Open'
 }
-
+ 
 const statusTone: Record<CaseStatus, string> = { Solved: 'good', Closed: 'good', Open: 'info', Discarded: 'critical' }
 const severityLabel: Record<number, string> = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' }
-
+ 
 function formatDate(date: string | undefined | null) {
   if (!date) return '�'
   const d = new Date(date.slice(0, 10) + 'T00:00:00')
   if (isNaN(d.getTime())) return '�'
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
-
+ 
 function toCaseRecord(item: AgentCaseListItem): CaseRecord {
   return {
     id: String(item.case_id),
@@ -48,17 +48,17 @@ function toCaseRecord(item: AgentCaseListItem): CaseRecord {
     dueDate: item.due_date || undefined,
   }
 }
-
+ 
 function AgentOrgCases() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const orgId = Number((user as any)?.org_id ?? 0)
-
+ 
   const [cases, setCases] = useState<CaseRecord[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+ 
   const loadOrgCases = async () => {
     if (!orgId) { setError('Organization ID missing. Please log out and back in.'); return }
     setLoading(true); setError(null)
@@ -71,7 +71,7 @@ function AgentOrgCases() {
       setLoading(false)
     }
   }
-
+ 
   const filteredCases = useMemo(
     () => cases.filter((c) =>
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,9 +79,9 @@ function AgentOrgCases() {
     ),
     [cases, searchQuery]
   )
-
+ 
   useEffect(() => { void loadOrgCases() }, [orgId])
-
+ 
   return (
     <AgentLayout>
       <header className="admin-header">
@@ -93,15 +93,15 @@ function AgentOrgCases() {
           </p>
         </div>
       </header>
-
+ 
       {error && <div className="admin-alert error">{error}</div>}
-
+ 
       <section className="admin-card">
         <div className="orgdash-card-head">
           <h2>All Cases</h2>
           <span className="admin-pill neutral">{cases.length} cases</span>
         </div>
-
+ 
         <input
           className="edit-org-input"
           type="text"
@@ -110,12 +110,12 @@ function AgentOrgCases() {
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ width: '100%', boxSizing: 'border-box', marginBottom: '12px' }}
         />
-
+ 
         {loading && <p style={{ opacity: 0.6 }}>Loading...</p>}
         {!loading && filteredCases.length === 0 && (
           <p style={{ opacity: 0.7 }}>No cases found in your organization.</p>
         )}
-
+ 
         <div className="orgdash-progress-list">
           {filteredCases.map((c) => (
             <div key={c.id} className="orgdash-progress-row">
@@ -136,7 +136,7 @@ function AgentOrgCases() {
                 type="button"
                 className="admin-btn primary"
                 style={{ marginLeft: '12px', flexShrink: 0, alignSelf: 'flex-start' }}
-                onClick={() => navigate(`/AgentCase/${c.id}`)}
+                onClick={() => navigate(`/AgentCase/${c.id}?readonly=1`)}
               >
                 View
               </button>
@@ -147,5 +147,5 @@ function AgentOrgCases() {
     </AgentLayout>
   )
 }
-
+ 
 export default AgentOrgCases

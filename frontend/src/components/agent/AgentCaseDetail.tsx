@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   agentGetCaseDetail, agentUpdateCase,
   agentCreateNote, agentUpdateNote, agentDeleteNote,
@@ -15,9 +15,9 @@ import { EvidenceSection, EvidenceUploadSection } from '../shared/EvidenceSectio
 import { GraphFAB } from '../shared/GraphDrawer'
 import '../../styles/Admin/AdminLayout.css'
 import { getCaseCorrelation, type CaseCorrelation } from '../../helpers/org/Cases'
-
+ 
 type CaseStatus = 'Solved' | 'Open' | 'Discarded' | 'Closed'
-
+ 
 function normalizeStatus(s: string | undefined): CaseStatus {
   const v = s?.trim().toLowerCase()
   if (v === 'solved') return 'Solved'
@@ -25,31 +25,33 @@ function normalizeStatus(s: string | undefined): CaseStatus {
   if (v === 'discarded') return 'Discarded'
   return 'Open'
 }
-
+ 
 const statusTone: Record<CaseStatus, string> = { Solved: 'good', Closed: 'good', Open: 'info', Discarded: 'critical' }
 const severityLabel: Record<number, string> = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' }
-
+ 
 function roleColor(role: string): string {
   if (role === 'Suspect') return 'critical'
   if (role === 'Person of Interest') return 'info'
   return 'neutral'
 }
-
+ 
 function formatDate(d: string | undefined | null) {
   if (!d) return '—'
   const dt = new Date(d.slice(0, 10) + 'T00:00:00')
   if (isNaN(dt.getTime())) return '—'
   return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
-
+ 
 function AgentCaseDetail() {
   const { caseId = '' } = useParams<{ caseId: string }>()
   const { user } = useAuth()
   const { fetchSignalsForCase, clearSignals, confirmedSignals, setWatchedCase } = useSignals()
   const navigate = useNavigate()
+  const location = useLocation()
+  const readOnly = new URLSearchParams(location.search).get('readonly') === '1'
   const agentId = Number((user as any)?.user_id ?? 0)
   const orgId = Number((user as any)?.org_id ?? 0)
-
+ 
   const [detail, setDetail] = useState<AgentCaseDetailResponse | null>(null)
   const [showEditForm, setShowEditForm] = useState(false)
   const [editTitle, setEditTitle] = useState('')
@@ -67,7 +69,7 @@ function AgentCaseDetail() {
   const [correlations, setCorrelations] = useState<CaseCorrelation[]>([])
   const [correlationsCollapsed, setCorrelationsCollapsed] = useState(true)
   const [confirmedCollapsed, setConfirmedCollapsed] = useState(true)
-
+ 
   useEffect(() => {
     if (!caseId) return
     getCaseCorrelation(caseId).then(setCorrelations).catch(() => setCorrelations([]))
@@ -77,7 +79,7 @@ function AgentCaseDetail() {
     void setWatchedCase(caseId)
     return () => { void setWatchedCase(null) }
   }, [caseId])
-
+ 
   const loadDetail = async () => {
     setLoading(true)
     try {
@@ -89,14 +91,14 @@ function AgentCaseDetail() {
       setLoading(false)
     }
   }
-
+ 
   const openEditForm = () => {
     if (!detail) return
     setEditTitle(detail.case.title)
     setEditDueDate(detail.case.due_date ? detail.case.due_date.slice(0, 10) : '')
     setShowEditForm((p) => !p)
   }
-
+ 
   const handleEditCase = async () => {
     setLoading(true); setError(null)
     try {
@@ -104,7 +106,7 @@ function AgentCaseDetail() {
       setSuccess('Case updated'); setShowEditForm(false); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to update case') } finally { setLoading(false) }
   }
-
+ 
   const handleAddNote = async () => {
     if (!newNoteContent.trim()) return
     setLoading(true); setError(null)
@@ -113,7 +115,7 @@ function AgentCaseDetail() {
       setSuccess('Note added'); setNewNoteContent(''); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to add note') } finally { setLoading(false) }
   }
-
+ 
   const handleEditNote = async (noteId: number) => {
     if (!editNoteContent.trim()) return
     setLoading(true); setError(null)
@@ -122,7 +124,7 @@ function AgentCaseDetail() {
       setSuccess('Note updated'); setEditingNoteId(null); setEditNoteContent(''); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to update note') } finally { setLoading(false) }
   }
-
+ 
   const handleDeleteNote = async (noteId: number) => {
     setLoading(true); setError(null)
     try {
@@ -130,19 +132,19 @@ function AgentCaseDetail() {
       setSuccess('Note deleted'); setConfirmDeleteNoteId(null); void loadDetail()
     } catch (err: any) { setError(err?.message ?? 'Failed to delete note') } finally { setLoading(false) }
   }
-
+ 
   const handleUploadEvidence = async (file: File, agentContext: string) => {
     await agentUploadEvidence(caseId, file, agentId, agentContext)
     setSuccess('Evidence uploaded')
     void loadDetail()
   }
-
+ 
   const handleDeleteEvidence = async (fileId: string) => {
     await agentDeleteEvidence(fileId, agentId)
     setSuccess('Evidence deleted')
     void loadDetail()
   }
-
+ 
   useEffect(() => { void loadDetail() }, [caseId, agentId, orgId])
   useEffect(() => {
     if (caseId) {
@@ -160,11 +162,11 @@ function AgentCaseDetail() {
     const t = setTimeout(() => { setSuccess(null); setError(null) }, 4000)
     return () => clearTimeout(t)
   }, [success, error])
-
+ 
   return (
     <AgentLayout>
       <GraphFAB graphPath={`/AgentCase/${caseId}/graph`} />
-
+ 
       <header className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" className="admin-btn" onClick={() => navigate('/AgentCases')}>← Back</button>
@@ -174,20 +176,20 @@ function AgentCaseDetail() {
           </div>
         </div>
       </header>
-
+ 
       {error && <div className="admin-alert error">{error}</div>}
       {success && <div className="admin-alert success">{success}</div>}
       {loading && !detail && <p style={{ opacity: 0.6 }}>Loading...</p>}
-
+ 
       {detail && (
         <>
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span className={`admin-pill ${statusTone[normalizeStatus(detail.case.status)]}`}>{detail.case.status}</span>
-              <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>
+              {!readOnly && <button type="button" className="admin-btn" onClick={openEditForm}>Edit</button>}
               <button type="button" className="admin-btn" onClick={() => navigate(`/AgentCase/${caseId}/graph`)} >Signal Graph</button>
             </div>
-            {showEditForm && (
+            {!readOnly && showEditForm && (
               <div className="admin-card" style={{ marginTop: '16px' }}>
                 <h3>Edit Case</h3>
                 <div className="edit-org-controls">
@@ -205,7 +207,7 @@ function AgentCaseDetail() {
               </div>
             )}
           </section>
-
+ 
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <h2>Case Info</h2>
             <div className="orgdash-progress-meta">
@@ -217,7 +219,7 @@ function AgentCaseDetail() {
             </div>
             {detail.case.description && <p style={{ marginTop: '12px' }}>{detail.case.description}</p>}
           </section>
-
+ 
           <section className="admin-card" style={{ marginBottom: '16px' }}>
             <h2>Actors ({actors.length})</h2>
             {actorsLoading && <p style={{ opacity: 0.6 }}>Loading actors...</p>}
@@ -238,16 +240,16 @@ function AgentCaseDetail() {
               </div>
             ))}
           </section>
-
-          <EvidenceUploadSection onUpload={handleUploadEvidence} />
-
+ 
+          {!readOnly && <EvidenceUploadSection onUpload={handleUploadEvidence} />}
+ 
           <EvidenceSection
             evidence={detail.evidence}
             loading={loading}
             onDelete={handleDeleteEvidence}
             previewRoute="/agent/evidence/preview"
           />
-
+ 
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #fa0000' }}>
             <h2
               onClick={() => setNotesCollapsed(p => !p)}
@@ -290,7 +292,7 @@ function AgentCaseDetail() {
                           <p style={{ margin: 0 }}>{note.content}</p>
                           <small style={{ opacity: 0.6 }}>{note.author_first_name} {note.author_last_name} · {formatDate(note.created_at)}</small>
                         </div>
-                        {note.author_id === agentId && (
+                        {!readOnly && note.author_id === agentId && (
                           <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
                             <button type="button" className="admin-btn" onClick={() => { setEditingNoteId(note.note_id); setEditNoteContent(note.content); setConfirmDeleteNoteId(null) }} disabled={loading}>Edit</button>
                             <button type="button" className="admin-btn critical" onClick={() => { setConfirmDeleteNoteId(note.note_id); setEditingNoteId(null) }} disabled={loading}>Delete</button>
@@ -300,16 +302,18 @@ function AgentCaseDetail() {
                     )}
                   </div>
                 ))}
-                <div style={{ marginTop: '12px' }}>
-                  <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
-                  <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
-                </div>
+                {!readOnly && (
+                  <div style={{ marginTop: '12px' }}>
+                    <textarea className="edit-org-input" placeholder="Add a note..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} rows={3} style={{ width: '100%', boxSizing: 'border-box' }} />
+                    <button type="button" className="admin-btn primary" style={{ marginTop: '8px' }} onClick={() => void handleAddNote()} disabled={loading || !newNoteContent.trim()}>Save New Note</button>
+                  </div>
+                )}
               </>
             )}
           </section>
-
+ 
           <PendingSignalsSection />
-
+ 
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #16a34a' }}>
             <h2
               onClick={() => setConfirmedCollapsed(p => !p)}
@@ -343,7 +347,7 @@ function AgentCaseDetail() {
               </div>
             )}
           </section>
-
+ 
           <section className="admin-card" style={{ marginBottom: '16px', borderLeft: '3px solid #7c3aed' }}>
             <h2
               onClick={() => setCorrelationsCollapsed(p => !p)}
@@ -385,5 +389,5 @@ function AgentCaseDetail() {
     </AgentLayout>
   )
 }
-
+ 
 export default AgentCaseDetail
